@@ -22,7 +22,9 @@ class AnemifyApp extends StatelessWidget {
         ),
       ),
       home: const Scaffold(
-        body: Center(child: Text('Anemify')),
+        body: Center(
+          child: Text('Anemify'),
+        ),
       ),
     );
   }
