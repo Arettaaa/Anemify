@@ -1,3 +1,4 @@
+import 'debug_scan_page.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
@@ -84,7 +85,18 @@ class _DebugParityPageState extends State<DebugParityPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Cek paritas model')),
+      appBar: AppBar(
+        title: const Text('Cek paritas model'),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.camera_alt),
+            tooltip: 'Uji skrining dengan kamera',
+            onPressed: () => Navigator.of(context).push(
+              MaterialPageRoute(builder: (_) => const DebugScanPage()),
+            ),
+          ),
+        ],
+      ),
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: [
