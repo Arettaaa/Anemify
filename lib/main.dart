@@ -1,8 +1,12 @@
+import 'core/di/injection.dart';
+
 import 'package:flutter/material.dart';
 
 import 'features/scan/presentation/pages/debug_parity_page.dart';
 
 void main() {
+  WidgetsFlutterBinding.ensureInitialized();
+  setupInjection();
   runApp(const AnemifyApp());
 }
 

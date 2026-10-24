@@ -1,7 +1,7 @@
 import 'dart:typed_data';
 
+import 'package:flutter/foundation.dart' show compute;
 import 'package:flutter/services.dart' show rootBundle;
-import 'package:image/image.dart' as img;
 
 import '../../domain/entities/scan_failure.dart';
 import '../../domain/entities/scan_result.dart';
@@ -12,13 +12,21 @@ import '../models/risk_decider.dart';
 import '../preprocessing/guide_cropper.dart';
 import '../preprocessing/roi_preprocessor.dart';
 
+/// Dijalankan di isolate terpisah: decode foto besar + potong + resize itu berat.
+/// Harus fungsi top-level supaya bisa dipakai compute().
+RoiTensor prepareTensorJob(({Uint8List photo, bool isEye}) job) {
+  final im = RoiPreprocessor.decodeOriented(job.photo);
+  if (im == null) throw const ScanFailure(ScanFailureType.invalidImage);
+  final c = job.isEye ? GuideCropper.eye(im) : GuideCropper.palm(im);
+  final t = RoiPreprocessor().fromRgba(c.rgba, c.width, c.height);
+  if (t == null) throw const ScanFailure(ScanFailureType.roiTooSmall);
+  return t;
+}
+
 class ScanRepositoryImpl implements ScanRepository {
-  ScanRepositoryImpl({TfliteDataSource? models, RoiPreprocessor? preprocessor})
-      : _models = models ?? TfliteDataSource(),
-        _pre = preprocessor ?? RoiPreprocessor();
+  ScanRepositoryImpl({TfliteDataSource? models}) : _models = models ?? TfliteDataSource();
 
   final TfliteDataSource _models;
-  final RoiPreprocessor _pre;
   RiskDecider? _decider;
 
   @override
@@ -34,22 +42,19 @@ class ScanRepositoryImpl implements ScanRepository {
   Future<ScanResult> classify({Uint8List? palmPhoto, Uint8List? eyePhoto}) async {
     final decider = _decider;
     if (decider == null) throw const ScanFailure(ScanFailureType.modelNotReady);
-    final palm =
-        palmPhoto == null ? null : _models.predictPalm(_tensor(palmPhoto, GuideCropper.palm));
-    final eye =
-        eyePhoto == null ? null : _models.predictKonj(_tensor(eyePhoto, GuideCropper.eye));
+    double? palm, eye;
+    if (palmPhoto != null) {
+      palm = _models.predictPalm(await compute(prepareTensorJob, (photo: palmPhoto, isEye: false)));
+    }
+    if (eyePhoto != null) {
+      eye = _models.predictKonj(await compute(prepareTensorJob, (photo: eyePhoto, isEye: true)));
+    }
     return decider.decide(palm: palm, eye: eye);
   }
 
-  RoiTensor _tensor(Uint8List photo, RgbaCrop Function(img.Image) crop) {
-    final im = RoiPreprocessor.decodeOriented(photo);
-    if (im == null) throw const ScanFailure(ScanFailureType.invalidImage);
-    final c = crop(im);
-    final t = _pre.fromRgba(c.rgba, c.width, c.height);
-    if (t == null) throw const ScanFailure(ScanFailureType.roiTooSmall);
-    return t;
-  }
-
   @override
-  void dispose() => _models.close();
+  void dispose() {
+    _models.close();
+    _decider = null;
+  }
 }
