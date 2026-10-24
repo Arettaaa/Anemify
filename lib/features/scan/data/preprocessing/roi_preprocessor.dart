@@ -19,22 +19,31 @@ class RoiPreprocessor {
   static const int _alphaThreshold = 12; // Python: alpha > 12
   static const int _minRoiPixels = 20; // Python: mask.sum() < 20 -> tidak valid
 
-  /// Dari file PNG/JPG. Orientasi EXIF (foto kamera) diluruskan dulu.
-  /// Alpha dibaca langsung per piksel supaya transparansi PNG (termasuk PNG berpalet) tidak hilang.
-  RoiTensor? fromEncoded(Uint8List bytes) {
+  /// Dekode PNG/JPG dan luruskan orientasi EXIF (foto kamera).
+  static img.Image? decodeOriented(Uint8List bytes) {
     final decoded = img.decodeImage(bytes);
-    if (decoded == null) return null;
-    final im = img.bakeOrientation(decoded);
-    final w = im.width, h = im.height;
-    final rgba = Uint8List(w * h * 4);
+    return decoded == null ? null : img.bakeOrientation(decoded);
+  }
+
+  /// img.Image -> RGBA (w*h*4). Alpha dibaca per piksel; tanpa kanal alpha -> 255.
+  static Uint8List rgbaBytes(img.Image im) {
+    final w = im.width;
+    final rgba = Uint8List(w * im.height * 4);
     for (final p in im) {
       final i = (p.y * w + p.x) * 4;
       rgba[i] = (p.rNormalized * 255).round();
       rgba[i + 1] = (p.gNormalized * 255).round();
       rgba[i + 2] = (p.bNormalized * 255).round();
-      rgba[i + 3] = (p.aNormalized * 255).round(); // tanpa kanal alpha -> 255
+      rgba[i + 3] = (p.aNormalized * 255).round();
     }
-    return fromRgba(rgba, w, h);
+    return rgba;
+  }
+
+  /// Dari file PNG/JPG utuh (dipakai halaman cek paritas).
+  RoiTensor? fromEncoded(Uint8List bytes) {
+    final im = decodeOriented(bytes);
+    if (im == null) return null;
+    return fromRgba(rgbaBytes(im), im.width, im.height);
   }
 
   /// [rgba]: w*h*4 byte. Piksel dengan alpha > 12 dianggap ROI.
