@@ -38,6 +38,7 @@ class _ConsistencyTestPageState extends State<ConsistencyTestPage> {
   bool _switching = false;
   String? _error;
   final List<_Shot> _shots = [];
+  final Map<String, Map<String, int>> _rejects = {};
 
   @override
   void initState() {
@@ -110,7 +111,11 @@ class _ConsistencyTestPageState extends State<ConsistencyTestPage> {
       final isFront = c.description.lensDirection == CameraLensDirection.front;
       _shots.add(_Shot(_eye, isFront, r.score, r.category.key));
     } on ScanFailure catch (e) {
-      _toast('Gagal: ${e.type.name}');
+      final isFront = c.description.lensDirection == CameraLensDirection.front;
+      final g = '${_eye ? 'Mata' : 'Palm'} - ${isFront ? 'Depan' : 'Belakang'}';
+      final m = _rejects.putIfAbsent(g, () => {});
+      m[e.type.name] = (m[e.type.name] ?? 0) + 1;
+      _toast('Ditolak: ${e.type.name}');
     } catch (e) {
       _toast('Error: $e');
     } finally {
@@ -148,6 +153,12 @@ class _ConsistencyTestPageState extends State<ConsistencyTestPage> {
         lines.add('$t: selisih rata-rata depan vs belakang = ${(d - b).abs().toStringAsFixed(3)}');
       }
     }
+    _rejects.forEach((g, m) {
+      final total = m.values.fold(0, (a, b) => a + b);
+      final ok = groups[g]?.length ?? 0;
+      final detail = m.entries.map((e) => '${e.key} ${e.value}').join(', ');
+      lines.add('$g: ditolak $total dari ${total + ok} foto ($detail)');
+    });
     return lines;
   }
 
@@ -174,12 +185,17 @@ class _ConsistencyTestPageState extends State<ConsistencyTestPage> {
           IconButton(
             icon: const Icon(Icons.copy),
             tooltip: 'Salin hasil',
-            onPressed: _shots.isEmpty ? null : _copy,
+            onPressed: (_shots.isEmpty && _rejects.isEmpty) ? null : _copy,
           ),
           IconButton(
             icon: const Icon(Icons.delete_outline),
             tooltip: 'Hapus semua',
-            onPressed: _shots.isEmpty ? null : () => setState(_shots.clear),
+            onPressed: (_shots.isEmpty && _rejects.isEmpty)
+                ? null
+                : () => setState(() {
+                      _shots.clear();
+                      _rejects.clear();
+                    }),
           ),
         ],
       ),
