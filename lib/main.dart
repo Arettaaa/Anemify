@@ -1,8 +1,8 @@
+import 'package:anemify/features/splash/splash_screen.dart';
+
 import 'core/di/injection.dart';
 
 import 'package:flutter/material.dart';
-
-import 'features/scan/presentation/pages/debug_parity_page.dart';
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
@@ -28,7 +28,7 @@ class AnemifyApp extends StatelessWidget {
         ),
       ),
       // SEMENTARA untuk cek paritas model; nanti diganti halaman utama
-      home: const DebugParityPage(),
+      home: const SplashScreen(),
     );
   }
 }
