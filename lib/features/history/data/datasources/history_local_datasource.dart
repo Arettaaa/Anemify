@@ -90,7 +90,12 @@ class HistoryLocalDataSource {
       usesFusion: (m['uses_fusion'] as int) == 1,
       warnings: warn.isEmpty
           ? const []
-          : warn.split(',').map((n) => ScanWarning.values.byName(n)).toList(),
+          : warn
+              .split(',')
+              .map((n) => ScanWarning.values.where((w) => w.name == n))
+              .where((found) => found.isNotEmpty)
+              .map((found) => found.first)
+              .toList(),
     );
   }
 }
