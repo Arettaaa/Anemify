@@ -15,6 +15,7 @@ class ScanState extends Equatable {
     this.eyePhoto,
     this.result,
     this.failure,
+    this.failedPhoto,
   });
 
   final ScanStatus status;
@@ -23,6 +24,7 @@ class ScanState extends Equatable {
   final Uint8List? eyePhoto;
   final ScanResult? result; // terisi saat status == success
   final ScanFailureType? failure; // terisi saat status == failure
+  final ScanPhotoKind? failedPhoto; // foto yang perlu diulang (bila spesifik)
 
   bool get hasPhoto => palmPhoto != null || eyePhoto != null;
   bool get canSubmit => modelReady && hasPhoto && status != ScanStatus.processing;
@@ -39,9 +41,14 @@ class ScanState extends Equatable {
   ScanState withResult(ScanResult r) => ScanState(
       status: ScanStatus.success, modelReady: modelReady, palmPhoto: palmPhoto, eyePhoto: eyePhoto, result: r);
 
-  ScanState withFailure(ScanFailureType f) => ScanState(
-      status: ScanStatus.failure, modelReady: modelReady, palmPhoto: palmPhoto, eyePhoto: eyePhoto, failure: f);
+  ScanState withFailure(ScanFailureType f, {ScanPhotoKind? photo}) => ScanState(
+      status: ScanStatus.failure,
+      modelReady: modelReady,
+      palmPhoto: palmPhoto,
+      eyePhoto: eyePhoto,
+      failure: f,
+      failedPhoto: photo);
 
   @override
-  List<Object?> get props => [status, modelReady, palmPhoto, eyePhoto, result, failure];
+  List<Object?> get props => [status, modelReady, palmPhoto, eyePhoto, result, failure, failedPhoto];
 }

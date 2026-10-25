@@ -1,5 +1,6 @@
 import 'package:equatable/equatable.dart';
 
+import 'quality_metrics.dart';
 import 'risk_category.dart';
 
 /// Catatan tambahan pada hasil skrining (ditampilkan UI sebagai peringatan).
@@ -9,6 +10,9 @@ enum ScanWarning {
 
   /// Hanya foto mata yang dipakai; model mata saja kurang informatif.
   eyeOnly,
+
+  /// Warna foto kusam (cahaya kurang); hasil mungkin kurang akurat.
+  dullColor,
 }
 
 /// Hasil skrining yang diterima lapisan UI.
@@ -19,6 +23,8 @@ class ScanResult extends Equatable {
     this.palmScore,
     this.eyeScore,
     this.warnings = const [],
+    this.palmQuality,
+    this.eyeQuality,
   });
 
   final RiskCategory category;
@@ -28,9 +34,28 @@ class ScanResult extends Equatable {
   final double? palmScore;
   final double? eyeScore;
   final List<ScanWarning> warnings;
+  final QualityMetrics? palmQuality;
+  final QualityMetrics? eyeQuality;
 
   bool get usesFusion => palmScore != null && eyeScore != null;
 
+  /// Salinan dengan peringatan tambahan (tanpa duplikat) dan data kualitas.
+  ScanResult withExtra({
+    List<ScanWarning> warnings = const [],
+    QualityMetrics? palmQuality,
+    QualityMetrics? eyeQuality,
+  }) =>
+      ScanResult(
+        category: category,
+        score: score,
+        palmScore: palmScore,
+        eyeScore: eyeScore,
+        warnings: {...this.warnings, ...warnings}.toList(),
+        palmQuality: palmQuality ?? this.palmQuality,
+        eyeQuality: eyeQuality ?? this.eyeQuality,
+      );
+
   @override
-  List<Object?> get props => [category, score, palmScore, eyeScore, warnings];
+  List<Object?> get props =>
+      [category, score, palmScore, eyeScore, warnings, palmQuality, eyeQuality];
 }

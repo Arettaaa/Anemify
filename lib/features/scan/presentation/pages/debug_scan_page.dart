@@ -4,14 +4,15 @@ import 'package:flutter/foundation.dart' show compute;
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:image/image.dart' as img;
-import 'debug_camera_page.dart';
 
 import '../../../../core/di/injection.dart';
 import '../../data/preprocessing/guide_cropper.dart';
 import '../../data/preprocessing/roi_preprocessor.dart';
+import '../../domain/entities/quality_metrics.dart';
 import '../bloc/scan_bloc.dart';
 import '../bloc/scan_event.dart';
 import '../bloc/scan_state.dart';
+import 'debug_camera_page.dart';
 
 /// Pratinjau area yang dipotong (PNG; di luar sabit transparan). Top-level untuk compute().
 Uint8List? cropPreviewJob(({Uint8List photo, bool isEye}) job) {
@@ -79,6 +80,12 @@ class _DebugScanViewState extends State<_DebugScanView> {
     context.read<ScanBloc>().add(const ScanReset());
   }
 
+  String _q(QualityMetrics q) => 'terang ${q.brightness.toStringAsFixed(1)} | '
+      'saturasi ${q.saturation.toStringAsFixed(3)} | '
+      'tajam ${q.sharpness?.toStringAsFixed(1) ?? '-'} | '
+      'tajam½ ${q.sharpnessHalf?.toStringAsFixed(1) ?? '-'} | '
+      'hue ${q.hue?.toStringAsFixed(1) ?? '-'}°';
+
   @override
   Widget build(BuildContext context) {
     return BlocConsumer<ScanBloc, ScanState>(
@@ -115,9 +122,12 @@ class _DebugScanViewState extends State<_DebugScanView> {
                 if (r.warnings.isNotEmpty)
                   Text('Peringatan: ${r.warnings.map((w) => w.name).join(', ')}'),
                 Text('Waktu analisis: ${_sw.elapsedMilliseconds} ms'),
+                if (r.palmQuality != null) Text('Kualitas palm: ${_q(r.palmQuality!)}'),
+                if (r.eyeQuality != null) Text('Kualitas mata: ${_q(r.eyeQuality!)}'),
               ],
               if (s.status == ScanStatus.failure)
-                Text('Gagal: ${s.failure?.name}', style: const TextStyle(color: Colors.red)),
+                Text('Gagal: ${s.failure?.name} (foto: ${s.failedPhoto?.name ?? '-'})',
+                    style: const TextStyle(color: Colors.red)),
             ],
           ),
         );
