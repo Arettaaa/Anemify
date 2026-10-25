@@ -1,0 +1,21 @@
+{
+  "percentiles": [
+    0.5,
+    99.5
+  ],
+  "source": "ROI dataset Mendeley (seluruh gambar)",
+  "konjungtiva": {
+    "brightness_min": 54.14172277951933,
+    "brightness_max": 215.30269688117534,
+    "saturation_min": 0.10518781611262296,
+    "overexposed_max": 0.5967648757943386,
+    "sharpness_min": 0.7257223426443574
+  },
+  "palm": {
+    "brightness_min": 69.27415196508292,
+    "brightness_max": 219.35094274154977,
+    "saturation_min": 0.04285652592673366,
+    "overexposed_max": 0.5706114477040817,
+    "sharpness_min": 1.01426178808547
+  }
+}

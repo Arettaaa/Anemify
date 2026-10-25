@@ -1,0 +1,187 @@
+{
+  "version": "ood_v1",
+  "model_file": "ood_v1_fp32.tflite",
+  "method": "Mahalanobis (Ledoit-Wolf) pada embedding EfficientNetB0 beku (ImageNet); Lee dkk. 2018",
+  "input": "sama dengan model skrining: RGBA [1,224,224,4] float32, RGB 0..255, alpha 0/255",
+  "output": {
+    "shape": [
+      1,
+      2
+    ],
+    "order": [
+      "palm",
+      "konjungtiva"
+    ],
+    "meaning": "jarak ke distribusi foto dataset (makin besar makin asing)"
+  },
+  "thresholds": {
+    "palm": 81.3967,
+    "konjungtiva": 66.983
+  },
+  "reject_thresholds": {
+    "konjungtiva": null,
+    "note": "null = ketat (sama dengan thresholds). Isi 100.0 untuk dua tingkat: jarak di atas thresholds tapi <= 100 = lolos dengan peringatan."
+  },
+  "rule": "jarak > ambang -> foto bukan telapak/konjungtiva yang dikenali model -> tolak",
+  "id_quantile": 0.99,
+  "fit_on": "clean + aug (semua foto dataset)",
+  "cv_folds": 5,
+  "report": {
+    "palm": {
+      "threshold": 81.3967,
+      "id_reject_rate": 0.0101,
+      "negatives": {
+        "foto konjungtiva (dataset)": {
+          "n": 4262,
+          "rejected": 1.0,
+          "auroc": 1.0,
+          "median_dist": 261.86
+        },
+        "gradasi": {
+          "n": 12,
+          "rejected": 1.0,
+          "auroc": 0.9995,
+          "median_dist": 163.8
+        },
+        "kayu": {
+          "n": 12,
+          "rejected": 1.0,
+          "auroc": 1.0,
+          "median_dist": 274.43
+        },
+        "kotak/garis (keyboard)": {
+          "n": 12,
+          "rejected": 1.0,
+          "auroc": 1.0,
+          "median_dist": 399.34
+        },
+        "kulit polos": {
+          "n": 12,
+          "rejected": 1.0,
+          "auroc": 0.9958,
+          "median_dist": 96.68
+        },
+        "layar teks/kode": {
+          "n": 12,
+          "rejected": 1.0,
+          "auroc": 1.0,
+          "median_dist": 253.33
+        },
+        "motif merah muda": {
+          "n": 12,
+          "rejected": 1.0,
+          "auroc": 1.0,
+          "median_dist": 524.35
+        },
+        "noise": {
+          "n": 12,
+          "rejected": 1.0,
+          "auroc": 1.0,
+          "median_dist": 259.87
+        },
+        "warna polos": {
+          "n": 12,
+          "rejected": 0.9167,
+          "auroc": 0.9982,
+          "median_dist": 150.84
+        }
+      }
+    },
+    "konjungtiva": {
+      "threshold": 66.983,
+      "id_reject_rate": 0.0101,
+      "negatives": {
+        "foto palm (dataset)": {
+          "n": 4260,
+          "rejected": 1.0,
+          "auroc": 1.0,
+          "median_dist": 158.75
+        },
+        "gradasi": {
+          "n": 12,
+          "rejected": 0.8333,
+          "auroc": 0.9894,
+          "median_dist": 76.13
+        },
+        "kayu": {
+          "n": 12,
+          "rejected": 1.0,
+          "auroc": 1.0,
+          "median_dist": 159.42
+        },
+        "kotak/garis (keyboard)": {
+          "n": 12,
+          "rejected": 1.0,
+          "auroc": 1.0,
+          "median_dist": 175.03
+        },
+        "kulit polos": {
+          "n": 12,
+          "rejected": 0.0,
+          "auroc": 0.9559,
+          "median_dist": 56.03
+        },
+        "layar teks/kode": {
+          "n": 12,
+          "rejected": 1.0,
+          "auroc": 1.0,
+          "median_dist": 204.54
+        },
+        "motif merah muda": {
+          "n": 12,
+          "rejected": 1.0,
+          "auroc": 1.0,
+          "median_dist": 150.3
+        },
+        "noise": {
+          "n": 12,
+          "rejected": 1.0,
+          "auroc": 1.0,
+          "median_dist": 154.43
+        },
+        "warna polos": {
+          "n": 12,
+          "rejected": 0.4167,
+          "auroc": 0.9856,
+          "median_dist": 66.24
+        }
+      }
+    }
+  },
+  "test_vectors": [
+    {
+      "file": "konj_1.png",
+      "palm": 188.9776,
+      "konjungtiva": 28.9074
+    },
+    {
+      "file": "konj_2.png",
+      "palm": 242.556,
+      "konjungtiva": 34.7284
+    },
+    {
+      "file": "konj_3.png",
+      "palm": 350.4565,
+      "konjungtiva": 41.7455
+    },
+    {
+      "file": "palm_1.png",
+      "palm": 21.1982,
+      "konjungtiva": 136.1342
+    },
+    {
+      "file": "palm_2.png",
+      "palm": 40.4227,
+      "konjungtiva": 149.9908
+    },
+    {
+      "file": "palm_3.png",
+      "palm": 33.135,
+      "konjungtiva": 184.0409
+    }
+  ],
+  "caveats": [
+    "Ambang dari foto dataset (anak <=5 th, Ghana); foto HP valid bisa lebih jauh dari dataset (beda kamera) -> cek di HP.",
+    "Objek yang sangat mirip (mis. kulit lengan untuk palm, kulit kelopak untuk mata) bisa lolos."
+  ]
+}
