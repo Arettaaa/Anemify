@@ -8,6 +8,7 @@ class QualityMetrics extends Equatable {
     this.sharpness,
     this.sharpnessHalf,
     this.hue,
+    this.oodDistance,
   });
 
   /// Luminansi rata-rata ROI, 0..255.
@@ -19,14 +20,24 @@ class QualityMetrics extends Equatable {
   /// Varians Laplacian di dalam ROI; null bila ROI terlalu kecil untuk diukur.
   final double? sharpness;
 
-  /// Sama dengan [sharpness], tetapi pada luminansi 112x112 (rata-rata blok 2x2)
-  /// sehingga lebih tahan terhadap noise sensor saat cahaya redup.
+  /// Sama dengan [sharpness], pada luminansi 112x112 (rata-rata blok 2x2).
   final double? sharpnessHalf;
 
   /// Hue warna rata-rata ROI dalam derajat (-180..180].
-  /// Merah muda/magenta < 0, merah = 0, oranye/cokelat > 0.
   final double? hue;
 
+  /// Jarak Mahalanobis ke foto dataset (model OOD); makin besar makin asing.
+  final double? oodDistance;
+
+  QualityMetrics withOod(double d) => QualityMetrics(
+        brightness: brightness,
+        saturation: saturation,
+        sharpness: sharpness,
+        sharpnessHalf: sharpnessHalf,
+        hue: hue,
+        oodDistance: d,
+      );
+
   @override
-  List<Object?> get props => [brightness, saturation, sharpness, sharpnessHalf, hue];
+  List<Object?> get props => [brightness, saturation, sharpness, sharpnessHalf, hue, oodDistance];
 }

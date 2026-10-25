@@ -6,6 +6,7 @@ import '../preprocessing/roi_preprocessor.dart';
 class TfliteDataSource {
   Interpreter? _palm;
   Interpreter? _konj;
+  Interpreter? _ood;
 
   Future<void> load({required String palmFile, required String konjFile}) async {
     _palm ??= await Interpreter.fromAsset('assets/models/$palmFile',
@@ -25,9 +26,25 @@ class TfliteDataSource {
     return output[0][0];
   }
 
+  Future<void> loadOod(String file) async {
+    _ood ??= await Interpreter.fromAsset('assets/models/$file',
+        options: InterpreterOptions()..threads = 4);
+  }
+
+  /// Jarak OOD palm, konjungtiva untuk satu tensor RGBA 224x224.
+  ({double palm, double konj}) predictOod(RoiTensor t) {
+    final it = _ood;
+    if (it == null) throw StateError('Model OOD belum dimuat');
+    final out = [List<double>.filled(2, 0)];
+    it.run(t.data.reshape([1, RoiPreprocessor.size, RoiPreprocessor.size, 4]), out);
+    return (palm: out[0][0], konj: out[0][1]);
+  }
+
   void close() {
     _palm?.close();
     _konj?.close();
+    _ood?.close();
+    _ood = null;
     _palm = null;
     _konj = null;
   }

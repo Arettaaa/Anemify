@@ -45,7 +45,7 @@ class ScanBloc extends Bloc<ScanEvent, ScanState> {
       final r = await _classify(palmPhoto: state.palmPhoto, eyePhoto: state.eyePhoto);
       emit(state.withResult(r));
     } on ScanFailure catch (f) {
-      emit(state.withFailure(f.type, photo: f.photo));
+      emit(state.withFailure(f.type, photo: f.photo, metrics: f.metrics));
     } catch (_) {
       emit(state.withFailure(ScanFailureType.unknown));
     }

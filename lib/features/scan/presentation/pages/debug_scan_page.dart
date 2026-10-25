@@ -13,6 +13,7 @@ import '../bloc/scan_bloc.dart';
 import '../bloc/scan_event.dart';
 import '../bloc/scan_state.dart';
 import 'debug_camera_page.dart';
+import 'debug_ood_page.dart';
 
 /// Pratinjau area yang dipotong (PNG; di luar sabit transparan). Top-level untuk compute().
 Uint8List? cropPreviewJob(({Uint8List photo, bool isEye}) job) {
@@ -84,7 +85,8 @@ class _DebugScanViewState extends State<_DebugScanView> {
       'saturasi ${q.saturation.toStringAsFixed(3)} | '
       'tajam ${q.sharpness?.toStringAsFixed(1) ?? '-'} | '
       'tajam½ ${q.sharpnessHalf?.toStringAsFixed(1) ?? '-'} | '
-      'hue ${q.hue?.toStringAsFixed(1) ?? '-'}°';
+      'hue ${q.hue?.toStringAsFixed(1) ?? '-'}° | '
+      'OOD ${q.oodDistance?.toStringAsFixed(1) ?? '-'}';
 
   @override
   Widget build(BuildContext context) {
@@ -96,7 +98,17 @@ class _DebugScanViewState extends State<_DebugScanView> {
       builder: (context, s) {
         final r = s.result;
         return Scaffold(
-          appBar: AppBar(title: const Text('Uji skrining (debug)')),
+          appBar: AppBar(
+            title: const Text('Uji skrining (debug)'),
+            actions: [
+              IconButton(
+                icon: const Icon(Icons.fact_check),
+                tooltip: 'Paritas OOD',
+                onPressed: () => Navigator.of(context)
+                    .push(MaterialPageRoute(builder: (_) => const DebugOodPage())),
+              ),
+            ],
+          ),
           body: ListView(
             padding: const EdgeInsets.all(16),
             children: [
@@ -125,9 +137,11 @@ class _DebugScanViewState extends State<_DebugScanView> {
                 if (r.palmQuality != null) Text('Kualitas palm: ${_q(r.palmQuality!)}'),
                 if (r.eyeQuality != null) Text('Kualitas mata: ${_q(r.eyeQuality!)}'),
               ],
-              if (s.status == ScanStatus.failure)
+              if (s.status == ScanStatus.failure) ...[
                 Text('Gagal: ${s.failure?.name} (foto: ${s.failedPhoto?.name ?? '-'})',
                     style: const TextStyle(color: Colors.red)),
+                if (s.failedMetrics != null) Text('Metrik foto gagal: ${_q(s.failedMetrics!)}'),
+              ],
             ],
           ),
         );

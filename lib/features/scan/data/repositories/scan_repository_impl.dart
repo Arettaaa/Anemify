@@ -9,6 +9,7 @@ import '../../domain/entities/scan_result.dart';
 import '../../domain/repositories/scan_repository.dart';
 import '../datasources/tflite_data_source.dart';
 import '../models/fusion_config.dart';
+import '../models/ood_config.dart';
 import '../models/quality_config.dart';
 import '../models/risk_decider.dart';
 import '../preprocessing/guide_cropper.dart';
@@ -32,6 +33,7 @@ class ScanRepositoryImpl implements ScanRepository {
 
   final TfliteDataSource _models;
   QualityChecker? _quality;
+  OodConfig? _ood;
   RiskDecider? _decider; // diisi paling akhir = tanda semua siap
 
   @override
@@ -41,15 +43,19 @@ class ScanRepositoryImpl implements ScanRepository {
         await rootBundle.loadString('assets/config/fusion_config.json'));
     final qcfg = QualityConfig.fromJsonString(
         await rootBundle.loadString('assets/config/quality_config.json'));
+    final ocfg = OodConfig.fromJsonString(
+        await rootBundle.loadString('assets/config/ood_config.json'));
     await _models.load(palmFile: cfg.palmModelFile, konjFile: cfg.konjModelFile);
+    await _models.loadOod(ocfg.modelFile);
     _quality = QualityChecker(qcfg);
+    _ood = ocfg;
     _decider = RiskDecider(cfg);
   }
 
   @override
   Future<ScanResult> classify({Uint8List? palmPhoto, Uint8List? eyePhoto}) async {
-    final decider = _decider, quality = _quality;
-    if (decider == null || quality == null) {
+    final decider = _decider, quality = _quality, ood = _ood;
+    if (decider == null || quality == null || ood == null) {
       throw const ScanFailure(ScanFailureType.modelNotReady);
     }
     final extra = <ScanWarning>[];
@@ -57,14 +63,12 @@ class ScanRepositoryImpl implements ScanRepository {
     QualityMetrics? pq, eq;
     if (palmPhoto != null) {
       final t = await compute(prepareTensorJob, (photo: palmPhoto, isEye: false));
-      pq = QualityChecker.measure(t);
-      extra.addAll(_verify(quality, pq, ScanPhotoKind.palm));
+      pq = _verify(quality, ood, t, ScanPhotoKind.palm, extra);
       palm = _models.predictPalm(t);
     }
     if (eyePhoto != null) {
       final t = await compute(prepareTensorJob, (photo: eyePhoto, isEye: true));
-      eq = QualityChecker.measure(t);
-      extra.addAll(_verify(quality, eq, ScanPhotoKind.eye));
+      eq = _verify(quality, ood, t, ScanPhotoKind.eye, extra);
       eye = _models.predictKonj(t);
     }
     return decider
@@ -72,16 +76,28 @@ class ScanRepositoryImpl implements ScanRepository {
         .withExtra(warnings: extra, palmQuality: pq, eyeQuality: eq);
   }
 
-  List<ScanWarning> _verify(QualityChecker c, QualityMetrics q, ScanPhotoKind kind) {
-    final v = c.check(q, isEye: kind == ScanPhotoKind.eye);
-    if (v.failure != null) throw ScanFailure(v.failure!, photo: kind);
-    return v.warnings;
+  /// Urutan: kualitas (gelap/terang/blur) -> OOD (bukan telapak/konjungtiva).
+  /// Lolos -> metrik + jarak OOD dikembalikan, peringatan ditambahkan ke [extra].
+  QualityMetrics _verify(
+      QualityChecker c, OodConfig ood, RoiTensor t, ScanPhotoKind kind, List<ScanWarning> extra) {
+    final isEye = kind == ScanPhotoKind.eye;
+    var q = QualityChecker.measure(t);
+    final v = c.check(q, isEye: isEye);
+    if (v.failure != null) throw ScanFailure(v.failure!, photo: kind, metrics: q);
+    final d = _models.predictOod(t);
+    q = q.withOod(isEye ? d.konj : d.palm);
+    if (!ood.isTarget(q.oodDistance!, isEye: isEye)) {
+      throw ScanFailure(ScanFailureType.notTarget, photo: kind, metrics: q);
+    }
+    extra.addAll(v.warnings);
+    return q;
   }
 
   @override
   void dispose() {
     _models.close();
     _quality = null;
+    _ood = null;
     _decider = null;
   }
 }
