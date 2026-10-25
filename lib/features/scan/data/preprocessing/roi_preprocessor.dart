@@ -181,4 +181,18 @@ class RoiPreprocessor {
     final r = (v + 0.5).floor();
     return r < 0 ? 0 : (r > 255 ? 255 : r);
   }
+
+  /// Salinan tensor RGBA 224x224 yang dicerminkan kiri-kanan.
+  static Float32List mirrored(Float32List d) {
+    final out = Float32List(d.length);
+    for (var y = 0; y < size; y++) {
+      for (var x = 0; x < size; x++) {
+        final src = (y * size + x) * 4, dst = (y * size + (size - 1 - x)) * 4;
+        for (var c = 0; c < 4; c++) {
+          out[dst + c] = d[src + c];
+        }
+      }
+    }
+    return out;
+  }
 }

@@ -9,6 +9,7 @@ class QualityMetrics extends Equatable {
     this.sharpnessHalf,
     this.hue,
     this.oodDistance,
+    this.oodDistanceFlipped,
   });
 
   /// Luminansi rata-rata ROI, 0..255.
@@ -29,15 +30,20 @@ class QualityMetrics extends Equatable {
   /// Jarak Mahalanobis ke foto dataset (model OOD); makin besar makin asing.
   final double? oodDistance;
 
-  QualityMetrics withOod(double d) => QualityMetrics(
+  /// Jarak OOD dari foto yang dicerminkan (percobaan mata kiri/kanan).
+  final double? oodDistanceFlipped;
+
+  QualityMetrics withOod(double d, {double? flipped}) => QualityMetrics(
         brightness: brightness,
         saturation: saturation,
         sharpness: sharpness,
         sharpnessHalf: sharpnessHalf,
         hue: hue,
         oodDistance: d,
+        oodDistanceFlipped: flipped,
       );
 
   @override
-  List<Object?> get props => [brightness, saturation, sharpness, sharpnessHalf, hue, oodDistance];
+  List<Object?> get props =>
+      [brightness, saturation, sharpness, sharpnessHalf, hue, oodDistance, oodDistanceFlipped];
 }

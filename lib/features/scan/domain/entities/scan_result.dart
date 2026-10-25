@@ -13,6 +13,9 @@ enum ScanWarning {
 
   /// Warna foto kusam (cahaya kurang); hasil mungkin kurang akurat.
   dullColor,
+
+  /// Foto kurang mirip data latih (zona abu-abu OOD); hasil kurang pasti.
+  atypicalPhoto,
 }
 
 /// Hasil skrining yang diterima lapisan UI.

@@ -86,7 +86,8 @@ class _DebugScanViewState extends State<_DebugScanView> {
       'tajam ${q.sharpness?.toStringAsFixed(1) ?? '-'} | '
       'tajam½ ${q.sharpnessHalf?.toStringAsFixed(1) ?? '-'} | '
       'hue ${q.hue?.toStringAsFixed(1) ?? '-'}° | '
-      'OOD ${q.oodDistance?.toStringAsFixed(1) ?? '-'}';
+      'OOD ${q.oodDistance?.toStringAsFixed(1) ?? '-'} | '
+      'OOD cermin ${q.oodDistanceFlipped?.toStringAsFixed(1) ?? '-'}';
 
   @override
   Widget build(BuildContext context) {

@@ -18,6 +18,10 @@
     "palm": 81.3967,
     "konjungtiva": 66.983
   },
+  "reject_thresholds": {
+    "konjungtiva": null,
+    "note": "null = ketat (sama dengan thresholds). Isi 100.0 untuk dua tingkat: jarak di atas thresholds tapi <= 100 = lolos dengan peringatan."
+  },
   "rule": "jarak > ambang -> foto bukan telapak/konjungtiva yang dikenali model -> tolak",
   "id_quantile": 0.99,
   "fit_on": "clean + aug (semua foto dataset)",

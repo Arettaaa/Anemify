@@ -86,8 +86,13 @@ class ScanRepositoryImpl implements ScanRepository {
     if (v.failure != null) throw ScanFailure(v.failure!, photo: kind, metrics: q);
     final d = _models.predictOod(t);
     q = q.withOod(isEye ? d.konj : d.palm);
-    if (!ood.isTarget(q.oodDistance!, isEye: isEye)) {
-      throw ScanFailure(ScanFailureType.notTarget, photo: kind, metrics: q);
+    switch (ood.level(q.oodDistance!, isEye: isEye)) {
+      case OodLevel.foreign:
+        throw ScanFailure(ScanFailureType.notTarget, photo: kind, metrics: q);
+      case OodLevel.unusual:
+        extra.add(ScanWarning.atypicalPhoto);
+      case OodLevel.ok:
+        break;
     }
     extra.addAll(v.warnings);
     return q;

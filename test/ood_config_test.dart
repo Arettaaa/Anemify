@@ -20,4 +20,16 @@ void main() {
       expect(cfg.isTarget(isEye ? v.palm : v.konj, isEye: !isEye), isFalse, reason: v.file);
     }
   });
+
+  test('tingkat OOD konsisten dengan ambang (berlaku untuk mode ketat maupun dua tingkat)', () {
+    expect(cfg.palmReject, cfg.palmMax);
+    for (final eye in [true, false]) {
+      final soft = cfg.maxFor(isEye: eye);
+      final hard = eye ? cfg.konjReject : cfg.palmReject;
+      expect(hard, greaterThanOrEqualTo(soft));
+      expect(cfg.level(soft - 1, isEye: eye), OodLevel.ok);
+      expect(cfg.level(hard + 1, isEye: eye), OodLevel.foreign);
+      if (hard > soft) expect(cfg.level((soft + hard) / 2, isEye: eye), OodLevel.unusual);
+    }
+  });
 }
