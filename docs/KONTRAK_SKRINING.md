@@ -166,6 +166,37 @@ BlocBuilder<ScanBloc, ScanState>(
 - **Cek kualitas foto:** jenis kegagalan baru di `ScanFailureType` (mis. terlalu gelap, terlalu terang, blur, warna tidak wajar) beserta saran pesannya.
 - **Riwayat skrining:** entity dan cara menyimpan/membaca riwayat untuk halaman Riwayat.
 
+## 10a. Riwayat skrining
+
+Lokasi: `lib/features/history`. Disimpan lokal (SQLite), tanpa login. Yang disimpan: waktu, kategori, skor gabungan, skor palm, skor mata, peringatan. **Foto tidak disimpan.**
+
+Semua lewat `sl` (`core/di/injection.dart`):
+
+| Aksi | Kode |
+|---|---|
+| Simpan hasil | `await sl<SaveScanToHistory>()(result);` |
+| Semua riwayat (terbaru dulu) | `await sl<GetScanHistory>()();` → `List<HistoryEntry>` |
+| Satu riwayat | `await sl<GetHistoryEntry>()(id);` → `HistoryEntry?` |
+| Hapus satu | `await sl<DeleteHistoryEntry>()(id);` |
+| Hapus semua | `await sl<ClearHistory>()();` |
+
+`HistoryEntry`: `id`, `createdAt`, `category`, `score`, `palmScore`, `eyeScore`, `usesFusion`, `warnings`.
+
+**Menyimpan otomatis** (taruh di halaman hasil/kamera, jangan ubah `ScanBloc`):
+
+```dart
+BlocListener<ScanBloc, ScanState>(
+  listenWhen: (p, c) => p.status != ScanStatus.success && c.status == ScanStatus.success,
+  listener: (context, state) {
+    final r = state.result;
+    if (r != null) sl<SaveScanToHistory>()(r);
+  },
+  child: ...,
+)
+```
+
+`listenWhen` memastikan hasil hanya tersimpan sekali per skrining.
+
 ## 11. Koordinasi Git
 
 - Kerja langsung di `main`: `git pull` sebelum mulai dan sebelum `push`.
