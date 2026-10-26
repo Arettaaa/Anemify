@@ -13,4 +13,7 @@ class AppColors {
   static const white = Color(0xFFFFFFFF);
   static const successSoft = Color(0xFFC9FBD0);
   static const success = Color(0xFF1B7F3B);
+  static const pinkTint = Color(0xFFFFEBEC);
+  static const Color warningSoft = Color(0xFFFFF3C4);
+  static const Color warning = Color(0xFF8A4B00);
 }

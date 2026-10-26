@@ -6,6 +6,7 @@ import '../../../onboarding/presentation/pages/welcome_page.dart';
 import '../../../onboarding/presentation/widgets/onboarding_consent_box.dart';
 import '../../../onboarding/presentation/widgets/onboarding_header.dart';
 import '../../../onboarding/presentation/widgets/onboarding_primary_button.dart';
+import '../../data/profile_storage.dart';
 
 class ProfileSetupPage extends StatefulWidget {
   const ProfileSetupPage({super.key});
@@ -33,10 +34,15 @@ class _ProfileSetupPageState extends State<ProfileSetupPage> {
 
   Future<void> _save() async {
     final name = _nameCtrl.text.trim();
+    await ProfileStorage.add(
+      Profile.create(
+        name: name,
+        age: int.parse(_ageCtrl.text.trim()),
+        category: _category,
+      ),
+      setActive: true,
+    );
     final prefs = await SharedPreferences.getInstance();
-    await prefs.setString('profile_name', name);
-    await prefs.setInt('profile_age', int.parse(_ageCtrl.text.trim()));
-    await prefs.setString('profile_category', _category);
     await prefs.setBool('onboarding_seen', true);
     if (!mounted) return;
 

@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:lottie/lottie.dart';
 
 import '../onboarding/presentation/pages/onboarding_page.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import '../shell/presentation/pages/main_shell.dart';
 
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
@@ -50,13 +52,20 @@ class _SplashScreenState extends State<SplashScreen>
     }
   }
 
-  void _goToOnboarding() {
+  Future<void> _goToOnboarding() async {
     if (_navigated || !mounted) return;
     _navigated = true;
+
+    final prefs = await SharedPreferences.getInstance();
+    final seen = prefs.getBool('onboarding_seen') ?? false;
+    if (!mounted) return;
+
+    final Widget next = seen ? const MainShell() : const OnboardingPage();
+
     Navigator.of(context).pushReplacement(
       PageRouteBuilder(
         transitionDuration: const Duration(milliseconds: 900),
-        pageBuilder: (_, __, ___) => const OnboardingPage(),
+        pageBuilder: (_, __, ___) => next,
         transitionsBuilder: (_, animation, __, child) {
           final curved = CurvedAnimation(
             parent: animation,
@@ -66,10 +75,7 @@ class _SplashScreenState extends State<SplashScreen>
             opacity: curved,
             child: SlideTransition(
               position: Tween<Offset>(
-                begin: const Offset(
-                  0.25,
-                  0,
-                ), // masuk dari kanan, jaraknya pendek
+                begin: const Offset(0.25, 0),
                 end: Offset.zero,
               ).animate(curved),
               child: child,

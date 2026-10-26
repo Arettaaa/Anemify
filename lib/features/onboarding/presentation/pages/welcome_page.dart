@@ -3,6 +3,7 @@ import 'package:google_fonts/google_fonts.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../widgets/onboarding_header.dart';
 import '../widgets/onboarding_primary_button.dart';
+import '../../../shell/presentation/pages/main_shell.dart';
 
 class WelcomePage extends StatelessWidget {
   final String name;
@@ -10,9 +11,8 @@ class WelcomePage extends StatelessWidget {
   const WelcomePage({super.key, required this.name});
 
   void _goHome(BuildContext context) {
-    // TODO: ganti Placeholder() dengan HomePage()
     Navigator.of(context).pushAndRemoveUntil(
-      MaterialPageRoute(builder: (_) => const Placeholder()),
+      MaterialPageRoute(builder: (_) => const MainShell()),
       (route) => false,
     );
   }
