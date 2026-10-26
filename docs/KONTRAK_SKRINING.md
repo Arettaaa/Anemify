@@ -170,7 +170,18 @@ Import: `import '../../domain/entities/scan_failure.dart';` (berisi `ScanFailure
 
 ## 7. Halaman kamera (WAJIB diikuti)
 
-Area yang dianalisis dipotong **persis** sesuai bentuk panduan. Agar yang dilihat pengguna sama dengan yang dipotong:
+Area yang dianalisis dipotong **persis** sesuai bentuk panduan.
+
+**Cara paling aman: pakai `GuidedCameraPage`** (`presentation/pages/guided_camera_page.dart`). Halaman ini sudah memenuhi semua aturan di bawah
+(preview utuh + `GuideOverlay`, flash mati, fokus ke tengah panduan, kamera depan/belakang, foto utuh) dan sudah diuji di HP.
+
+```dart
+final bytes = await Navigator.of(context).push<Uint8List>(
+  MaterialPageRoute(builder: (_) => const GuidedCameraPage(isEye: true)));
+if (bytes != null) context.read<ScanBloc>().add(EyePhotoCaptured(bytes));
+```
+
+Tampilannya boleh diberi gaya (warna, tombol, teks petunjuk lewat parameter `instruction`). Kalau membuat halaman kamera sendiri, aturan berikut wajib diikuti:
 
 1. **Overlay:** pakai `GuideOverlay(isEye: true/false)` dari `presentation/widgets/guide_overlay.dart`.
    Warna/ketebalan garis boleh diubah; **geometri tidak boleh** (geometri ada di `GuideGeometry`).
@@ -187,6 +198,8 @@ Area yang dianalisis dipotong **persis** sesuai bentuk panduan. Agar yang diliha
    Dari uji coba, kesalahan paling sering adalah tepi kelopak dan bulu mata ikut masuk sabit → foto ditolak `notTarget`.
 
 Contoh lengkap yang sudah teruji: `presentation/pages/debug_camera_page.dart`.
+
+Foto dari galeri **tidak didukung**: posisi konjungtiva/telapak pada foto galeri tidak diketahui, sehingga hasil potongannya salah.
 
 ## 8. Jangan
 

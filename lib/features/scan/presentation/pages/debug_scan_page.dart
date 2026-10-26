@@ -12,7 +12,7 @@ import '../../domain/entities/quality_metrics.dart';
 import '../bloc/scan_bloc.dart';
 import '../bloc/scan_event.dart';
 import '../bloc/scan_state.dart';
-import 'debug_camera_page.dart';
+import 'guided_camera_page.dart';
 import 'debug_ood_page.dart';
 
 /// Pratinjau area yang dipotong (PNG; di luar sabit transparan). Top-level untuk compute().
@@ -51,7 +51,7 @@ class _DebugScanViewState extends State<_DebugScanView> {
   Future<void> _take(bool isEye) async {
     final bloc = context.read<ScanBloc>();
     final bytes = await Navigator.of(context).push<Uint8List>(
-      MaterialPageRoute(builder: (_) => DebugCameraPage(isEye: isEye)),
+      MaterialPageRoute(builder: (_) => GuidedCameraPage(isEye: isEye)),
     );
     if (bytes == null) return;
     bloc.add(isEye ? EyePhotoCaptured(bytes) : PalmPhotoCaptured(bytes));
