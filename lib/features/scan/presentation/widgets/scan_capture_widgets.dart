@@ -1,49 +1,9 @@
-import 'dart:io';
+import 'dart:typed_data';
 
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import 'package:image_picker/image_picker.dart';
 
 import '../../../../core/theme/app_colors.dart';
 import 'scan_widgets.dart';
-
-/// Sheet pilih kamera/galeri lalu ambil foto. Mengembalikan null kalau batal.
-Future<XFile?> pickScanPhoto(BuildContext context) async {
-  final source = await showModalBottomSheet<ImageSource>(
-    context: context,
-    backgroundColor: AppColors.white,
-    shape: const RoundedRectangleBorder(
-      borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
-    ),
-    builder: (sheetContext) => SafeArea(
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          const SizedBox(height: 8),
-          ListTile(
-            leading: const Icon(Icons.photo_camera_outlined),
-            title: Text(
-              'Ambil foto',
-              style: scanStyle(size: 15, weight: FontWeight.w600),
-            ),
-            onTap: () => Navigator.pop(sheetContext, ImageSource.camera),
-          ),
-          ListTile(
-            leading: const Icon(Icons.photo_library_outlined),
-            title: Text(
-              'Pilih dari galeri',
-              style: scanStyle(size: 15, weight: FontWeight.w600),
-            ),
-            onTap: () => Navigator.pop(sheetContext, ImageSource.gallery),
-          ),
-          const SizedBox(height: 8),
-        ],
-      ),
-    ),
-  );
-  if (source == null) return null;
-  return ImagePicker().pickImage(source: source, imageQuality: 90);
-}
 
 /// Dua bar progres; [step] = jumlah bar yang merah (1 atau 2).
 class ScanStepBars extends StatelessWidget {
@@ -72,9 +32,10 @@ class ScanStepBars extends StatelessWidget {
   }
 }
 
-/// Kotak gelap berisi foto (kalau ada) + garis panduan + caption.
+/// Kotak gelap: ilustrasi panduan, atau pratinjau foto kalau sudah diambil.
+/// Area yang dianalisis mengikuti frame di halaman kamera, bukan ilustrasi ini.
 class ScanFrameBox extends StatelessWidget {
-  final XFile? photo;
+  final Uint8List? photo;
   final CustomPainter painter;
   final String caption;
   const ScanFrameBox({
@@ -102,16 +63,17 @@ class ScanFrameBox extends StatelessWidget {
             fit: StackFit.expand,
             children: [
               if (photo != null)
-                kIsWeb
-                    ? Image.network(photo!.path, fit: BoxFit.cover)
-                    : Image.file(File(photo!.path), fit: BoxFit.cover),
-              CustomPaint(painter: painter),
-              const Positioned(
+                Image.memory(photo!, fit: BoxFit.cover)
+              else
+                CustomPaint(painter: painter),
+              Positioned(
                 top: 16,
                 left: 4,
                 child: _Pill(
-                  icon: Icons.verified_user_outlined,
-                  text: 'Panduan posisi foto',
+                  icon: photo != null
+                      ? Icons.check_circle_outline
+                      : Icons.verified_user_outlined,
+                  text: photo != null ? 'Foto sudah diambil' : 'Panduan posisi foto',
                 ),
               ),
               Positioned(
@@ -154,10 +116,7 @@ class _Pill extends StatelessWidget {
               text,
               textAlign: TextAlign.center,
               style: scanStyle(
-                size: 11.5,
-                weight: FontWeight.w500,
-                color: AppColors.white,
-              ),
+                  size: 11.5, weight: FontWeight.w500, color: AppColors.white),
             ),
           ),
         ],
@@ -189,10 +148,7 @@ class ScanGuideCard extends StatelessWidget {
           Text(
             body,
             style: scanStyle(
-              size: 14,
-              height: 1.6,
-              color: AppColors.textSecondary,
-            ),
+                size: 14, height: 1.6, color: AppColors.textSecondary),
           ),
         ],
       ),
@@ -207,9 +163,8 @@ class ScanCaptureFootnote extends StatelessWidget {
   Widget build(BuildContext context) {
     return Center(
       child: Text(
-        'Frame dan garis adalah panduan posisi, bukan segmentasi '
-        'otomatis. Foto dummy hanya ditampilkan di riwayat.\n'
-        'Analisis TFLite belum tersedia.',
+        'Frame di kamera menunjukkan area yang dianalisis.\n'
+        'Foto diproses di perangkat dan tidak disimpan.',
         textAlign: TextAlign.center,
         style: scanStyle(
           size: 11,

@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:lucide_icons_flutter/lucide_icons.dart'; 
+import 'package:lucide_icons_flutter/lucide_icons.dart';
 import '../../../../core/theme/app_colors.dart';
 
 class AppBottomNav extends StatelessWidget {
@@ -72,7 +72,8 @@ class AppBottomNav extends StatelessWidget {
                       ),
                     ],
                   ),
-                  child: const Icon(Icons.crop_free_rounded, color: AppColors.white, size: 26),
+                  child: const Icon(Icons.crop_free_rounded,
+                      color: AppColors.white, size: 26),
                 ),
               ),
             ),
@@ -109,6 +110,7 @@ class AppBottomNav extends StatelessWidget {
   }
 
   Widget _scanLabel() {
+    final active = currentIndex == 2;
     return Expanded(
       child: GestureDetector(
         behavior: HitTestBehavior.opaque,
@@ -120,8 +122,8 @@ class AppBottomNav extends StatelessWidget {
               'Scan',
               style: GoogleFonts.dmSans(
                 fontSize: 10.5,
-                fontWeight: FontWeight.w500,
-                color: AppColors.textSecondary,
+                fontWeight: active ? FontWeight.w700 : FontWeight.w500,
+                color: active ? AppColors.primary : AppColors.textSecondary,
               ),
             ),
             const SizedBox(height: 14),

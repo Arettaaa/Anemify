@@ -51,7 +51,8 @@ class ScanPageScaffold extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    if (showBack) ScanHeader(showBack: showBack),
+                    // logo selalu tampil, tombol back opsional
+                    ScanHeader(showBack: showBack),
                     const SizedBox(height: 24),
                     ...children,
                   ],
@@ -174,6 +175,7 @@ class ScanPrimaryButton extends StatelessWidget {
           elevation: 0,
           backgroundColor: AppColors.primary,
           disabledBackgroundColor: AppColors.primary.withOpacity(0.4),
+          disabledForegroundColor: AppColors.white,
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(16),
           ),

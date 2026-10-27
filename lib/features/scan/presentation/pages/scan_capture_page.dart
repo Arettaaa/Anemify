@@ -1,9 +1,15 @@
-import 'package:flutter/material.dart';
-import 'package:image_picker/image_picker.dart';
+import 'dart:typed_data';
 
+import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+
+import '../bloc/scan_bloc.dart';
+import '../bloc/scan_event.dart';
 import '../widgets/scan_capture_widgets.dart';
 import '../widgets/scan_guide_painters.dart';
 import '../widgets/scan_widgets.dart';
+import 'guided_camera_page.dart';
+import 'scan_flow.dart';
 import 'scan_palm_page.dart';
 
 class ScanCapturePage extends StatefulWidget {
@@ -14,15 +20,18 @@ class ScanCapturePage extends StatefulWidget {
 }
 
 class _ScanCapturePageState extends State<ScanCapturePage> {
-  XFile? _photo;
+  Uint8List? _photo;
 
-  Future<void> _pick() async {
-    final x = await pickScanPhoto(context);
-    if (x == null || !mounted) return;
-    setState(() => _photo = x);
-    Navigator.of(context).push(
-      MaterialPageRoute(builder: (_) => ScanPalmPage(eyePhoto: x)),
+  Future<void> _capture() async {
+    // rootNavigator: kamera full screen di atas bottom nav
+    final bytes =
+        await Navigator.of(context, rootNavigator: true).push<Uint8List>(
+      MaterialPageRoute(builder: (_) => const GuidedCameraPage(isEye: true)),
     );
+    if (bytes == null || !mounted) return;
+    context.read<ScanBloc>().add(EyePhotoCaptured(bytes));
+    setState(() => _photo = bytes);
+    pushScanPage(context, const ScanPalmPage());
   }
 
   @override
@@ -44,16 +53,17 @@ class _ScanCapturePageState extends State<ScanCapturePage> {
         const SizedBox(height: 16),
         const ScanGuideCard(
           title: 'Panduan foto mata',
-          body: 'Dengan tangan bersih, tarik kelopak bawah perlahan. '
-              'Jangan sentuh bola mata. Posisikan konjungtiva pada '
-              'bulan sabit. Minta bantuan bila perlu.',
+          body: 'Pegang HP ±15–20 cm. Dengan tangan bersih, tarik kelopak bawah '
+              'perlahan sampai bagian dalam yang kemerahan terlihat. Isi sabit '
+              'dengan bagian itu saja, bulu mata di luar sabit. Cahaya terang, '
+              'tanpa flash. Minta bantuan bila perlu.',
         ),
         const SizedBox(height: 16),
         ScanPrimaryButton(
-          label: 'Ambil atau pilih foto',
+          label: _photo == null ? 'Ambil foto' : 'Ambil ulang foto',
           icon: Icons.photo_camera_rounded,
           iconAfter: false,
-          onPressed: _pick,
+          onPressed: _capture,
         ),
         const SizedBox(height: 14),
         const ScanCaptureFootnote(),

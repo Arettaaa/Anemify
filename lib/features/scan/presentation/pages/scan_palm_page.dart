@@ -1,34 +1,57 @@
-import 'package:flutter/material.dart';
-import 'package:image_picker/image_picker.dart';
+import 'dart:typed_data';
 
+import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+
+import '../../domain/entities/scan_failure.dart';
+import '../bloc/scan_bloc.dart';
+import '../bloc/scan_event.dart';
+import '../bloc/scan_state.dart';
 import '../widgets/scan_capture_widgets.dart';
 import '../widgets/scan_guide_painters.dart';
+import '../widgets/scan_messages.dart';
 import '../widgets/scan_widgets.dart';
+import 'guided_camera_page.dart';
+import 'scan_flow.dart';
 import 'scan_loading_page.dart';
 
 class ScanPalmPage extends StatefulWidget {
-  final XFile eyePhoto;
-  const ScanPalmPage({super.key, required this.eyePhoto});
+  const ScanPalmPage({super.key});
 
   @override
   State<ScanPalmPage> createState() => _ScanPalmPageState();
 }
 
 class _ScanPalmPageState extends State<ScanPalmPage> {
-  XFile? _photo;
+  Uint8List? _photo;
 
-  Future<void> _pick() async {
-    final x = await pickScanPhoto(context);
-    if (x == null || !mounted) return;
-    setState(() => _photo = x);
-    Navigator.of(context).push(
-      MaterialPageRoute(
-        builder: (_) => ScanLoadingPage(
-          eyePhoto: widget.eyePhoto,
-          palmPhoto: x,
+  Future<void> _capture() async {
+    final bytes =
+        await Navigator.of(context, rootNavigator: true).push<Uint8List>(
+      MaterialPageRoute(builder: (_) => const GuidedCameraPage(isEye: false)),
+    );
+    if (bytes == null || !mounted) return;
+    context.read<ScanBloc>().add(PalmPhotoCaptured(bytes));
+    setState(() => _photo = bytes);
+    _analyze();
+  }
+
+  Future<void> _analyze() async {
+    final failed =
+        await pushScanPage<ScanState>(context, const ScanLoadingPage());
+    if (failed == null || failed.failure == null || !mounted) return;
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(
+          pesanGagal(failed.failure!, failed.failedPhoto),
+          style: scanStyle(size: 13, color: Colors.white),
         ),
       ),
     );
+    if (failed.failedPhoto == ScanPhotoKind.eye) {
+      Navigator.of(context).pop(); // ulangi foto mata saja
+    }
   }
 
   @override
@@ -45,21 +68,20 @@ class _ScanPalmPageState extends State<ScanPalmPage> {
         ScanFrameBox(
           photo: _photo,
           painter: const HandPainter(),
-          caption: 'Sejajarkan telapak dan pastikan garis tangan terlihat',
+          caption: 'Posisikan bagian tengah telapak di dalam kotak',
         ),
         const SizedBox(height: 16),
         const ScanGuideCard(
           title: 'Panduan foto tangan',
-          body: 'Buka telapak dengan santai. Pastikan seluruh telapak '
-              'dan garis-garisnya tampak tajam, tanpa bayangan atau '
-              'filter kamera.',
+          body: 'Buka telapak dengan santai dan posisikan bagian tengahnya '
+              'memenuhi kotak. Pastikan tajam, tanpa bayangan atau filter kamera.',
         ),
         const SizedBox(height: 16),
         ScanPrimaryButton(
-          label: 'Ambil atau pilih foto',
+          label: _photo == null ? 'Ambil foto' : 'Ambil ulang foto',
           icon: Icons.photo_camera_rounded,
           iconAfter: false,
-          onPressed: _pick,
+          onPressed: _capture,
         ),
         const SizedBox(height: 14),
         const ScanCaptureFootnote(),
