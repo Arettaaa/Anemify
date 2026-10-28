@@ -1,9 +1,17 @@
 import 'package:flutter/material.dart';
-import '../widgets/education_header.dart';
-import '../widgets/education_tab_bar.dart';
-import '../widgets/education_hero_card.dart';
+import 'package:google_fonts/google_fonts.dart';
+
+import '../../data/education_data.dart';
+import '../../data/models/article_model.dart';
+import '../../data/models/food_model.dart';
+import '../utils/show_article_detail.dart';
 import '../widgets/article_list_item.dart';
 import '../widgets/bottom_info_card.dart';
+import '../widgets/education_header.dart';
+import '../widgets/education_hero_card.dart';
+import '../widgets/education_tab_bar.dart';
+import '../widgets/food_card_item.dart';
+import '../widgets/food_detail_sheet.dart';
 
 class EducationPage extends StatefulWidget {
   const EducationPage({super.key});
@@ -14,6 +22,8 @@ class EducationPage extends StatefulWidget {
 
 class _EducationPageState extends State<EducationPage> {
   int _selectedTabIndex = 0;
+  String _foodSearchQuery = '';
+  String _selectedFoodCategory = 'Semua';
 
   final List<String> _tabs = [
     'Seputar Anemia',
@@ -23,26 +33,50 @@ class _EducationPageState extends State<EducationPage> {
     'Mitos vs Fakta',
   ];
 
+  final List<String> _symptomChips = [
+    'Pucat',
+    'Lemas',
+    'Pusing',
+    'Sesak',
+    'Jantung berdebar',
+  ];
+
+  final List<String> _foodCategories = ['Semua', 'Sayuran', 'Hewani', 'Nabati'];
+
+  List<FoodModel> get _filteredFoods {
+    return EducationData.foodCatalog.where((food) {
+      final matchesCategory =
+          _selectedFoodCategory == 'Semua' ||
+          food.category == _selectedFoodCategory;
+      final matchesSearch =
+          food.name.toLowerCase().contains(_foodSearchQuery.toLowerCase()) ||
+          food.subtitle.toLowerCase().contains(_foodSearchQuery.toLowerCase());
+      return matchesCategory && matchesSearch;
+    }).toList();
+  }
+
   @override
   Widget build(BuildContext context) {
+    final List<ArticleModel> currentArticles = _selectedTabIndex == 1
+        ? EducationData.gejalaArticles
+        : EducationData.seputarAnemiaArticles;
+
     return Scaffold(
       backgroundColor: Colors.white,
-      // Tanpa AppBar agar jarak status bar & logo seragam dengan HomePage
       body: SafeArea(
         bottom: false,
         child: SingleChildScrollView(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // 1. Header Baru (Dengan DM Sans & Logo Sejajar)
+              // Header
               const Padding(
                 padding: EdgeInsets.fromLTRB(20, 16, 20, 0),
                 child: EducationHeader(),
               ),
-
               const SizedBox(height: 24),
 
-              // 2. Tab Bar
+              // Tab Bar
               EducationTabBar(
                 tabs: _tabs,
                 selectedIndex: _selectedTabIndex,
@@ -52,60 +86,237 @@ class _EducationPageState extends State<EducationPage> {
                   });
                 },
               ),
-
               const SizedBox(height: 24),
 
-              // 3. Konten Utama
+              // Konten Utama
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 20.0),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const EducationHeroCard(),
-                    const SizedBox(height: 32),
+                    // Dynamic Hero Card
+                    EducationHeroCard(
+                      title: _selectedTabIndex == 2
+                          ? 'Nutrisi baik, dekat denganmu.'
+                          : _selectedTabIndex == 1
+                          ? 'Dengarkan tanda dari tubuhmu.'
+                          : 'Pahami tubuh, jaga energimu.',
+                      subtitle: _selectedTabIndex == 2
+                          ? 'Sumber zat besi lokal dan perkiraan kandungan gizi untuk melengkapi piringmu.'
+                          : _selectedTabIndex == 1
+                          ? 'Kenali keluhan yang perlu diperhatikan, tanpa menyimpulkan diagnosis sendiri.'
+                          : 'Mulai dari pengertian, penyebab, jenis, hingga siapa yang lebih berisiko.',
+                      icon: _selectedTabIndex == 2
+                          ? Icons.eco_outlined
+                          : _selectedTabIndex == 1
+                          ? Icons.favorite_border_rounded
+                          : Icons.menu_book_rounded,
+                    ),
 
-                    const Text(
-                      'Baca, pahami, lalu terapkan',
-                      style: TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.black87,
+                    // TAB 2: KATALOG MAKANAN
+                    if (_selectedTabIndex == 2) ...[
+                      const SizedBox(height: 20),
+
+                      // Input Search
+                      Container(
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFF4F5F7),
+                          borderRadius: BorderRadius.circular(16),
+                        ),
+                        child: TextField(
+                          onChanged: (val) {
+                            setState(() {
+                              _foodSearchQuery = val;
+                            });
+                          },
+                          decoration: InputDecoration(
+                            hintText: 'Cari makanan bergizi...',
+                            hintStyle: GoogleFonts.dmSans(
+                              fontSize: 14,
+                              color: Colors.grey.shade500,
+                            ),
+                            prefixIcon: const Icon(
+                              Icons.search_rounded,
+                              color: Colors.grey,
+                            ),
+                            border: InputBorder.none,
+                            contentPadding: const EdgeInsets.symmetric(
+                              vertical: 14,
+                            ),
+                          ),
+                        ),
                       ),
-                    ),
-                    const SizedBox(height: 16),
+                      const SizedBox(height: 16),
 
-                    ArticleListItem(
-                      number: '01',
-                      title: 'Apa itu anemia?',
-                      description:
-                          'Bukan sekadar kurang darah. Kenali peran hemoglobin dan mengapa pemeriksaan tetap penting.',
-                      readTime: '3 menit baca',
-                      onTap: () {},
-                    ),
-                    ArticleListItem(
-                      number: '02',
-                      title: 'Apa penyebab anemia?',
-                      description:
-                          'Kekurangan zat besi sering terjadi, tetapi anemia memiliki lebih dari satu penyebab.',
-                      readTime: '4 menit baca',
-                      onTap: () {},
-                    ),
-                    ArticleListItem(
-                      number: '03',
-                      title: 'Jenis-jenis anemia',
-                      description:
-                          'Penyebab yang berbeda memerlukan pemeriksaan dan penanganan yang berbeda pula.',
-                      readTime: '4 menit baca',
-                      onTap: () {},
-                    ),
-                    ArticleListItem(
-                      number: '04',
-                      title: 'Siapa yang lebih berisiko?',
-                      description:
-                          'Kebutuhan tubuh dan kondisi kesehatan dapat meningkatkan risiko anemia.',
-                      readTime: '3 menit baca',
-                      onTap: () {},
-                    ),
+                      // Filter Category Chips
+                      SingleChildScrollView(
+                        scrollDirection: Axis.horizontal,
+                        child: Row(
+                          children: _foodCategories.map((cat) {
+                            final isSelected = _selectedFoodCategory == cat;
+                            return Padding(
+                              padding: const EdgeInsets.only(right: 8.0),
+                              child: GestureDetector(
+                                onTap: () {
+                                  setState(() {
+                                    _selectedFoodCategory = cat;
+                                  });
+                                },
+                                child: Container(
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 16,
+                                    vertical: 8,
+                                  ),
+                                  decoration: BoxDecoration(
+                                    color: isSelected
+                                        ? const Color(0xFF2B2D42)
+                                        : const Color(0xFFF4F5F7),
+                                    borderRadius: BorderRadius.circular(20),
+                                  ),
+                                  child: Text(
+                                    cat,
+                                    style: GoogleFonts.dmSans(
+                                      fontSize: 13,
+                                      fontWeight: FontWeight.w600,
+                                      color: isSelected
+                                          ? Colors.white
+                                          : const Color(0xFF2B2D42),
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            );
+                          }).toList(),
+                        ),
+                      ),
+                      const SizedBox(height: 24),
+
+                      Text(
+                        '${_filteredFoods.length} pilihan makanan lokal',
+                        style: GoogleFonts.dmSans(
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                          color: const Color(0xFF2B2D42),
+                        ),
+                      ),
+                      const SizedBox(height: 16),
+
+                      // Grid Makanan 2 Kolom
+                      GridView.builder(
+                        shrinkWrap: true,
+                        physics: const NeverScrollableScrollPhysics(),
+                        itemCount: _filteredFoods.length,
+                        gridDelegate:
+                            const SliverGridDelegateWithFixedCrossAxisCount(
+                              crossAxisCount: 2,
+                              childAspectRatio:
+                                  0.72, // Rasio diubah dari 0.82 ke 0.72 biar wadah kartu lebih tinggi
+                              crossAxisSpacing: 12,
+                              mainAxisSpacing: 12,
+                            ),
+                        itemBuilder: (context, index) {
+                          final food = _filteredFoods[index];
+                          return FoodCardItem(
+                            food: food,
+                            onTap: () => showFoodDetailModal(context, food),
+                          );
+                        },
+                      ),
+                      const SizedBox(height: 16),
+
+                      Text(
+                        'Perkiraan per 100 g bahan mentah. Nilai dapat berubah menurut varietas dan pengolahan. Rujukan: USDA FoodData Central. Foto: Unsplash; kredit fotografer tersedia pada detail makanan.',
+                        style: GoogleFonts.dmSans(
+                          fontSize: 11,
+                          height: 1.4,
+                          color: Colors.grey.shade500,
+                        ),
+                      ),
+                    ],
+
+                    // TAB 1 & GEJALA
+                    if (_selectedTabIndex != 2) ...[
+                      if (_selectedTabIndex == 1) ...[
+                        const SizedBox(height: 20),
+                        Wrap(
+                          spacing: 8,
+                          runSpacing: 10,
+                          children: _symptomChips.map((chip) {
+                            return Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 14,
+                                vertical: 8,
+                              ),
+                              decoration: BoxDecoration(
+                                color: const Color(0xFFFFF0F2),
+                                borderRadius: BorderRadius.circular(20),
+                              ),
+                              child: Text(
+                                chip,
+                                style: GoogleFonts.dmSans(
+                                  fontSize: 13,
+                                  fontWeight: FontWeight.w600,
+                                  color: const Color(0xFFE63946),
+                                ),
+                              ),
+                            );
+                          }).toList(),
+                        ),
+                        const SizedBox(height: 20),
+                        Container(
+                          padding: const EdgeInsets.all(16),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFFFFF0F2),
+                            borderRadius: BorderRadius.circular(16),
+                            border: Border.all(
+                              color: const Color(0xFFFFD6DC),
+                              width: 1,
+                            ),
+                          ),
+                          child: Row(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              const Icon(
+                                Icons.info_outline_rounded,
+                                color: Color(0xFFE63946),
+                                size: 20,
+                              ),
+                              const SizedBox(width: 12),
+                              Expanded(
+                                child: Text(
+                                  'Nyeri dada, sesak berat, pingsan, atau perdarahan aktif? Cari pertolongan segera. Jangan menunggu hasil scan.',
+                                  style: GoogleFonts.dmSans(
+                                    fontSize: 13,
+                                    height: 1.45,
+                                    fontWeight: FontWeight.w500,
+                                    color: const Color(0xFF9E2A2B),
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                      const SizedBox(height: 32),
+                      Text(
+                        'Baca, pahami, lalu terapkan',
+                        style: GoogleFonts.dmSans(
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                          color: const Color(0xFF2B2D42),
+                        ),
+                      ),
+                      const SizedBox(height: 16),
+                      ...currentArticles.map((article) {
+                        return ArticleListItem(
+                          number: article.number,
+                          title: article.title,
+                          description: article.subtitle,
+                          readTime: article.readTime,
+                          onTap: () => showArticleDetailModal(context, article),
+                        );
+                      }),
+                    ],
 
                     const SizedBox(height: 16),
                     const BottomInfoCard(),
@@ -114,13 +325,13 @@ class _EducationPageState extends State<EducationPage> {
                     Center(
                       child: Text(
                         'Edukasi umum, bukan pengganti konsultasi medis.',
-                        style: TextStyle(
+                        style: GoogleFonts.dmSans(
                           fontSize: 11,
                           color: Colors.grey.shade500,
                         ),
                       ),
                     ),
-                    const SizedBox(height: 130), // Spacing navigasi bawah
+                    const SizedBox(height: 130),
                   ],
                 ),
               ),

@@ -1,13 +1,23 @@
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 
 class EducationHeroCard extends StatelessWidget {
-  const EducationHeroCard({super.key});
+  final String title;
+  final String subtitle;
+  final IconData icon;
+
+  const EducationHeroCard({
+    super.key,
+    required this.title,
+    required this.subtitle,
+    required this.icon,
+  });
 
   @override
   Widget build(BuildContext context) {
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.all(24),
+      padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
         color: const Color(0xFF2B2D42),
         borderRadius: BorderRadius.circular(20),
@@ -20,40 +30,41 @@ class EducationHeroCard extends StatelessWidget {
               Container(
                 padding: const EdgeInsets.all(8),
                 decoration: BoxDecoration(
-                  color: Colors.white.withOpacity(0.1),
-                  borderRadius: BorderRadius.circular(10),
+                  color: Colors.white.withOpacity(0.12),
+                  shape: BoxShape.circle,
                 ),
-                child: const Icon(
-                  Icons.menu_book,
-                  color: Colors.white70,
-                  size: 20,
-                ),
+                child: Icon(icon, color: Colors.white, size: 20),
               ),
               const SizedBox(width: 12),
-              const Text(
+              Text(
                 'EDUKASI ANEMIFY',
-                style: TextStyle(
-                  color: Colors.white54,
-                  fontSize: 12,
-                  fontWeight: FontWeight.bold,
+                style: GoogleFonts.dmSans(
+                  fontSize: 11,
+                  fontWeight: FontWeight.w700,
+                  color: Colors.white.withOpacity(0.7),
+                  letterSpacing: 1.1,
                 ),
               ),
             ],
           ),
           const SizedBox(height: 16),
-          const Text(
-            'Pahami tubuh, jaga\nenergimu.',
-            style: TextStyle(
-              color: Colors.white,
-              fontSize: 22,
+          Text(
+            title,
+            style: GoogleFonts.dmSans(
+              fontSize: 20,
               fontWeight: FontWeight.bold,
-              height: 1.2,
+              color: Colors.white,
+              height: 1.25,
             ),
           ),
-          const SizedBox(height: 12),
-          const Text(
-            'Mulai dari pengertian, penyebab, jenis, hingga\nsiapa yang lebih berisiko.',
-            style: TextStyle(color: Colors.white70, fontSize: 13, height: 1.5),
+          const SizedBox(height: 8),
+          Text(
+            subtitle,
+            style: GoogleFonts.dmSans(
+              fontSize: 13,
+              color: Colors.white.withOpacity(0.8),
+              height: 1.4,
+            ),
           ),
         ],
       ),
