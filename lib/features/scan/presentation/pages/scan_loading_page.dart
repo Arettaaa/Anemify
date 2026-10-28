@@ -1,3 +1,6 @@
+import 'dart:async';
+import 'dart:math' as math;
+
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
@@ -22,21 +25,44 @@ class ScanLoadingPage extends StatefulWidget {
 }
 
 class _ScanLoadingPageState extends State<ScanLoadingPage>
-    with SingleTickerProviderStateMixin {
-  late final AnimationController _pulse = AnimationController(
+    with TickerProviderStateMixin {
+  static const _steps = [
+    'Memeriksa kualitas foto…',
+    'Menganalisis foto…',
+    'Menyiapkan hasil…',
+  ];
+
+  late final AnimationController _spin = AnimationController(
     vsync: this,
-    duration: const Duration(milliseconds: 900),
+    duration: const Duration(milliseconds: 1400),
+  )..repeat();
+
+  late final AnimationController _scan = AnimationController(
+    vsync: this,
+    duration: const Duration(milliseconds: 1100),
   )..repeat(reverse: true);
+
+  int _step = 0;
+  Timer? _timer;
 
   @override
   void initState() {
     super.initState();
     context.read<ScanBloc>().add(const ScanSubmitted());
+    _timer = Timer.periodic(const Duration(milliseconds: 1500), (t) {
+      if (!mounted || _step >= _steps.length - 1) {
+        t.cancel();
+        return;
+      }
+      setState(() => _step++);
+    });
   }
 
   @override
   void dispose() {
-    _pulse.dispose();
+    _timer?.cancel();
+    _spin.dispose();
+    _scan.dispose();
     super.dispose();
   }
 
@@ -47,7 +73,8 @@ class _ScanLoadingPageState extends State<ScanLoadingPage>
       listenWhen: (a, b) => a.status != b.status,
       listener: (context, s) {
         if (s.status == ScanStatus.success && s.result != null) {
-          sl<SaveScanToHistory>()(s.result!).then((_) => notifyHistoryChanged());
+          sl<SaveScanToHistory>()(s.result!)
+              .then((_) => notifyHistoryChanged()); // kontrak bagian 10
           pushScanPage(context, ScanResultPage(result: s.result!),
               replace: true);
         } else if (s.status == ScanStatus.failure) {
@@ -73,30 +100,30 @@ class _ScanLoadingPageState extends State<ScanLoadingPage>
                           child: Column(
                             mainAxisSize: MainAxisSize.min,
                             children: [
-                              ScaleTransition(
-                                scale: Tween(begin: 0.94, end: 1.06).animate(
-                                  CurvedAnimation(
-                                      parent: _pulse, curve: Curves.easeInOut),
-                                ),
-                                child: Container(
-                                  width: 96,
-                                  height: 96,
-                                  decoration: const BoxDecoration(
-                                    color: AppColors.pinkTint,
-                                    shape: BoxShape.circle,
-                                  ),
-                                  child: const Icon(Icons.crop_free_rounded,
-                                      size: 36, color: AppColors.primary),
-                                ),
-                              ),
+                              _ScanLoader(spin: _spin, scan: _scan),
                               const SizedBox(height: 32),
-                              Text(
-                                'Menganalisis foto…',
-                                textAlign: TextAlign.center,
-                                style: scanStyle(
-                                    size: 19,
-                                    weight: FontWeight.w700,
-                                    letterSpacing: -0.3),
+                              AnimatedSwitcher(
+                                duration: const Duration(milliseconds: 320),
+                                transitionBuilder: (child, a) =>
+                                    FadeTransition(
+                                  opacity: a,
+                                  child: SlideTransition(
+                                    position: Tween(
+                                      begin: const Offset(0, 0.3),
+                                      end: Offset.zero,
+                                    ).animate(a),
+                                    child: child,
+                                  ),
+                                ),
+                                child: Text(
+                                  _steps[_step],
+                                  key: ValueKey(_step),
+                                  textAlign: TextAlign.center,
+                                  style: scanStyle(
+                                      size: 19,
+                                      weight: FontWeight.w700,
+                                      letterSpacing: -0.3),
+                                ),
                               ),
                               const SizedBox(height: 12),
                               Text(
@@ -122,4 +149,113 @@ class _ScanLoadingPageState extends State<ScanLoadingPage>
       ),
     );
   }
+}
+
+class _ScanLoader extends StatelessWidget {
+  final Animation<double> spin;
+  final Animation<double> scan;
+  const _ScanLoader({required this.spin, required this.scan});
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      width: 132,
+      height: 132,
+      child: Stack(
+        alignment: Alignment.center,
+        children: [
+          RotationTransition(
+            turns: spin,
+            child: CustomPaint(
+              size: const Size.square(132),
+              painter: _RingPainter(),
+            ),
+          ),
+          Container(
+            width: 100,
+            height: 100,
+            decoration: const BoxDecoration(
+              color: AppColors.pinkTint,
+              shape: BoxShape.circle,
+            ),
+          ),
+          SizedBox(
+            width: 48,
+            height: 48,
+            child: Stack(
+              children: [
+                const Positioned.fill(
+                  child: Icon(Icons.crop_free_rounded,
+                      size: 48, color: AppColors.primary),
+                ),
+                AnimatedBuilder(
+                  animation: scan,
+                  builder: (_, __) {
+                    final t = Curves.easeInOut.transform(scan.value);
+                    return Positioned(
+                      left: 12,
+                      right: 12,
+                      top: 12 + 22 * t,
+                      child: Container(
+                        height: 2.5,
+                        decoration: BoxDecoration(
+                          color: AppColors.primary,
+                          borderRadius: BorderRadius.circular(2),
+                          boxShadow: [
+                            BoxShadow(
+                              color: AppColors.primary.withOpacity(0.45),
+                              blurRadius: 8,
+                            ),
+                          ],
+                        ),
+                      ),
+                    );
+                  },
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// Cincin tipis + busur merah berekor (diputar oleh RotationTransition).
+class _RingPainter extends CustomPainter {
+  @override
+  void paint(Canvas canvas, Size size) {
+    final center = size.center(Offset.zero);
+    final r = size.width / 2 - 4;
+    final rect = Rect.fromCircle(center: center, radius: r);
+
+    canvas.drawCircle(
+      center,
+      r,
+      Paint()
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = 5
+        ..color = AppColors.pinkTint,
+    );
+
+    const sweep = math.pi * 1.35;
+    canvas.drawArc(
+      rect,
+      0,
+      sweep,
+      false,
+      Paint()
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = 5
+        ..strokeCap = StrokeCap.round
+        ..shader = SweepGradient(
+          startAngle: 0,
+          endAngle: sweep,
+          colors: [AppColors.primary.withOpacity(0), AppColors.primary],
+        ).createShader(rect),
+    );
+  }
+
+  @override
+  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
 }
