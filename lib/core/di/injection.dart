@@ -44,7 +44,7 @@ void setupInjection() {
 
   // Riwayat skrining
   sl.registerLazySingleton(() => HistoryLocalDataSource());
-  sl.registerLazySingleton<HistoryRepository>(() => HistoryRepositoryImpl(sl()));
+  sl.registerLazySingleton<HistoryRepository>(() => HistoryRepositoryImpl(sl(), sl()));  
   sl.registerFactory(() => SaveScanToHistory(sl()));
   sl.registerFactory(() => GetScanHistory(sl()));
   sl.registerFactory(() => GetHistoryEntry(sl()));

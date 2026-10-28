@@ -5,6 +5,7 @@ import '../../../../core/di/injection.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/widgets/app_logo.dart';
 import '../../../history/domain/usecases/history_usecases.dart';
+import '../../../history/presentation/history_revision.dart';
 import '../bloc/scan_bloc.dart';
 import '../bloc/scan_event.dart';
 import '../bloc/scan_state.dart';
@@ -46,7 +47,7 @@ class _ScanLoadingPageState extends State<ScanLoadingPage>
       listenWhen: (a, b) => a.status != b.status,
       listener: (context, s) {
         if (s.status == ScanStatus.success && s.result != null) {
-          sl<SaveScanToHistory>()(s.result!); // kontrak bagian 10
+          sl<SaveScanToHistory>()(s.result!).then((_) => notifyHistoryChanged());
           pushScanPage(context, ScanResultPage(result: s.result!),
               replace: true);
         } else if (s.status == ScanStatus.failure) {

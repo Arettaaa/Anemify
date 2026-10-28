@@ -4,8 +4,12 @@ import '../../../../core/di/injection.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/utils/date_format.dart';
 import '../../../../core/widgets/app_logo.dart';
+import '../../../profile/domain/usecases/profile_usecases.dart';
+import '../../../profile/presentation/widgets/profile_switcher.dart';
 import '../../../scan/domain/entities/risk_category.dart';
 import '../../../scan/presentation/widgets/scan_widgets.dart';
+import '../../../ttd/presentation/ttd_revision.dart';
+import '../../../ttd/presentation/widgets/ttd_tab.dart';
 import '../../domain/entities/history_entry.dart';
 import '../../domain/usecases/history_usecases.dart';
 import '../history_revision.dart';
@@ -24,6 +28,7 @@ class HistoryPage extends StatefulWidget {
 class _HistoryPageState extends State<HistoryPage> {
   List<HistoryEntry> _all = [];
   bool _loading = true;
+  String _name = 'Profil';
   int _tab = 0; // 0 hasil scan, 1 konsumsi TTD
   bool _monthly = true;
   DateTime _anchor = DateTime.now();
@@ -33,12 +38,15 @@ class _HistoryPageState extends State<HistoryPage> {
   void initState() {
     super.initState();
     historyRevision.addListener(_load);
+    ttdRevision.addListener(_loadName);
     _load();
+    _loadName();
   }
 
   @override
   void dispose() {
     historyRevision.removeListener(_load);
+    ttdRevision.removeListener(_loadName);
     super.dispose();
   }
 
@@ -49,6 +57,20 @@ class _HistoryPageState extends State<HistoryPage> {
       _all = all;
       _loading = false;
     });
+  }
+
+  Future<void> _loadName() async {
+    final p = await sl<GetActiveProfile>()();
+    if (!mounted) return;
+    setState(() => _name = p?.name ?? 'Profil');
+  }
+
+  Future<void> _switchProfile() async {
+    final changed = await openProfileSwitcher(context);
+    if (changed) {
+      notifyTtdChanged(); // reload nama + data TTD
+      _load();
+    }
   }
 
   DateTime get _start {
@@ -96,12 +118,40 @@ class _HistoryPageState extends State<HistoryPage> {
                 title: 'Perjalanan sehatmu',
                 subtitle: TextSpan(text: 'Pantau setiap langkah sehatmu.'),
               ),
-              const SizedBox(height: 20),
+              const SizedBox(height: 18),
+              Center(child: _profileChip()),
+              const SizedBox(height: 16),
               _tabs(),
               const SizedBox(height: 24),
-              if (_tab == 0) ..._scanSection() else _ttdPlaceholder(),
+              if (_tab == 0) ..._scanSection() else const TtdTab(),
             ],
           ),
+        ),
+      ),
+    );
+  }
+
+  Widget _profileChip() {
+    return GestureDetector(
+      onTap: _switchProfile,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+        decoration: BoxDecoration(
+          color: AppColors.white,
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(color: AppColors.inactive),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Icon(Icons.people_outline_rounded,
+                size: 16, color: AppColors.textPrimary),
+            const SizedBox(width: 8),
+            Text(_name, style: scanStyle(size: 13, weight: FontWeight.w700)),
+            const SizedBox(width: 4),
+            const Icon(Icons.keyboard_arrow_down_rounded,
+                size: 18, color: AppColors.textPrimary),
+          ],
         ),
       ),
     );
@@ -135,7 +185,8 @@ class _HistoryPageState extends State<HistoryPage> {
               children: [
                 Icon(icon,
                     size: 17,
-                    color: active ? AppColors.primary : AppColors.textSecondary),
+                    color:
+                        active ? AppColors.primary : AppColors.textSecondary),
                 const SizedBox(width: 8),
                 Text(label,
                     style: scanStyle(
@@ -219,7 +270,8 @@ class _HistoryPageState extends State<HistoryPage> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text('Kategori risiko skrining, bukan kadar Hb',
+            Text(
+                '${_monthly ? 'Bulan' : 'Minggu'} terpilih · Kategori risiko skrining, bukan kadar Hb',
                 style: scanStyle(size: 11.5, color: AppColors.textSecondary)),
             const SizedBox(height: 12),
             RiskTrendChart(
@@ -371,19 +423,6 @@ class _HistoryPageState extends State<HistoryPage> {
           ),
         ],
       ),
-    );
-  }
-
-  // ---------- TTD (tahap berikutnya) ----------
-  Widget _ttdPlaceholder() {
-    return Container(
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        color: AppColors.surface,
-        borderRadius: BorderRadius.circular(20),
-      ),
-      child: Text('Pencatatan konsumsi TTD sedang disiapkan.',
-          style: scanStyle(size: 13.5, color: AppColors.textSecondary)),
     );
   }
 }

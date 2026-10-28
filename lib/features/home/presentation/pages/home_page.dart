@@ -12,6 +12,11 @@ import '../../../profile/domain/usecases/profile_usecases.dart';
 import '../../../profile/presentation/widgets/profile_switcher.dart';
 import '../../../scan/presentation/widgets/risk_badge.dart';
 import '../../../scan/presentation/widgets/scan_messages.dart';
+import '../../../ttd/domain/entities/ttd_settings.dart';
+import '../../../ttd/domain/usecases/ttd_usecases.dart';
+import '../../../ttd/presentation/pages/ttd_reminder_page.dart';
+import '../../../ttd/presentation/ttd_revision.dart';
+  import '../../../history/domain/usecases/history_usecases.dart';
 import '../widgets/food_card.dart';
 import '../widgets/habit_card.dart';
 import '../widgets/home_header.dart';
@@ -39,18 +44,23 @@ class _HomePageState extends State<HomePage> {
   String _name = '';
   HistoryEntry? _last;
   bool _lastLoaded = false;
+  TtdSettings? _ttd;
+  bool _takenToday = false;
 
   @override
   void initState() {
     super.initState();
     historyRevision.addListener(_loadLast);
+    ttdRevision.addListener(_loadTtd);
     _loadName();
     _loadLast();
+    _loadTtd();
   }
 
   @override
   void dispose() {
     historyRevision.removeListener(_loadLast);
+    ttdRevision.removeListener(_loadTtd);
     super.dispose();
   }
 
@@ -69,9 +79,32 @@ class _HomePageState extends State<HomePage> {
     });
   }
 
+  Future<void> _loadTtd() async {
+    final s = await sl<GetTtdSettings>()();
+    final logs = await sl<GetTtdLogs>()();
+    if (!mounted) return;
+    setState(() {
+      _ttd = s;
+      _takenToday = logs.containsKey(dateKey(DateTime.now()));
+    });
+  }
+
   Future<void> _openSwitcher() async {
     final changed = await openProfileSwitcher(context);
-    if (changed) _loadName();
+    if (changed) {
+      _loadName();
+      notifyHistoryChanged();
+      notifyTtdChanged();
+    }
+  }
+
+  void _openTtdSettings() => Navigator.of(context).push(
+        MaterialPageRoute(builder: (_) => const TtdReminderPage()),
+      );
+
+  Future<void> _toggleToday() async {
+    await sl<SetTtdTaken>()(DateTime.now(), !_takenToday);
+    notifyTtdChanged();
   }
 
   Widget _lastScreening() {
@@ -93,6 +126,37 @@ class _HomePageState extends State<HomePage> {
       subtitle: '${formatTglPendek(e.createdAt)} · ${sumberFoto(e)}',
       trailing: RiskBadge(category: e.category),
       onTap: () => showHistoryDetail(context, e),
+    );
+  }
+
+  Widget _ttdCard() {
+    final s = _ttd;
+    if (s == null) return const SizedBox(height: 72);
+
+    if (!s.enabled) {
+      return HabitCard(
+        title: 'Atur pengingat TTD',
+        note: 'Ketuk untuk mengatur jadwal minum TTD',
+        onTap: _openTtdSettings,
+      );
+    }
+
+    if (!s.isScheduled(DateTime.now())) {
+      return HabitCard(
+        title: 'Tidak ada jadwal TTD hari ini',
+        time: s.timeLabel,
+        note: s.frequencyLabel,
+        onTap: _openTtdSettings,
+      );
+    }
+
+    return HabitCard(
+      title: _takenToday ? 'TTD hari ini sudah diminum' : 'Minum TTD hari ini',
+      time: s.timeLabel,
+      note: 'Sesuai anjuran tenaga kesehatan',
+      done: _takenToday,
+      onToggle: _toggleToday,
+      onTap: _openTtdSettings,
     );
   }
 
@@ -120,14 +184,10 @@ class _HomePageState extends State<HomePage> {
             SectionHeader(
               title: 'Kebiasaan kecil, manfaat besar',
               actionLabel: 'Atur',
-              onAction: () {}, // TODO: halaman Pengingat sehat (fitur TTD)
+              onAction: _openTtdSettings,
             ),
             const SizedBox(height: 14),
-            const HabitCard(
-              title: 'Contoh catatan TTD hari ini',
-              time: '19:00',
-              note: 'Sesuai anjuran tenaga kesehatan',
-            ),
+            _ttdCard(),
             const SizedBox(height: 28),
             SectionHeader(
               title: 'Isi piring, tambah energi',
