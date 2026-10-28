@@ -6,9 +6,12 @@ import '../../../../core/utils/date_format.dart';
 import '../../../scan/presentation/widgets/scan_widgets.dart';
 import '../../domain/entities/ttd_settings.dart';
 import '../../domain/usecases/ttd_usecases.dart';
+import '../../../profile/presentation/profile_revision.dart';
 import '../pages/ttd_reminder_page.dart';
 import '../ttd_revision.dart';
 import 'ttd_calendar.dart';
+
+const _kLogPreview = 10;
 
 class TtdTab extends StatefulWidget {
   const TtdTab({super.key});
@@ -21,17 +24,19 @@ class _TtdTabState extends State<TtdTab> {
   TtdSettings? _settings;
   Map<String, DateTime> _logs = {};
   DateTime _month = DateTime(DateTime.now().year, DateTime.now().month);
-
+  
   @override
   void initState() {
     super.initState();
     ttdRevision.addListener(_load);
+    profileRevision.addListener(_load);
     _load();
   }
 
   @override
   void dispose() {
     ttdRevision.removeListener(_load);
+    profileRevision.removeListener(_load);
     super.dispose();
   }
 
@@ -45,9 +50,9 @@ class _TtdTabState extends State<TtdTab> {
     });
   }
 
-  void _openSettings() => Navigator.of(context).push(
-        MaterialPageRoute(builder: (_) => const TtdReminderPage()),
-      );
+  void _openSettings() => Navigator.of(
+    context,
+  ).push(MaterialPageRoute(builder: (_) => const TtdReminderPage()));
 
   Future<void> _toggle(DateTime d) async {
     await sl<SetTtdTaken>()(d, !_logs.containsKey(dateKey(d)));
@@ -56,9 +61,27 @@ class _TtdTabState extends State<TtdTab> {
 
   bool get _canNext {
     final now = DateTime.now();
-    return DateTime(_month.year, _month.month + 1)
-        .isBefore(DateTime(now.year, now.month + 1));
+    return DateTime(
+      _month.year,
+      _month.month + 1,
+    ).isBefore(DateTime(now.year, now.month + 1));
   }
+
+  bool get _canPrev {
+    var first = _settings?.startDate ?? DateTime.now();
+    for (final d in _logs.values) {
+      if (d.isBefore(first)) first = d;
+    }
+    return DateTime(_month.year, _month.month)
+        .isAfter(DateTime(first.year, first.month));
+  }
+
+  bool _showAllLogs = false;
+
+  void _setMonth(DateTime m) => setState(() {
+    _month = m;
+    _showAllLogs = false;
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -66,16 +89,15 @@ class _TtdTabState extends State<TtdTab> {
     if (s == null) {
       return const Padding(
         padding: EdgeInsets.only(top: 40),
-        child:
-            Center(child: CircularProgressIndicator(color: AppColors.primary)),
+        child: Center(
+          child: CircularProgressIndicator(color: AppColors.primary),
+        ),
       );
     }
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        if (!s.enabled) _notSetCard() else ..._content(s),
-      ],
+      children: [if (!s.enabled) _notSetCard() else ..._content(s)],
     );
   }
 
@@ -88,23 +110,28 @@ class _TtdTabState extends State<TtdTab> {
       ),
       child: Column(
         children: [
-          const Icon(Icons.medication_outlined,
-              size: 32, color: AppColors.primary),
+          const Icon(
+            Icons.medication_outlined,
+            size: 32,
+            color: AppColors.primary,
+          ),
           const SizedBox(height: 10),
-          Text('Jadwal TTD belum diatur',
-              style: scanStyle(size: 15, weight: FontWeight.w700)),
+          Text(
+            'Jadwal TTD belum diatur',
+            style: scanStyle(size: 15, weight: FontWeight.w700),
+          ),
           const SizedBox(height: 6),
           Text(
             'Atur frekuensi sesuai anjuran tenaga kesehatan untuk mulai mencatat konsumsi.',
             textAlign: TextAlign.center,
             style: scanStyle(
-                size: 12.5, height: 1.6, color: AppColors.textSecondary),
+              size: 12.5,
+              height: 1.6,
+              color: AppColors.textSecondary,
+            ),
           ),
           const SizedBox(height: 14),
-          ScanPrimaryButton(
-            label: 'Atur jadwal',
-            onPressed: _openSettings,
-          ),
+          ScanPrimaryButton(label: 'Atur jadwal', onPressed: _openSettings),
         ],
       ),
     );
@@ -113,11 +140,14 @@ class _TtdTabState extends State<TtdTab> {
   List<Widget> _content(TtdSettings s) {
     final stats = sl<CalculateTtdStats>()(s, _logs, _month);
     final unit = s.frequency == TtdFrequency.harian ? 'hari' : 'kali';
-    final monthLogs = _logs.entries
-        .where((e) =>
-            e.value.year == _month.year && e.value.month == _month.month)
-        .toList()
-      ..sort((a, b) => b.value.compareTo(a.value));
+    final monthLogs =
+        _logs.entries
+            .where(
+              (e) =>
+                  e.value.year == _month.year && e.value.month == _month.month,
+            )
+            .toList()
+          ..sort((a, b) => b.value.compareTo(a.value));
 
     return [
       IntrinsicHeight(
@@ -134,34 +164,44 @@ class _TtdTabState extends State<TtdTab> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text('Langkah yang konsisten',
-                        style: scanStyle(
-                            size: 11,
-                            color: AppColors.white.withOpacity(0.7))),
+                    Text(
+                      'Langkah yang konsisten',
+                      style: scanStyle(
+                        size: 11,
+                        color: AppColors.white.withOpacity(0.7),
+                      ),
+                    ),
                     const SizedBox(height: 10),
                     Row(
                       crossAxisAlignment: CrossAxisAlignment.end,
                       children: [
-                        Text('${stats.streak}',
-                            style: scanStyle(
-                                size: 30,
-                                weight: FontWeight.w700,
-                                color: AppColors.white)),
+                        Text(
+                          '${stats.streak}',
+                          style: scanStyle(
+                            size: 30,
+                            weight: FontWeight.w700,
+                            color: AppColors.white,
+                          ),
+                        ),
                         const SizedBox(width: 6),
                         Padding(
                           padding: const EdgeInsets.only(bottom: 5),
-                          child: Text(unit,
-                              style:
-                                  scanStyle(size: 13, color: AppColors.white)),
+                          child: Text(
+                            unit,
+                            style: scanStyle(size: 13, color: AppColors.white),
+                          ),
                         ),
                       ],
                     ),
                     const SizedBox(height: 8),
-                    Text('berturut-turut hingga hari ini / kemarin',
-                        style: scanStyle(
-                            size: 10.5,
-                            height: 1.4,
-                            color: AppColors.white.withOpacity(0.7))),
+                    Text(
+                      'berturut-turut hingga hari ini / kemarin',
+                      style: scanStyle(
+                        size: 10.5,
+                        height: 1.4,
+                        color: AppColors.white.withOpacity(0.7),
+                      ),
+                    ),
                   ],
                 ),
               ),
@@ -177,36 +217,48 @@ class _TtdTabState extends State<TtdTab> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text('Kepatuhan bulan terpilih',
-                        style: scanStyle(
-                            size: 11, color: AppColors.textSecondary)),
+                    Text(
+                      'Kepatuhan bulan terpilih',
+                      style: scanStyle(
+                        size: 11,
+                        color: AppColors.textSecondary,
+                      ),
+                    ),
                     const SizedBox(height: 10),
                     Row(
                       crossAxisAlignment: CrossAxisAlignment.end,
                       children: [
-                        Text(stats.percent?.toString() ?? '–',
-                            style: scanStyle(
-                                size: 30,
-                                weight: FontWeight.w700,
-                                color: AppColors.primary)),
+                        Text(
+                          stats.percent?.toString() ?? '–',
+                          style: scanStyle(
+                            size: 30,
+                            weight: FontWeight.w700,
+                            color: AppColors.primary,
+                          ),
+                        ),
                         const SizedBox(width: 4),
                         Padding(
                           padding: const EdgeInsets.only(bottom: 5),
-                          child: Text('%',
-                              style: scanStyle(
-                                  size: 14,
-                                  weight: FontWeight.w700,
-                                  color: AppColors.primary)),
+                          child: Text(
+                            '%',
+                            style: scanStyle(
+                              size: 14,
+                              weight: FontWeight.w700,
+                              color: AppColors.primary,
+                            ),
+                          ),
                         ),
                       ],
                     ),
                     const SizedBox(height: 8),
                     Text(
-                        '${stats.taken} dari ${stats.scheduled} $unit terjadwal',
-                        style: scanStyle(
-                            size: 10.5,
-                            height: 1.4,
-                            color: AppColors.textSecondary)),
+                      '${stats.taken} dari ${stats.scheduled} $unit terjadwal',
+                      style: scanStyle(
+                        size: 10.5,
+                        height: 1.4,
+                        color: AppColors.textSecondary,
+                      ),
+                    ),
                   ],
                 ),
               ),
@@ -227,20 +279,23 @@ class _TtdTabState extends State<TtdTab> {
           children: [
             Row(
               children: [
-                _circleBtn(Icons.arrow_back_rounded, () {
-                  setState(() =>
-                      _month = DateTime(_month.year, _month.month - 1));
-                }),
+                _circleBtn(
+                  Icons.arrow_back_rounded,
+                  _canPrev
+                      ? () => _setMonth(DateTime(_month.year, _month.month - 1))
+                      : null,
+                ),
                 Expanded(
-                  child: Text(formatBulanTahun(_month),
-                      textAlign: TextAlign.center,
-                      style: scanStyle(size: 15, weight: FontWeight.w700)),
+                  child: Text(
+                    formatBulanTahun(_month),
+                    textAlign: TextAlign.center,
+                    style: scanStyle(size: 15, weight: FontWeight.w700),
+                  ),
                 ),
                 _circleBtn(
                   Icons.arrow_forward_rounded,
                   _canNext
-                      ? () => setState(() =>
-                          _month = DateTime(_month.year, _month.month + 1))
+                      ? () => _setMonth(DateTime(_month.year, _month.month + 1))
                       : null,
                 ),
               ],
@@ -249,19 +304,27 @@ class _TtdTabState extends State<TtdTab> {
             Row(
               children: [
                 Expanded(
-                  child: Text('Checklist konsumsi',
-                      style: scanStyle(size: 13, weight: FontWeight.w700)),
+                  child: Text(
+                    'Checklist konsumsi',
+                    style: scanStyle(size: 13, weight: FontWeight.w700),
+                  ),
                 ),
                 Container(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 10,
+                    vertical: 4,
+                  ),
                   decoration: BoxDecoration(
                     color: AppColors.surface,
                     borderRadius: BorderRadius.circular(12),
                   ),
-                  child: Text(s.frequencyLabel,
-                      style: scanStyle(
-                          size: 10.5, color: AppColors.textSecondary)),
+                  child: Text(
+                    s.frequencyLabel,
+                    style: scanStyle(
+                      size: 10.5,
+                      color: AppColors.textSecondary,
+                    ),
+                  ),
                 ),
               ],
             ),
@@ -280,7 +343,10 @@ class _TtdTabState extends State<TtdTab> {
                 _legend(AppColors.primary, null, 'Sudah diminum'),
                 _legend(AppColors.surface, null, 'Terjadwal'),
                 _legend(
-                    Colors.transparent, AppColors.inactive, 'Di luar jadwal'),
+                  Colors.transparent,
+                  AppColors.inactive,
+                  'Di luar jadwal',
+                ),
               ],
             ),
           ],
@@ -296,8 +362,11 @@ class _TtdTabState extends State<TtdTab> {
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Icon(Icons.info_outline_rounded,
-                size: 18, color: AppColors.textSecondary),
+            const Icon(
+              Icons.info_outline_rounded,
+              size: 18,
+              color: AppColors.textSecondary,
+            ),
             const SizedBox(width: 10),
             Expanded(
               child: Text(
@@ -306,7 +375,10 @@ class _TtdTabState extends State<TtdTab> {
                 'hari ini. Hari mendatang tidak dihitung. Jadwal bukan resep; ikuti '
                 'tenaga kesehatan.',
                 style: scanStyle(
-                    size: 12, height: 1.6, color: AppColors.textSecondary),
+                  size: 12,
+                  height: 1.6,
+                  color: AppColors.textSecondary,
+                ),
               ),
             ),
           ],
@@ -316,35 +388,89 @@ class _TtdTabState extends State<TtdTab> {
       Row(
         children: [
           Expanded(
-            child: Text('Log konsumsi TTD',
-                style: scanStyle(size: 17, weight: FontWeight.w700)),
+            child: Text(
+              'Log konsumsi TTD',
+              style: scanStyle(size: 17, weight: FontWeight.w700),
+            ),
           ),
           GestureDetector(
             onTap: _openSettings,
             child: Row(
               children: [
-                Text('Atur jadwal',
-                    style: scanStyle(
-                        size: 12.5,
-                        weight: FontWeight.w700,
-                        color: AppColors.primary)),
-                const Icon(Icons.chevron_right_rounded,
-                    size: 18, color: AppColors.primary),
+                Text(
+                  'Atur jadwal',
+                  style: scanStyle(
+                    size: 12.5,
+                    weight: FontWeight.w700,
+                    color: AppColors.primary,
+                  ),
+                ),
+                const Icon(
+                  Icons.chevron_right_rounded,
+                  size: 18,
+                  color: AppColors.primary,
+                ),
               ],
             ),
           ),
         ],
       ),
       const SizedBox(height: 12),
-      if (monthLogs.isEmpty)
+           if (monthLogs.isEmpty)
         Text('Belum ada catatan di bulan ini.',
             style: scanStyle(size: 12.5, color: AppColors.textSecondary))
-      else
-        for (final e in monthLogs) ...[
-          _logCard(e.value),
-          const SizedBox(height: 10),
-        ],
+      else ...[
+        AnimatedSize(
+          duration: const Duration(milliseconds: 280),
+          curve: Curves.easeOutCubic,
+          alignment: Alignment.topCenter,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              for (final e in _showAllLogs
+                  ? monthLogs
+                  : monthLogs.take(_kLogPreview)) ...[
+                _logCard(e.value),
+                const SizedBox(height: 10),
+              ],
+            ],
+          ),
+        ),
+        if (monthLogs.length > _kLogPreview) _showMoreButton(monthLogs.length),
+      ],
     ];
+  }
+
+    Widget _showMoreButton(int total) {
+    return GestureDetector(
+      onTap: () => setState(() => _showAllLogs = !_showAllLogs),
+      child: Container(
+        height: 46,
+        alignment: Alignment.center,
+        decoration: BoxDecoration(
+          color: AppColors.surface,
+          borderRadius: BorderRadius.circular(16),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(
+              _showAllLogs
+                  ? 'Tampilkan lebih sedikit'
+                  : 'Lihat semua ($total catatan)',
+              style: scanStyle(size: 13, weight: FontWeight.w700),
+            ),
+            const SizedBox(width: 6),
+            AnimatedRotation(
+              turns: _showAllLogs ? 0.5 : 0,
+              duration: const Duration(milliseconds: 250),
+              child: const Icon(Icons.keyboard_arrow_down_rounded,
+                  size: 18, color: AppColors.textPrimary),
+            ),
+          ],
+        ),
+      ),
+    );
   }
 
   Widget _logCard(DateTime at) {
@@ -364,20 +490,26 @@ class _TtdTabState extends State<TtdTab> {
               color: AppColors.pinkTint,
               borderRadius: BorderRadius.circular(14),
             ),
-            child: const Icon(Icons.done_all_rounded,
-                size: 20, color: AppColors.primary),
+            child: const Icon(
+              Icons.done_all_rounded,
+              size: 20,
+              color: AppColors.primary,
+            ),
           ),
           const SizedBox(width: 14),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(formatTglPendek(at),
-                    style: scanStyle(size: 15, weight: FontWeight.w700)),
+                Text(
+                  formatTglPendek(at),
+                  style: scanStyle(size: 15, weight: FontWeight.w700),
+                ),
                 const SizedBox(height: 2),
-                Text('Dicatat ${formatTglPendek(at)} · ${formatJam(at)}',
-                    style:
-                        scanStyle(size: 11.5, color: AppColors.textSecondary)),
+                Text(
+                  'Dicatat ${formatTglPendek(at)} · ${formatJam(at)}',
+                  style: scanStyle(size: 11.5, color: AppColors.textSecondary),
+                ),
               ],
             ),
           ),
@@ -387,11 +519,14 @@ class _TtdTabState extends State<TtdTab> {
               color: AppColors.pinkTint,
               borderRadius: BorderRadius.circular(14),
             ),
-            child: Text('Diminum',
-                style: scanStyle(
-                    size: 11.5,
-                    weight: FontWeight.w700,
-                    color: AppColors.primary)),
+            child: Text(
+              'Diminum',
+              style: scanStyle(
+                size: 11.5,
+                weight: FontWeight.w700,
+                color: AppColors.primary,
+              ),
+            ),
           ),
         ],
       ),
@@ -409,13 +544,17 @@ class _TtdTabState extends State<TtdTab> {
             color: fill,
             shape: BoxShape.circle,
             border: Border.all(
-                color: border ??
-                    (fill == AppColors.surface ? AppColors.inactive : fill)),
+              color:
+                  border ??
+                  (fill == AppColors.surface ? AppColors.inactive : fill),
+            ),
           ),
         ),
         const SizedBox(width: 6),
-        Text(label,
-            style: scanStyle(size: 10.5, color: AppColors.textSecondary)),
+        Text(
+          label,
+          style: scanStyle(size: 10.5, color: AppColors.textSecondary),
+        ),
       ],
     );
   }
@@ -430,11 +569,13 @@ class _TtdTabState extends State<TtdTab> {
           color: AppColors.surface,
           shape: BoxShape.circle,
         ),
-        child: Icon(icon,
-            size: 18,
-            color: onTap == null
-                ? AppColors.textSecondary.withOpacity(0.35)
-                : AppColors.textPrimary),
+        child: Icon(
+          icon,
+          size: 18,
+          color: onTap == null
+              ? AppColors.textSecondary.withOpacity(0.35)
+              : AppColors.textPrimary,
+        ),
       ),
     );
   }

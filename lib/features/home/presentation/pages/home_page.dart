@@ -9,6 +9,7 @@ import '../../../history/presentation/history_revision.dart';
 import '../../../history/presentation/widgets/history_detail_sheet.dart';
 import '../../../history/presentation/widgets/history_scan_card.dart';
 import '../../../profile/domain/usecases/profile_usecases.dart';
+import '../../../profile/presentation/profile_revision.dart';
 import '../../../profile/presentation/widgets/profile_switcher.dart';
 import '../../../scan/presentation/widgets/risk_badge.dart';
 import '../../../scan/presentation/widgets/scan_messages.dart';
@@ -51,16 +52,23 @@ class _HomePageState extends State<HomePage> {
     super.initState();
     historyRevision.addListener(_loadLast);
     ttdRevision.addListener(_loadTtd);
-    _loadName();
-    _loadLast();
-    _loadTtd();
+    profileRevision.addListener(_onProfileChanged);
+    _onProfileChanged();
   }
 
   @override
   void dispose() {
     historyRevision.removeListener(_loadLast);
     ttdRevision.removeListener(_loadTtd);
+    profileRevision.removeListener(_onProfileChanged);
     super.dispose();
+  }
+
+  /// Profil diganti/diubah dari mana pun -> muat ulang semuanya.
+  void _onProfileChanged() {
+    _loadName();
+    _loadLast();
+    _loadTtd();
   }
 
   Future<void> _loadName() async {
@@ -86,15 +94,6 @@ class _HomePageState extends State<HomePage> {
       _ttd = s;
       _takenToday = logs.containsKey(dateKey(DateTime.now()));
     });
-  }
-
-  Future<void> _openSwitcher() async {
-    final changed = await openProfileSwitcher(context);
-    if (changed) {
-      _loadName();
-      notifyHistoryChanged();
-      notifyTtdChanged();
-    }
   }
 
   void _openTtdSettings() => Navigator.of(context).push(
@@ -152,7 +151,7 @@ class _HomePageState extends State<HomePage> {
     return HabitCard(
       title: _takenToday ? 'TTD hari ini sudah diminum' : 'Minum TTD hari ini',
       time: s.timeLabel,
-      note: 'Sesuai anjuran tenaga kesehatan',
+      note: s.frequencyLabel,
       done: _takenToday,
       onToggle: _toggleToday,
       onTap: _openTtdSettings,
@@ -168,7 +167,10 @@ class _HomePageState extends State<HomePage> {
         child: ListView(
           padding: const EdgeInsets.fromLTRB(24, 16, 24, 32),
           children: [
-            HomeHeader(name: _name, onProfileTap: _openSwitcher),
+            HomeHeader(
+              name: _name,
+              onProfileTap: () => openProfileSwitcher(context),
+            ),
             const SizedBox(height: 20),
             ScreeningHeroCard(onStart: widget.onStartScan),
             const SizedBox(height: 28),

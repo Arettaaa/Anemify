@@ -14,12 +14,12 @@ class ScreeningHeroCard extends StatelessWidget {
       child: Container(
         color: AppColors.pinkTint,
         child: Stack(
-          children: [
-            Positioned(right: -64, top: -14, child: _ring(200, 0.10)),
-            Positioned(right: -29, top: 21, child: _ring(130, 0.14)),
+                   children: [
+            Positioned(right: -64, top: -38, child: _ring(200, 0.10)),
+            Positioned(right: -29, top: -3, child: _ring(130, 0.14)),
             Positioned(
               right: 24,
-              top: 52,
+              top: 26,
               child: Transform.rotate(
                 angle: -0.1,
                 child: _tile(Icons.remove_red_eye_outlined, 64, AppColors.white),
@@ -27,7 +27,7 @@ class ScreeningHeroCard extends StatelessWidget {
             ),
             Positioned(
               right: 10,
-              top: 110,
+              top: 84,
               child: Transform.rotate(
                 angle: 0.12,
                 child: _tile(Icons.back_hand_outlined, 60,
@@ -36,8 +36,7 @@ class ScreeningHeroCard extends StatelessWidget {
               ),
             ),
             Padding(
-              padding: const EdgeInsets.fromLTRB(22, 56, 22, 22),
-              child: Column(
+                padding: const EdgeInsets.fromLTRB(22, 30, 22, 22),              child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
                   Padding(
