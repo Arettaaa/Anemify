@@ -3,6 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../../../core/di/injection.dart';
 import '../../../../core/theme/app_colors.dart';
+import '../../../../core/widgets/app_logo.dart';
 import '../../../history/domain/usecases/history_usecases.dart';
 import '../bloc/scan_bloc.dart';
 import '../bloc/scan_event.dart';
@@ -65,7 +66,7 @@ class _ScanLoadingPageState extends State<ScanLoadingPage>
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Image.asset('assets/images/anemify_logo.png', height: 28),
+                      const AppLogo(),
                       Expanded(
                         child: Center(
                           child: Column(

@@ -57,3 +57,15 @@ String pesanPeringatan(ScanWarning w) => switch (w) {
       ScanWarning.atypicalPhoto =>
         'Foto kurang jelas terdeteksi sebagai telapak tangan/konjungtiva. Hasil mungkin kurang akurat. Sebaiknya foto ulang sesuai panduan.',
     };
+
+String saranLanjutan(RiskCategory c) => switch (c) {
+      RiskCategory.tinggi =>
+        'Kategori ini perlu ditindaklanjuti dengan pemeriksaan di fasilitas '
+            'kesehatan. Jangan memulai atau mengubah pengobatan berdasarkan aplikasi.',
+      RiskCategory.perluPerhatian =>
+        'Lakukan pemeriksaan kadar hemoglobin (Hb). Lengkapi menu dengan sumber '
+            'zat besi dan vitamin C, dan ikuti anjuran TTD dari tenaga kesehatan.',
+      RiskCategory.rendah =>
+        'Lengkapi menu dengan sumber zat besi dan vitamin C. Ikuti anjuran TTD '
+            'dari tenaga kesehatan. Periksakan keluhan meski kategori tampak rendah.',
+    };

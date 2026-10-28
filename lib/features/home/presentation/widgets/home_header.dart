@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../../../core/theme/app_colors.dart';
+import '../../../../core/widgets/app_logo.dart';
 
 class HomeHeader extends StatelessWidget {
   final String name;
@@ -14,7 +15,7 @@ class HomeHeader extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Image.asset('assets/images/anemify_logo.png', height: 28),
+        const AppLogo(),
         const SizedBox(height: 20),
         Row(
           crossAxisAlignment: CrossAxisAlignment.center,
@@ -98,8 +99,11 @@ class _ProfileChip extends StatelessWidget {
                 ),
               ),
               const SizedBox(width: 4),
-              const Icon(Icons.keyboard_arrow_down_rounded,
-                  size: 18, color: AppColors.textSecondary),
+              const Icon(
+                Icons.keyboard_arrow_down_rounded,
+                size: 18,
+                color: AppColors.textSecondary,
+              ),
             ],
           ),
         ),

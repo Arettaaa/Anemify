@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
-
+import '../../../../core/widgets/app_logo.dart';
 import '../../../../core/theme/app_colors.dart';
 
 TextStyle scanStyle({
@@ -75,7 +75,7 @@ class ScanHeader extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Image.asset('assets/images/anemify_logo.png', height: 28),
+        const AppLogo(),
         if (showBack) ...[
           const SizedBox(height: 16),
           Material(

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 import '../../../../core/theme/app_colors.dart';
 import '../../domain/entities/risk_category.dart';
@@ -15,6 +16,7 @@ class ScanResultPage extends StatelessWidget {
   const ScanResultPage({super.key, required this.result});
 
   void _finish(BuildContext context) {
+    context.read<ScanBloc>().add(const ScanReset());
     Navigator.of(context).popUntil((r) => r.isFirst);
   }
 
@@ -23,6 +25,27 @@ class ScanResultPage extends StatelessWidget {
     Navigator.of(context)
         .popUntil((r) => r.settings.name == kScanCaptureRoute || r.isFirst);
   }
+
+  Future<void> _openFaskes() async {
+    final uri = Uri.parse(
+      'https://www.google.com/maps/search/?api=1'
+      '&query=${Uri.encodeComponent('puskesmas klinik laboratorium cek hb terdekat')}',
+    );
+    final ok = await launchUrl(uri, mode: LaunchMode.externalApplication);
+    if (!ok) await launchUrl(uri);
+  }
+
+  String _nextSteps(RiskCategory c) => switch (c) {
+        RiskCategory.tinggi =>
+          'Kategori ini perlu ditindaklanjuti dengan pemeriksaan di fasilitas '
+              'kesehatan. Jangan memulai atau mengubah pengobatan berdasarkan aplikasi.',
+        RiskCategory.perluPerhatian =>
+          'Lakukan pemeriksaan kadar hemoglobin (Hb). Lengkapi menu dengan sumber '
+              'zat besi dan vitamin C, dan ikuti anjuran TTD dari tenaga kesehatan.',
+        RiskCategory.rendah =>
+          'Lengkapi menu dengan sumber zat besi dan vitamin C. Ikuti anjuran TTD '
+              'dari tenaga kesehatan. Periksakan keluhan meski kategori tampak rendah.',
+      };
 
   ({String badge, Color bg, Color fg}) _style(RiskCategory c) => switch (c) {
         RiskCategory.rendah => (
@@ -37,14 +60,21 @@ class ScanResultPage extends StatelessWidget {
           ),
         RiskCategory.tinggi => (
             badge: 'Tinggi',
-            bg: AppColors.primary.withOpacity(0.12),
-            fg: AppColors.primary,
+            bg: AppColors.primary,
+            fg: AppColors.white,
           ),
       };
+
+  Widget _mapsNote() => Text(
+        'Membuka Google Maps; lokasi diatur oleh Maps. Foto dan hasil scan tidak dikirim.',
+        style:
+            scanStyle(size: 11, color: AppColors.textSecondary.withOpacity(0.7)),
+      );
 
   @override
   Widget build(BuildContext context) {
     final st = _style(result.category);
+    final c = result.category;
 
     return PopScope(
       canPop: false,
@@ -89,7 +119,7 @@ class ScanResultPage extends StatelessWidget {
                 ),
                 const SizedBox(height: 16),
                 Text(
-                  judulKategori(result.category),
+                  judulKategori(c),
                   textAlign: TextAlign.center,
                   style: scanStyle(
                       size: 30, weight: FontWeight.w700, letterSpacing: -0.7),
@@ -122,7 +152,7 @@ class ScanResultPage extends StatelessWidget {
                 ),
                 const SizedBox(height: 16),
                 Text(
-                  pesanKategori(result.category),
+                  pesanKategori(c),
                   textAlign: TextAlign.center,
                   style: scanStyle(
                       size: 13.5, height: 1.7, color: AppColors.textSecondary),
@@ -154,12 +184,63 @@ class ScanResultPage extends StatelessWidget {
           ),
           const SizedBox(height: 10),
           Text(
-            'Lengkapi menu dengan sumber zat besi dan vitamin C. Ikuti '
-            'anjuran TTD dari tenaga kesehatan. Periksakan keluhan meski '
-            'kategori tampak rendah.',
+            _nextSteps(c),
             style: scanStyle(
                 size: 14, height: 1.7, color: AppColors.textSecondary),
           ),
+          if (c == RiskCategory.perluPerhatian) ...[
+            const SizedBox(height: 20),
+            SizedBox(
+              width: double.infinity,
+              height: 52,
+              child: OutlinedButton.icon(
+                onPressed: _openFaskes,
+                style: OutlinedButton.styleFrom(
+                  backgroundColor: AppColors.white,
+                  side: const BorderSide(color: AppColors.primarySoft),
+                  shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(16)),
+                ),
+                icon: const Icon(Icons.search_rounded,
+                    size: 18, color: AppColors.primary),
+                label: Text(
+                  'Cari tempat cek Hb',
+                  style: scanStyle(
+                      size: 15,
+                      weight: FontWeight.w700,
+                      color: AppColors.primary),
+                ),
+              ),
+            ),
+            const SizedBox(height: 8),
+            _mapsNote(),
+          ],
+          if (c == RiskCategory.tinggi) ...[
+            const SizedBox(height: 20),
+            ScanPrimaryButton(
+              label: 'Cari Faskes Terdekat',
+              icon: Icons.search_rounded,
+              iconAfter: false,
+              onPressed: _openFaskes,
+            ),
+            const SizedBox(height: 8),
+            _mapsNote(),
+            const SizedBox(height: 16),
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: AppColors.pinkTint,
+                borderRadius: BorderRadius.circular(16),
+              ),
+              child: Text(
+                'Sesak berat, nyeri dada, pingsan, atau perdarahan aktif? '
+                'Segera cari pertolongan darurat. Jangan menunggu scan ulang.',
+                style: scanStyle(
+                    size: 13, height: 1.7, color: AppColors.primary),
+              ),
+            ),
+          ],
           const SizedBox(height: 20),
           Container(
             width: double.infinity,

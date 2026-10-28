@@ -2,7 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/widgets/blur_sheet.dart';
-import '../../data/profile_storage.dart';
+import '../../domain/entities/profile.dart';
+import 'profile_fields.dart';
 
 /// Tambah (initial == null) atau ubah profil. Pop result: Profile
 class ProfileFormSheet extends StatefulWidget {
@@ -15,29 +16,32 @@ class ProfileFormSheet extends StatefulWidget {
 }
 
 class _ProfileFormSheetState extends State<ProfileFormSheet> {
-  static const _categories = ['Umum', 'Ibu hamil', 'Remaja'];
-
   late final _nameCtrl = TextEditingController(text: widget.initial?.name);
   late final _ageCtrl =
       TextEditingController(text: widget.initial?.age.toString());
-  late String _category = widget.initial?.category ?? 'Umum';
+  late Sex? _sex = widget.initial?.sex;
+  late bool _pregnant = widget.initial?.isPregnant ?? false;
 
   bool get _isEdit => widget.initial != null;
+  int? get _age => int.tryParse(_ageCtrl.text.trim());
+  bool get _canBePregnant => Profile.canBePregnant(_sex, _age);
 
   bool get _valid {
-    final age = int.tryParse(_ageCtrl.text.trim());
+    final age = _age;
     return _nameCtrl.text.trim().isNotEmpty &&
         age != null &&
         age > 0 &&
-        age < 120;
+        age < 120 &&
+        _sex != null;
   }
 
   void _save() {
     final name = _nameCtrl.text.trim();
-    final age = int.parse(_ageCtrl.text.trim());
     final result = _isEdit
-        ? widget.initial!.copyWith(name: name, age: age, category: _category)
-        : Profile.create(name: name, age: age, category: _category);
+        ? widget.initial!.copyWith(
+            name: name, age: _age, sex: _sex, pregnant: _pregnant)
+        : Profile.create(
+            name: name, age: _age!, sex: _sex!, pregnant: _pregnant);
     Navigator.of(context).pop(result);
   }
 
@@ -75,24 +79,16 @@ class _ProfileFormSheetState extends State<ProfileFormSheet> {
         const SizedBox(height: 8),
         _field(_ageCtrl, 'Usia dalam tahun', TextInputType.number),
         const SizedBox(height: 18),
-        _label('Kategori'),
+        _label('Jenis kelamin'),
         const SizedBox(height: 8),
-        DropdownButtonFormField<String>(
-          value: _category,
-          icon: const Icon(Icons.keyboard_arrow_down_rounded,
-              color: AppColors.textPrimary),
-          borderRadius: BorderRadius.circular(16),
-          dropdownColor: AppColors.white,
-          style: GoogleFonts.dmSans(
-            fontSize: 14,
-            fontWeight: FontWeight.w700,
-            color: AppColors.textPrimary,
-          ),
-          decoration: _decoration(null),
-          items: _categories
-              .map((c) => DropdownMenuItem(value: c, child: Text(c)))
-              .toList(),
-          onChanged: (v) => setState(() => _category = v ?? _category),
+        SexSelector(
+          value: _sex,
+          onChanged: (s) => setState(() => _sex = s),
+        ),
+        PregnancySwitch(
+          visible: _canBePregnant,
+          value: _pregnant && _canBePregnant,
+          onChanged: (v) => setState(() => _pregnant = v),
         ),
         const SizedBox(height: 22),
         SizedBox(
@@ -144,27 +140,29 @@ class _ProfileFormSheetState extends State<ProfileFormSheet> {
       keyboardType: type,
       onChanged: (_) => setState(() {}),
       style: GoogleFonts.dmSans(fontSize: 14, color: AppColors.textPrimary),
-      decoration: _decoration(hint),
-    );
-  }
-
-  InputDecoration _decoration(String? hint) {
-    OutlineInputBorder border(Color c) => OutlineInputBorder(
+      decoration: InputDecoration(
+        hintText: hint,
+        hintStyle: GoogleFonts.dmSans(
+          fontSize: 14,
+          color: AppColors.textSecondary.withOpacity(0.7),
+        ),
+        filled: true,
+        fillColor: AppColors.surface,
+        contentPadding:
+            const EdgeInsets.symmetric(horizontal: 18, vertical: 15),
+        border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(16),
-          borderSide: BorderSide(color: c),
-        );
-    return InputDecoration(
-      hintText: hint,
-      hintStyle: GoogleFonts.dmSans(
-        fontSize: 14,
-        color: AppColors.textSecondary.withOpacity(0.7),
+          borderSide: const BorderSide(color: AppColors.inactive),
+        ),
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(16),
+          borderSide: const BorderSide(color: AppColors.inactive),
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(16),
+          borderSide: const BorderSide(color: AppColors.primarySoft),
+        ),
       ),
-      filled: true,
-      fillColor: AppColors.surface,
-      contentPadding: const EdgeInsets.symmetric(horizontal: 18, vertical: 15),
-      border: border(AppColors.inactive),
-      enabledBorder: border(AppColors.inactive),
-      focusedBorder: border(AppColors.primarySoft),
     );
   }
 }

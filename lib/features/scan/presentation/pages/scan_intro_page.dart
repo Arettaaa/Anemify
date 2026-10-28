@@ -17,9 +17,10 @@ class ScanIntroPage extends StatefulWidget {
 class _ScanIntroPageState extends State<ScanIntroPage> {
   bool _agreed = false;
 
-  @override
+    @override
   Widget build(BuildContext context) {
     return ScanPageScaffold(
+      showBack: false,
       children: [
         ScanTitle(
           title: 'Kenali, lalu jaga.',

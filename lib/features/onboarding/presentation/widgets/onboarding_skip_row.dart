@@ -14,7 +14,7 @@ class OnboardingSkipRow extends StatelessWidget {
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
         Text(
-          'Kenali dulu, yuk',
+          'Kenalan dulu, yuk',
           style: GoogleFonts.dmSans(
             fontSize: 12,
             color: AppColors.textSecondary,

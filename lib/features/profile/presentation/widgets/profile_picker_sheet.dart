@@ -2,9 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/widgets/blur_sheet.dart';
-import '../../data/profile_storage.dart';
-
-/// pop result: 'changed' | 'add' | 'edit' | null
+import '../../../../core/di/injection.dart';
+import '../../domain/entities/profile.dart';
+import '../../domain/usecases/profile_usecases.dart';/// pop result: 'changed' | 'add' | 'edit' | null
 class ProfilePickerSheet extends StatefulWidget {
   const ProfilePickerSheet({super.key});
 
@@ -22,9 +22,9 @@ class _ProfilePickerSheetState extends State<ProfilePickerSheet> {
     _load();
   }
 
-  Future<void> _load() async {
-    final all = await ProfileStorage.getAll();
-    final active = await ProfileStorage.getActive();
+    Future<void> _load() async {
+    final all = await sl<GetProfiles>()();
+    final active = await sl<GetActiveProfile>()();
     if (!mounted) return;
     setState(() {
       _profiles = all;
@@ -33,7 +33,7 @@ class _ProfilePickerSheetState extends State<ProfilePickerSheet> {
   }
 
   Future<void> _select(Profile p) async {
-    await ProfileStorage.setActiveId(p.id);
+    await sl<SetActiveProfile>()(p.id);
     if (!mounted) return;
     Navigator.of(context).pop('changed');
   }

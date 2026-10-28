@@ -1,13 +1,23 @@
 import 'package:flutter/material.dart';
+
+import '../../../../core/di/injection.dart';
 import '../../../../core/theme/app_colors.dart';
+import '../../../../core/utils/date_format.dart';
+import '../../../history/domain/entities/history_entry.dart';
+import '../../../history/domain/usecases/history_usecases.dart';
+import '../../../history/presentation/history_revision.dart';
+import '../../../history/presentation/widgets/history_detail_sheet.dart';
+import '../../../history/presentation/widgets/history_scan_card.dart';
+import '../../../profile/domain/usecases/profile_usecases.dart';
+import '../../../profile/presentation/widgets/profile_switcher.dart';
+import '../../../scan/presentation/widgets/risk_badge.dart';
+import '../../../scan/presentation/widgets/scan_messages.dart';
 import '../widgets/food_card.dart';
 import '../widgets/habit_card.dart';
 import '../widgets/home_header.dart';
 import '../widgets/last_screening_card.dart';
 import '../widgets/screening_hero_card.dart';
 import '../widgets/section_header.dart';
-import '../../../profile/data/profile_storage.dart';
-import '../../../profile/presentation/widgets/profile_switcher.dart';
 
 class HomePage extends StatefulWidget {
   final VoidCallback onStartScan;
@@ -27,23 +37,63 @@ class HomePage extends StatefulWidget {
 
 class _HomePageState extends State<HomePage> {
   String _name = '';
+  HistoryEntry? _last;
+  bool _lastLoaded = false;
 
   @override
   void initState() {
     super.initState();
+    historyRevision.addListener(_loadLast);
     _loadName();
+    _loadLast();
   }
 
+  @override
+  void dispose() {
+    historyRevision.removeListener(_loadLast);
+    super.dispose();
+  }
 
   Future<void> _loadName() async {
-    final active = await ProfileStorage.getActive();
+    final active = await sl<GetActiveProfile>()();
     if (!mounted) return;
     setState(() => _name = active?.name ?? 'Teman');
+  }
+
+  Future<void> _loadLast() async {
+    final all = await sl<GetScanHistory>()(); // terbaru dulu
+    if (!mounted) return;
+    setState(() {
+      _last = all.isEmpty ? null : all.first;
+      _lastLoaded = true;
+    });
   }
 
   Future<void> _openSwitcher() async {
     final changed = await openProfileSwitcher(context);
     if (changed) _loadName();
+  }
+
+  Widget _lastScreening() {
+    if (!_lastLoaded) return const SizedBox(height: 82);
+
+    final e = _last;
+    if (e == null) {
+      return LastScreeningCard(
+        title: 'Belum ada skrining',
+        subtitle: 'Mulai skrining pertamamu',
+        trailing: const Icon(Icons.chevron_right_rounded,
+            color: AppColors.textSecondary),
+        onTap: widget.onStartScan,
+      );
+    }
+
+    return LastScreeningCard(
+      title: judulKategori(e.category),
+      subtitle: '${formatTglPendek(e.createdAt)} · ${sumberFoto(e)}',
+      trailing: RiskBadge(category: e.category),
+      onTap: () => showHistoryDetail(context, e),
+    );
   }
 
   @override
@@ -53,7 +103,7 @@ class _HomePageState extends State<HomePage> {
       body: SafeArea(
         bottom: false,
         child: ListView(
-          padding: const EdgeInsets.fromLTRB(24, 16, 24, 130),
+          padding: const EdgeInsets.fromLTRB(24, 16, 24, 32),
           children: [
             HomeHeader(name: _name, onProfileTap: _openSwitcher),
             const SizedBox(height: 20),
@@ -65,17 +115,12 @@ class _HomePageState extends State<HomePage> {
               onAction: widget.onOpenHistory,
             ),
             const SizedBox(height: 14),
-            // TODO: ganti dengan data asli dari sqflite
-            const LastScreeningCard(
-              title: 'Risiko anemia',
-              subtitle: '30 Sep · Data contoh',
-              status: 'Normal',
-            ),
+            _lastScreening(),
             const SizedBox(height: 28),
             SectionHeader(
               title: 'Kebiasaan kecil, manfaat besar',
               actionLabel: 'Atur',
-              onAction: () {},
+              onAction: () {}, // TODO: halaman Pengingat sehat (fitur TTD)
             ),
             const SizedBox(height: 14),
             const HabitCard(

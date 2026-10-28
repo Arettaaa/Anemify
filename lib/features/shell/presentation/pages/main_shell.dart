@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../../home/presentation/pages/home_page.dart';
 import '../../../scan/presentation/pages/scan_tab.dart';
+import '../../../history/presentation/pages/history_page.dart';
 import '../widgets/app_bottom_nav.dart';
 
 class MainShell extends StatefulWidget {
@@ -26,7 +27,7 @@ class _MainShellState extends State<MainShell> {
             onOpenHistory: () => _onTap(1),
             onOpenEducation: () => _onTap(3),
           ),
-          const _PlaceholderPage('Riwayat'), // TODO: HistoryPage()
+          HistoryPage(onStartScan: () => _onTap(2)),
           const ScanTab(),
           const _PlaceholderPage('Edukasi'), // TODO: EducationPage()
           const _PlaceholderPage('Pengaturan'), // TODO: SettingsPage()

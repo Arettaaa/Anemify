@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../../../core/theme/app_colors.dart';
+import '../../../../core/widgets/app_logo.dart';
 
 class OnboardingHeader extends StatelessWidget {
   final Widget? trailing;
@@ -11,10 +12,7 @@ class OnboardingHeader extends StatelessWidget {
   Widget build(BuildContext context) {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
-      children: [
-        Image.asset('assets/images/anemify_logo.png', height: 28),
-        trailing ?? const _NoLoginChip(),
-      ],
+      children: [const AppLogo(), trailing ?? const _NoLoginChip()],
     );
   }
 }
@@ -33,8 +31,11 @@ class _NoLoginChip extends StatelessWidget {
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          const Icon(Icons.lock_outline,
-              size: 14, color: AppColors.textSecondary),
+          const Icon(
+            Icons.lock_outline,
+            size: 14,
+            color: AppColors.textSecondary,
+          ),
           const SizedBox(width: 6),
           Text(
             'Tanpa login',
