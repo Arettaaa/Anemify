@@ -7,7 +7,10 @@ import '../../../profile/domain/usecases/profile_usecases.dart';
 import '../../../scan/presentation/widgets/scan_widgets.dart';
 import '../../domain/entities/ttd_settings.dart';
 import '../../domain/usecases/ttd_usecases.dart';
+import '../../../../core/widgets/app_toast.dart';
 import '../ttd_revision.dart';
+import 'package:flutter/cupertino.dart';
+import '../../../../core/widgets/blur_sheet.dart';
 
 class TtdReminderPage extends StatefulWidget {
   const TtdReminderPage({super.key});
@@ -41,24 +44,48 @@ class _TtdReminderPageState extends State<TtdReminderPage> {
     });
   }
 
-  Future<void> _pickTime() async {
+    Future<void> _pickTime() async {
     final s = _s!;
-    final t = await showTimePicker(
-      context: context,
-      initialTime: TimeOfDay(hour: s.hour, minute: s.minute),
-      builder: (ctx, child) => Theme(
-        data: Theme.of(ctx).copyWith(
-          colorScheme:
-              Theme.of(ctx).colorScheme.copyWith(primary: AppColors.primary),
-        ),
-        child: MediaQuery(
-          data: MediaQuery.of(ctx).copyWith(alwaysUse24HourFormat: true),
-          child: child!,
+    var picked = DateTime(2000, 1, 1, s.hour, s.minute);
+    final ok = await showBlurSheet<bool>(
+      context,
+      child: Builder(
+        builder: (ctx) => Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            const SheetHeader(title: 'Waktu pengingat'),
+            const SizedBox(height: 12),
+            SizedBox(
+              height: 200,
+              child: CupertinoTheme(
+                data: CupertinoThemeData(
+                  textTheme: CupertinoTextThemeData(
+                    dateTimePickerTextStyle:
+                        scanStyle(size: 22, weight: FontWeight.w600),
+                  ),
+                ),
+                child: CupertinoDatePicker(
+                  mode: CupertinoDatePickerMode.time,
+                  use24hFormat: true,
+                  initialDateTime: picked,
+                  onDateTimeChanged: (d) => picked = d,
+                ),
+              ),
+            ),
+            const SizedBox(height: 16),
+            ScanPrimaryButton(
+              label: 'Pilih waktu',
+              icon: Icons.check_rounded,
+              onPressed: () => Navigator.of(ctx).pop(true),
+            ),
+          ],
         ),
       ),
     );
-    if (t != null) {
-      setState(() => _s = s.copyWith(hour: t.hour, minute: t.minute));
+    if (ok == true && mounted) {
+      setState(() =>
+          _s = s.copyWith(hour: picked.hour, minute: picked.minute));
     }
   }
 
@@ -79,25 +106,18 @@ class _TtdReminderPageState extends State<TtdReminderPage> {
     await notif.applyTtd(settings: s, profileId: _profileId, name: _name);
 
     if (!mounted) return;
-    final messenger = ScaffoldMessenger.of(context);
+    if (granted) {
+      showAppToast(context, 'Jadwal TTD berhasil disimpan');
+    } else {
+      showAppToast(
+        context,
+        'Jadwal disimpan, tapi izin notifikasi belum aktif',
+        type: ToastType.warning,
+        actionLabel: 'Izinkan',
+        onAction: notif.openSettings,
+      );
+    }
     Navigator.of(context).pop();
-    messenger.showSnackBar(
-      SnackBar(
-        content: Text(
-          granted
-              ? 'Pengingat disimpan.'
-              : 'Pengingat disimpan, tapi izin notifikasi belum diberikan.',
-          style: scanStyle(size: 13, color: AppColors.white),
-        ),
-        action: granted
-            ? null
-            : SnackBarAction(
-                label: 'Buka pengaturan',
-                textColor: AppColors.primarySoft,
-                onPressed: notif.openSettings,
-              ),
-      ),
-    );
   }
 
   @override

@@ -1,8 +1,14 @@
-import 'package:flutter/material.dart';
-import 'package:lottie/lottie.dart';
+import 'dart:async';
 
-import '../onboarding/presentation/pages/onboarding_page.dart';
+import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
+import 'package:lottie/lottie.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+
+import '../../core/di/injection.dart';
+import '../history/domain/usecases/history_usecases.dart';
+import '../onboarding/presentation/pages/onboarding_page.dart';
+import '../profile/domain/usecases/profile_usecases.dart';
 import '../shell/presentation/pages/main_shell.dart';
 
 class SplashScreen extends StatefulWidget {
@@ -15,67 +21,106 @@ class SplashScreen extends StatefulWidget {
 class _SplashScreenState extends State<SplashScreen>
     with SingleTickerProviderStateMixin {
   static const _asset = 'assets/animations/splash_screen.json';
+  static const _skipIntro = 0.05;
 
   late final AnimationController _controller;
   LottieComposition? _composition;
   bool _navigated = false;
 
+  /// Hasil cek onboarding + pemanasan data, jalan paralel dengan animasi.
+  late final Future<bool> _prepare = _warmUp();
+
   @override
   void initState() {
     super.initState();
     _controller = AnimationController(vsync: this)
-      ..addStatusListener((status) {
-        if (status == AnimationStatus.completed) _goToOnboarding();
+      ..addStatusListener((s) {
+        if (s == AnimationStatus.completed) _goNext();
       });
-    _load();
+    _loadLottie();
+    _prepare; // mulai sekarang, jangan tunggu animasi selesai
   }
 
-  static const _skipIntro = 0.05;
-
-  Future<void> _load() async {
-    final sw = Stopwatch()..start();
+  Future<void> _loadLottie() async {
     try {
-      final composition = await AssetLottie(_asset).load();
-      debugPrint('Splash: Lottie dimuat dalam ${sw.elapsedMilliseconds} ms');
+      final c = await AssetLottie(_asset).load();
       if (!mounted) return;
-      _controller.duration = composition.duration;
-      setState(() => _composition = composition);
-      // Mulai putar SETELAH frame pertama tergambar.
+      _controller.duration = c.duration;
+      setState(() => _composition = c);
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (!mounted) return;
-        _controller.value = _skipIntro; // loncat ke frame yang sudah terlihat
-        _controller.forward(); // kecepatan tetap, hanya sisa durasi
+        _controller.value = _skipIntro;
+        _controller.forward();
       });
-    } catch (e, st) {
-      debugPrint('Splash: gagal memuat Lottie: $e\n$st');
-      Future.delayed(const Duration(seconds: 1), _goToOnboarding);
+    } catch (e) {
+      debugPrint('Splash: gagal memuat Lottie: $e');
+      Future.delayed(const Duration(milliseconds: 800), _goNext);
     }
   }
 
-  Future<void> _goToOnboarding() async {
+  /// Semua yang biasanya bikin halaman berikutnya "nyendat" dimuat di sini.
+  Future<bool> _warmUp() async {
+    final prefs = await SharedPreferences.getInstance();
+    final seen = prefs.getBool('onboarding_seen') ?? false;
+
+    final jobs = <Future<void>>[
+      // font DM Sans (google_fonts unduh saat runtime)
+      GoogleFonts.pendingFonts([
+        GoogleFonts.dmSans(),
+        GoogleFonts.dmSans(fontWeight: FontWeight.w600),
+        GoogleFonts.dmSans(fontWeight: FontWeight.w700),
+      ]).then((_) {}),
+    ];
+
+    if (seen) {
+      jobs.addAll([
+        sl<GetActiveProfile>()().then((_) {}),
+        sl<GetScanHistory>()().then((_) {}), // buka SQLite lebih awal
+      ]);
+    }
+
+    if (mounted) {
+      final imgs = seen
+          ? ['assets/foods/bayam.png', 'assets/foods/telur.png']
+          : [
+              'assets/images/onboarding_mascot_1.png',
+              'assets/images/onboarding_mascot_2.png',
+              'assets/images/onboarding_mascot_3.png',
+            ];
+      for (final p in imgs) {
+        jobs.add(precacheImage(AssetImage(p), context));
+      }
+    }
+
+    try {
+      await Future.wait(jobs).timeout(const Duration(seconds: 3));
+    } catch (e) {
+      debugPrint('Splash: warm-up dilewati: $e'); // offline/timeout tetap lanjut
+    }
+    return seen;
+  }
+
+  Future<void> _goNext() async {
     if (_navigated || !mounted) return;
     _navigated = true;
 
-    final prefs = await SharedPreferences.getInstance();
-    final seen = prefs.getBool('onboarding_seen') ?? false;
+    final seen = await _prepare; // biasanya sudah selesai saat animasi habis
     if (!mounted) return;
 
     final Widget next = seen ? const MainShell() : const OnboardingPage();
 
     Navigator.of(context).pushReplacement(
       PageRouteBuilder(
-        transitionDuration: const Duration(milliseconds: 900),
+        transitionDuration: const Duration(milliseconds: 500),
         pageBuilder: (_, __, ___) => next,
         transitionsBuilder: (_, animation, __, child) {
-          final curved = CurvedAnimation(
-            parent: animation,
-            curve: Curves.easeInOut,
-          );
+          final curved =
+              CurvedAnimation(parent: animation, curve: Curves.easeOutCubic);
           return FadeTransition(
             opacity: curved,
             child: SlideTransition(
               position: Tween<Offset>(
-                begin: const Offset(0.25, 0),
+                begin: const Offset(0.12, 0),
                 end: Offset.zero,
               ).animate(curved),
               child: child,
@@ -96,10 +141,9 @@ class _SplashScreenState extends State<SplashScreen>
   Widget build(BuildContext context) {
     final composition = _composition;
     final exit = CurvedAnimation(
-      parent:
-          ModalRoute.of(context)?.secondaryAnimation ??
+      parent: ModalRoute.of(context)?.secondaryAnimation ??
           kAlwaysDismissedAnimation,
-      curve: Curves.easeInOut,
+      curve: Curves.easeOutCubic,
     );
 
     return FadeTransition(
@@ -107,17 +151,19 @@ class _SplashScreenState extends State<SplashScreen>
       child: SlideTransition(
         position: Tween<Offset>(
           begin: Offset.zero,
-          end: const Offset(-0.25, 0), // keluar ke kiri, jaraknya pendek
+          end: const Offset(-0.12, 0),
         ).animate(exit),
         child: Scaffold(
-          backgroundColor: const Color(0xFFFFFFFF),
+          backgroundColor: Colors.white,
           body: SizedBox.expand(
             child: composition == null
                 ? null
-                : Lottie(
-                    composition: composition,
-                    controller: _controller,
-                    fit: BoxFit.contain,
+                : RepaintBoundary(
+                    child: Lottie(
+                      composition: composition,
+                      controller: _controller,
+                      fit: BoxFit.contain,
+                    ),
                   ),
           ),
         ),

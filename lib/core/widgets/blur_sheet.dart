@@ -4,39 +4,59 @@ import 'package:google_fonts/google_fonts.dart';
 import '../theme/app_colors.dart';
 
 Future<T?> showBlurSheet<T>(BuildContext context, {required Widget child}) {
-  return showModalBottomSheet<T>(
+  return showGeneralDialog<T>(
     context: context,
-    isScrollControlled: true,
-    backgroundColor: Colors.transparent,
+    barrierDismissible: false, // tap latar ditangani _BlurSheet
     barrierColor: Colors.transparent,
-    elevation: 0,
-    builder: (ctx) => _BlurSheet(child: child),
+    transitionDuration: const Duration(milliseconds: 340),
+    pageBuilder: (ctx, animation, _) =>
+        _BlurSheet(animation: animation, child: child),
+    transitionBuilder: (_, __, ___, w) => w,
   );
 }
 
 class _BlurSheet extends StatelessWidget {
+  final Animation<double> animation;
   final Widget child;
-  const _BlurSheet({required this.child});
+  const _BlurSheet({required this.animation, required this.child});
 
   @override
   Widget build(BuildContext context) {
     final mq = MediaQuery.of(context);
-    return SizedBox.expand(
-      child: Stack(
-        children: [
-          Positioned.fill(
-            child: GestureDetector(
-              onTap: () => Navigator.of(context).pop(),
-              child: BackdropFilter(
-                filter: ImageFilter.blur(sigmaX: 6, sigmaY: 6),
-                child: Container(
-                  color: AppColors.textPrimary.withOpacity(0.25),
-                ),
-              ),
+    final curved = CurvedAnimation(
+      parent: animation,
+      curve: Curves.easeOutCubic,
+      reverseCurve: Curves.easeInCubic,
+    );
+
+    return Stack(
+      children: [
+        // latar: blur + gelap, fade sesuai animasi
+        Positioned.fill(
+          child: GestureDetector(
+            onTap: () => Navigator.of(context).pop(),
+            child: AnimatedBuilder(
+              animation: curved,
+              builder: (_, __) {
+                final t = curved.value;
+                return BackdropFilter(
+                  filter: ImageFilter.blur(sigmaX: 6 * t, sigmaY: 6 * t),
+                  child: Container(
+                    color: AppColors.textPrimary.withOpacity(0.25 * t),
+                  ),
+                );
+              },
             ),
           ),
-          Align(
-            alignment: Alignment.bottomCenter,
+        ),
+        // sheet: meluncur dari bawah
+        Align(
+          alignment: Alignment.bottomCenter,
+          child: SlideTransition(
+            position: Tween(
+              begin: const Offset(0, 1),
+              end: Offset.zero,
+            ).animate(curved),
             child: Padding(
               padding: EdgeInsets.fromLTRB(
                 12,
@@ -49,7 +69,8 @@ class _BlurSheet extends StatelessWidget {
                 borderRadius: BorderRadius.circular(28),
                 clipBehavior: Clip.antiAlias,
                 child: ConstrainedBox(
-                  constraints: BoxConstraints(maxHeight: mq.size.height * 0.85),
+                  constraints:
+                      BoxConstraints(maxHeight: mq.size.height * 0.85),
                   child: SingleChildScrollView(
                     padding: const EdgeInsets.all(24),
                     child: child,
@@ -58,8 +79,8 @@ class _BlurSheet extends StatelessWidget {
               ),
             ),
           ),
-        ],
-      ),
+        ),
+      ],
     );
   }
 }
