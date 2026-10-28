@@ -3,9 +3,6 @@ import 'package:flutter/material.dart';
 import '../../../../core/di/injection.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/utils/date_format.dart';
-import '../../../profile/domain/entities/profile.dart';
-import '../../../profile/domain/usecases/profile_usecases.dart';
-import '../../../profile/presentation/widgets/profile_switcher.dart';
 import '../../../scan/presentation/widgets/scan_widgets.dart';
 import '../../domain/entities/ttd_settings.dart';
 import '../../domain/usecases/ttd_usecases.dart';
@@ -21,7 +18,6 @@ class TtdTab extends StatefulWidget {
 }
 
 class _TtdTabState extends State<TtdTab> {
-  Profile? _profile;
   TtdSettings? _settings;
   Map<String, DateTime> _logs = {};
   DateTime _month = DateTime(DateTime.now().year, DateTime.now().month);
@@ -40,20 +36,13 @@ class _TtdTabState extends State<TtdTab> {
   }
 
   Future<void> _load() async {
-    final p = await sl<GetActiveProfile>()();
     final s = await sl<GetTtdSettings>()();
     final l = await sl<GetTtdLogs>()();
     if (!mounted) return;
     setState(() {
-      _profile = p;
       _settings = s;
       _logs = l;
     });
-  }
-
-  Future<void> _switchProfile() async {
-    final changed = await openProfileSwitcher(context);
-    if (changed) notifyTtdChanged();
   }
 
   void _openSettings() => Navigator.of(context).push(
@@ -85,37 +74,8 @@ class _TtdTabState extends State<TtdTab> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        Center(child: _profileChip()),
-        const SizedBox(height: 18),
         if (!s.enabled) _notSetCard() else ..._content(s),
       ],
-    );
-  }
-
-  Widget _profileChip() {
-    return GestureDetector(
-      onTap: _switchProfile,
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 9),
-        decoration: BoxDecoration(
-          color: AppColors.white,
-          borderRadius: BorderRadius.circular(20),
-          border: Border.all(color: AppColors.inactive),
-        ),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            const Icon(Icons.people_outline_rounded,
-                size: 16, color: AppColors.textSecondary),
-            const SizedBox(width: 8),
-            Text(_profile?.name ?? 'Profil',
-                style: scanStyle(size: 13, weight: FontWeight.w700)),
-            const SizedBox(width: 4),
-            const Icon(Icons.keyboard_arrow_down_rounded,
-                size: 18, color: AppColors.textSecondary),
-          ],
-        ),
-      ),
     );
   }
 

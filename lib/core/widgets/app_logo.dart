@@ -7,9 +7,14 @@ class AppLogo extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return SvgPicture.asset(
-      'assets/images/anemify_logo.svg',
-      height: height,
+    return Align(
+      alignment: Alignment.centerLeft,
+      widthFactor: 1, // di dalam Row tetap seukuran logo
+      child: SvgPicture.asset(
+        'assets/images/anemify_logo.svg',
+        height: height,
+        alignment: Alignment.centerLeft,
+      ),
     );
   }
 }

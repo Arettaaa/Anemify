@@ -9,6 +9,14 @@ class HomeHeader extends StatelessWidget {
 
   const HomeHeader({super.key, required this.name, this.onProfileTap});
 
+  String get _greeting {
+    final h = DateTime.now().hour;
+    if (h >= 4 && h < 11) return 'Selamat pagi';
+    if (h >= 11 && h < 15) return 'Selamat siang';
+    if (h >= 15 && h < 18) return 'Selamat sore';
+    return 'Selamat malam';
+  }
+
   @override
   Widget build(BuildContext context) {
     final initial = name.isEmpty ? '?' : name[0].toUpperCase();
@@ -16,9 +24,9 @@ class HomeHeader extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         const AppLogo(),
-        const SizedBox(height: 20),
+        const SizedBox(height: 24),
         Row(
-          crossAxisAlignment: CrossAxisAlignment.center,
+          crossAxisAlignment: CrossAxisAlignment.end,
           children: [
             Expanded(
               child: Column(
@@ -26,22 +34,22 @@ class HomeHeader extends StatelessWidget {
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   Text(
-                    'Setiap hari, selangkah lebih sehat',
+                    _greeting,
                     style: GoogleFonts.dmSans(
-                      fontSize: 12,
+                      fontSize: 14,
                       color: AppColors.textSecondary,
                     ),
                   ),
-                  const SizedBox(height: 4),
+                  const SizedBox(height: 2),
                   Text(
-                    'Halo, $name 👋',
+                    name,
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                     style: GoogleFonts.dmSans(
-                      fontSize: 26,
+                      fontSize: 28,
                       fontWeight: FontWeight.w700,
                       height: 1.2,
-                      letterSpacing: -0.6,
+                      letterSpacing: -0.8,
                       color: AppColors.textPrimary,
                     ),
                   ),
@@ -67,46 +75,41 @@ class _ProfileChip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return SizedBox(
+    return Container(
       height: 40,
-      child: DecoratedBox(
-        decoration: BoxDecoration(
-          color: AppColors.white,
-          borderRadius: BorderRadius.circular(20),
-          border: Border.all(color: AppColors.inactive),
-        ),
-        child: Padding(
-          padding: const EdgeInsets.fromLTRB(6, 0, 10, 0),
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.center,
-            children: [
-              Container(
-                width: 28,
-                height: 28,
-                alignment: Alignment.center,
-                decoration: const BoxDecoration(
-                  color: AppColors.pinkTint,
-                  shape: BoxShape.circle,
-                ),
-                child: Text(
-                  initial,
-                  style: GoogleFonts.dmSans(
-                    fontSize: 12,
-                    fontWeight: FontWeight.w700,
-                    color: AppColors.primary,
-                  ),
-                ),
+      padding: const EdgeInsets.fromLTRB(6, 0, 10, 0),
+      decoration: BoxDecoration(
+        color: AppColors.white,
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: AppColors.inactive),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Container(
+            width: 28,
+            height: 28,
+            alignment: Alignment.center,
+            decoration: const BoxDecoration(
+              color: AppColors.pinkTint,
+              shape: BoxShape.circle,
+            ),
+            child: Text(
+              initial,
+              style: GoogleFonts.dmSans(
+                fontSize: 12,
+                fontWeight: FontWeight.w700,
+                color: AppColors.primary,
               ),
-              const SizedBox(width: 4),
-              const Icon(
-                Icons.keyboard_arrow_down_rounded,
-                size: 18,
-                color: AppColors.textSecondary,
-              ),
-            ],
+            ),
           ),
-        ),
+          const SizedBox(width: 4),
+          const Icon(
+            Icons.keyboard_arrow_down_rounded,
+            size: 18,
+            color: AppColors.textSecondary,
+          ),
+        ],
       ),
     );
   }

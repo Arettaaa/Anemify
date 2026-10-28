@@ -14,24 +14,40 @@ class MainShell extends StatefulWidget {
 class _MainShellState extends State<MainShell> {
   int _index = 0;
 
-  void _onTap(int i) => setState(() => _index = i);
+  /// Tab yang sudah pernah dibuka. Yang belum, tidak dibangun dulu.
+  final Set<int> _visited = {0};
+
+  void _onTap(int i) => setState(() {
+        _index = i;
+        _visited.add(i);
+      });
+
+  Widget _tab(int i) {
+    if (!_visited.contains(i)) return const SizedBox.shrink();
+    switch (i) {
+      case 0:
+        return HomePage(
+          onStartScan: () => _onTap(2),
+          onOpenHistory: () => _onTap(1),
+          onOpenEducation: () => _onTap(3),
+        );
+      case 1:
+        return HistoryPage(onStartScan: () => _onTap(2));
+      case 2:
+        return const ScanTab();
+      case 3:
+        return const _PlaceholderPage('Edukasi'); // TODO: EducationPage()
+      default:
+        return const _PlaceholderPage('Pengaturan'); // TODO: SettingsPage()
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       body: IndexedStack(
         index: _index,
-        children: [
-          HomePage(
-            onStartScan: () => _onTap(2),
-            onOpenHistory: () => _onTap(1),
-            onOpenEducation: () => _onTap(3),
-          ),
-          HistoryPage(onStartScan: () => _onTap(2)),
-          const ScanTab(),
-          const _PlaceholderPage('Edukasi'), // TODO: EducationPage()
-          const _PlaceholderPage('Pengaturan'), // TODO: SettingsPage()
-        ],
+        children: List.generate(5, _tab),
       ),
       bottomNavigationBar: AppBottomNav(currentIndex: _index, onTap: _onTap),
     );
