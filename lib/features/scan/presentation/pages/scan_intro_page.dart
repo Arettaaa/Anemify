@@ -4,6 +4,7 @@ import 'package:lucide_icons_flutter/lucide_icons.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../widgets/scan_widgets.dart';
 import 'scan_capture_page.dart';
+import 'scan_flow.dart';
 import 'scan_how_it_works_page.dart';
 
 class ScanIntroPage extends StatefulWidget {
@@ -16,9 +17,10 @@ class ScanIntroPage extends StatefulWidget {
 class _ScanIntroPageState extends State<ScanIntroPage> {
   bool _agreed = false;
 
-  @override
+    @override
   Widget build(BuildContext context) {
     return ScanPageScaffold(
+      showBack: false,
       children: [
         ScanTitle(
           title: 'Kenali, lalu jaga.',
@@ -54,7 +56,7 @@ class _ScanIntroPageState extends State<ScanIntroPage> {
                 child: _TypeCard(
                   icon: LucideIcons.hand,
                   title: 'Telapak tangan',
-                  caption: 'Garis telapak terlihat jelas',
+                  caption: 'Frame kotak di tengah',
                 ),
               ),
             ],
@@ -68,8 +70,8 @@ class _ScanIntroPageState extends State<ScanIntroPage> {
         const SizedBox(height: 16),
         const _TipRow(
           icon: LucideIcons.sun,
-          title: 'Cahaya alami yang merata',
-          desc: 'Hindari flash, bayangan, dan lampu berwarna.',
+          title: 'Cahaya terang yang merata',
+          desc: 'Tanpa flash, hindari bayangan dan lampu berwarna.',
         ),
         const _TipRow(
           icon: LucideIcons.camera,
@@ -79,7 +81,7 @@ class _ScanIntroPageState extends State<ScanIntroPage> {
         const _TipRow(
           icon: LucideIcons.shieldCheck,
           title: 'Data tetap di perangkatmu',
-          desc: 'Crop ROI hanya disimpan jika kamu menyetujuinya.',
+          desc: 'Foto diproses lokal dan tidak disimpan.',
         ),
         const SizedBox(height: 8),
         Container(
@@ -93,25 +95,19 @@ class _ScanIntroPageState extends State<ScanIntroPage> {
             TextSpan(
               children: [
                 TextSpan(
-                  text: 'Mode prototipe: ',
-                  style: scanStyle(
-                    size: 13,
-                    weight: FontWeight.w700,
-                    height: 1.5,
-                  ),
+                  text: 'Penting: ',
+                  style:
+                      scanStyle(size: 13, weight: FontWeight.w700, height: 1.5),
                 ),
                 const TextSpan(
-                  text: 'pemeriksaan kualitas nyata berjalan lokal, tetapi '
-                      'kategori risiko dan confidence adalah simulasi. '
-                      'Crop tengah dan outline bukan segmentasi ML.',
+                  text: 'hasil berupa kategori risiko skrining dari model di '
+                      'perangkat, bukan diagnosis. Ikuti panduan di kamera '
+                      'agar foto bisa dianalisis.',
                 ),
               ],
             ),
             style: scanStyle(
-              size: 13,
-              height: 1.5,
-              color: AppColors.textSecondary,
-            ),
+                size: 13, height: 1.5, color: AppColors.textSecondary),
           ),
         ),
         const SizedBox(height: 20),
@@ -127,25 +123,19 @@ class _ScanIntroPageState extends State<ScanIntroPage> {
                   value: _agreed,
                   activeColor: AppColors.primary,
                   side: const BorderSide(
-                    color: AppColors.textSecondary,
-                    width: 1.5,
-                  ),
+                      color: AppColors.textSecondary, width: 1.5),
                   shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(4),
-                  ),
+                      borderRadius: BorderRadius.circular(4)),
                   onChanged: (v) => setState(() => _agreed = v ?? false),
                 ),
               ),
               const SizedBox(width: 12),
               Expanded(
                 child: Text(
-                  'Saya memahami batasan skrining, pemrosesan foto lokal, '
-                  'dan bahwa hasil ini simulasi, bukan diagnosis.',
+                  'Saya memahami batasan skrining, foto diproses di perangkat, '
+                  'dan hasil ini bukan diagnosis.',
                   style: scanStyle(
-                    size: 13,
-                    height: 1.5,
-                    color: AppColors.textSecondary,
-                  ),
+                      size: 13, height: 1.5, color: AppColors.textSecondary),
                 ),
               ),
             ],
@@ -155,9 +145,10 @@ class _ScanIntroPageState extends State<ScanIntroPage> {
         ScanPrimaryButton(
           label: 'Mulai ambil foto',
           onPressed: _agreed
-              ? () => Navigator.push(
+              ? () => pushScanPage(
                     context,
-                    MaterialPageRoute(builder: (_) => const ScanCapturePage()),
+                    const ScanCapturePage(),
+                    name: kScanCaptureRoute,
                   )
               : null,
         ),
@@ -217,17 +208,13 @@ class _TypeCard extends StatelessWidget {
             child: Icon(icon, color: AppColors.primary, size: 26),
           ),
           const SizedBox(height: 14),
-          Text(
-            title,
-            textAlign: TextAlign.center,
-            style: scanStyle(size: 14, weight: FontWeight.w700),
-          ),
+          Text(title,
+              textAlign: TextAlign.center,
+              style: scanStyle(size: 14, weight: FontWeight.w700)),
           const SizedBox(height: 4),
-          Text(
-            caption,
-            textAlign: TextAlign.center,
-            style: scanStyle(size: 12, color: AppColors.textSecondary),
-          ),
+          Text(caption,
+              textAlign: TextAlign.center,
+              style: scanStyle(size: 12, color: AppColors.textSecondary)),
         ],
       ),
     );
@@ -261,19 +248,11 @@ class _TipRow extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
-                  title,
-                  style: scanStyle(size: 15, weight: FontWeight.w600),
-                ),
+                Text(title, style: scanStyle(size: 15, weight: FontWeight.w600)),
                 const SizedBox(height: 2),
-                Text(
-                  desc,
-                  style: scanStyle(
-                    size: 13,
-                    height: 1.4,
-                    color: AppColors.textSecondary,
-                  ),
-                ),
+                Text(desc,
+                    style: scanStyle(
+                        size: 13, height: 1.4, color: AppColors.textSecondary)),
               ],
             ),
           ),

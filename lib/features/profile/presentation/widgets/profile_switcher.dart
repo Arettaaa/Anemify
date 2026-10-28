@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
+
+import '../../../../core/di/injection.dart';
 import '../../../../core/widgets/blur_sheet.dart';
-import '../../data/profile_storage.dart';
+import '../../domain/entities/profile.dart';
+import '../../domain/usecases/profile_usecases.dart';
 import 'profile_form_sheet.dart';
 import 'profile_picker_sheet.dart';
 
@@ -15,20 +18,20 @@ Future<bool> openProfileSwitcher(BuildContext context) async {
       context,
       child: const ProfileFormSheet(),
     );
-    if (p != null) await ProfileStorage.add(p);
+    if (p != null) await sl<AddProfile>()(p);
     if (!context.mounted) return p != null;
     await openProfileSwitcher(context); // balik ke daftar
     return true;
   }
 
   if (action == 'edit') {
-    final active = await ProfileStorage.getActive();
+    final active = await sl<GetActiveProfile>()();
     if (active == null || !context.mounted) return false;
     final p = await showBlurSheet<Profile>(
       context,
       child: ProfileFormSheet(initial: active),
     );
-    if (p != null) await ProfileStorage.update(p);
+    if (p != null) await sl<UpdateProfile>()(p);
     return p != null;
   }
 

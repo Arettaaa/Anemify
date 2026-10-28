@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../../home/presentation/pages/home_page.dart';
-import '../../../scan/presentation/scan_flow.dart';
+import '../../../scan/presentation/pages/scan_tab.dart';
+import '../../../history/presentation/pages/history_page.dart';
 import '../widgets/app_bottom_nav.dart';
 import '../../../education/presentation/pages/education_page.dart';
 
@@ -14,32 +15,22 @@ class MainShell extends StatefulWidget {
 class _MainShellState extends State<MainShell> {
   int _index = 0;
 
-  void _onTap(int i) {
-    if (i == 2) {
-      openScanFlow(context);
-      return;
-    }
-    setState(() => _index = i);
-  }
+  void _onTap(int i) => setState(() => _index = i);
 
   @override
   Widget build(BuildContext context) {
-    // index nav -> index halaman (Scan tidak punya tab)
-    final pageIndex = const {0: 0, 1: 1, 3: 2, 4: 3}[_index]!;
-
     return Scaffold(
-      extendBody: true,
       body: IndexedStack(
-        index: pageIndex,
+        index: _index,
         children: [
           HomePage(
             onStartScan: () => _onTap(2),
             onOpenHistory: () => _onTap(1),
             onOpenEducation: () => _onTap(3),
           ),
-          const _PlaceholderPage('Riwayat'), // TODO: HistoryPage()
-          const EducationPage(), // Halaman Edukasi aktif!
-          const _PlaceholderPage('Pengaturan'), // TODO: SettingsPage()
+          HistoryPage(onStartScan: () => _onTap(2)), // Punya temanmu (Riwayat)
+          const EducationPage(), // Punya kamu (Edukasi)
+          const _PlaceholderPage('Pengaturan'), // Placeholder sisa
         ],
       ),
       bottomNavigationBar: AppBottomNav(currentIndex: _index, onTap: _onTap),

@@ -6,7 +6,10 @@ import '../../../onboarding/presentation/pages/welcome_page.dart';
 import '../../../onboarding/presentation/widgets/onboarding_consent_box.dart';
 import '../../../onboarding/presentation/widgets/onboarding_header.dart';
 import '../../../onboarding/presentation/widgets/onboarding_primary_button.dart';
-import '../../data/profile_storage.dart';
+import '../../../../core/di/injection.dart';
+import '../../domain/entities/profile.dart';
+import '../../domain/usecases/profile_usecases.dart';
+import '../widgets/profile_fields.dart';
 
 class ProfileSetupPage extends StatefulWidget {
   const ProfileSetupPage({super.key});
@@ -18,27 +21,31 @@ class ProfileSetupPage extends StatefulWidget {
 class _ProfileSetupPageState extends State<ProfileSetupPage> {
   final _nameCtrl = TextEditingController();
   final _ageCtrl = TextEditingController();
-  String _category = 'Umum';
+  Sex? _sex;
+  bool _pregnant = false;
   bool _consent = false;
 
-  static const _categories = ['Umum', 'Ibu hamil', 'Remaja'];
+  int? get _age => int.tryParse(_ageCtrl.text.trim());
+  bool get _canBePregnant => Profile.canBePregnant(_sex, _age);
 
   bool get _valid {
-    final age = int.tryParse(_ageCtrl.text.trim());
+    final age = _age;
     return _nameCtrl.text.trim().isNotEmpty &&
         age != null &&
         age > 0 &&
         age < 120 &&
+        _sex != null &&
         _consent;
   }
 
   Future<void> _save() async {
     final name = _nameCtrl.text.trim();
-    await ProfileStorage.add(
+    await sl<AddProfile>()(
       Profile.create(
         name: name,
-        age: int.parse(_ageCtrl.text.trim()),
-        category: _category,
+        age: _age!,
+        sex: _sex!,
+        pregnant: _pregnant,
       ),
       setActive: true,
     );
@@ -153,12 +160,16 @@ class _ProfileSetupPageState extends State<ProfileSetupPage> {
                     const SizedBox(height: 8),
                     _field(_ageCtrl, 'Usia dalam tahun', TextInputType.number),
                     const SizedBox(height: 16),
-                    _label('Kategori profil'),
+                    _label('Jenis kelamin'),
                     const SizedBox(height: 8),
-                    Row(
-                      children: _categories
-                          .map((c) => Expanded(child: _categoryCard(c)))
-                          .toList(),
+                    SexSelector(
+                      value: _sex,
+                      onChanged: (s) => setState(() => _sex = s),
+                    ),
+                    PregnancySwitch(
+                      visible: _canBePregnant,
+                      value: _pregnant && _canBePregnant,
+                      onChanged: (v) => setState(() => _pregnant = v),
                     ),
                     const SizedBox(height: 16),
                     OnboardingConsentBox(
@@ -166,7 +177,8 @@ class _ProfileSetupPageState extends State<ProfileSetupPage> {
                       checked: _consent,
                       onChanged: (v) => setState(() => _consent = v),
                       title: 'Persetujuan penggunaan data',
-                      text: 'Saya setuju data profil dan riwayat skrining disimpan secara lokal di perangkat ini, dan hanya digunakan untuk keperluan aplikasi.',
+                      text:
+                          'Saya setuju data profil dan riwayat skrining disimpan secara lokal di perangkat ini, dan hanya digunakan untuk keperluan aplikasi.',
                     ),
                     const SizedBox(height: 14),
                     Row(
@@ -177,7 +189,7 @@ class _ProfileSetupPageState extends State<ProfileSetupPage> {
                         const SizedBox(width: 8),
                         Expanded(
                           child: Text(
-                            'Profil keluarga bisa ditambahkan nanti. Usia dan kategori bukan dasar diagnosis atau resep TTD.',
+                            'Profil keluarga bisa ditambahkan nanti. Data profil tidak dipakai model skrining dan bukan dasar diagnosis atau resep TTD.',
                             style: GoogleFonts.dmSans(
                               fontSize: 11,
                               height: 1.6,
@@ -217,6 +229,7 @@ class _ProfileSetupPageState extends State<ProfileSetupPage> {
   }
 
   Widget _profileCard() {
+    final name = _nameCtrl.text.trim();
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
@@ -234,7 +247,7 @@ class _ProfileSetupPageState extends State<ProfileSetupPage> {
               shape: BoxShape.circle,
             ),
             child: Text(
-              '?',
+              name.isEmpty ? '?' : name[0].toUpperCase(),
               style: GoogleFonts.dmSans(
                 fontSize: 20,
                 fontWeight: FontWeight.w700,
@@ -248,7 +261,7 @@ class _ProfileSetupPageState extends State<ProfileSetupPage> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  'Profil pertamamu',
+                  name.isEmpty ? 'Profil pertamamu' : name,
                   style: GoogleFonts.dmSans(
                     fontSize: 14,
                     fontWeight: FontWeight.w700,
@@ -307,48 +320,6 @@ class _ProfileSetupPageState extends State<ProfileSetupPage> {
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(16),
           borderSide: const BorderSide(color: AppColors.primarySoft),
-        ),
-      ),
-    );
-  }
-
-  Widget _categoryCard(String c) {
-    final selected = _category == c;
-    return GestureDetector(
-      onTap: () => setState(() => _category = c),
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 150),
-        height: 70,
-        margin: EdgeInsets.only(right: c == _categories.last ? 0 : 8),
-        decoration: BoxDecoration(
-          color: selected
-              ? AppColors.primary.withOpacity(0.08)
-              : AppColors.white,
-          borderRadius: BorderRadius.circular(16),
-          border: Border.all(
-            color: selected ? AppColors.primarySoft : AppColors.inactive,
-          ),
-        ),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(
-              selected
-                  ? Icons.radio_button_checked
-                  : Icons.radio_button_unchecked,
-              size: 20,
-              color: selected ? AppColors.primary : AppColors.textPrimary,
-            ),
-            const SizedBox(height: 6),
-            Text(
-              c,
-              style: GoogleFonts.dmSans(
-                fontSize: 12,
-                fontWeight: FontWeight.w700,
-                color: selected ? AppColors.primary : AppColors.textPrimary,
-              ),
-            ),
-          ],
         ),
       ),
     );

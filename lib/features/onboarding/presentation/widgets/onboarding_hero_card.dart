@@ -45,12 +45,12 @@ class OnboardingHeroCard extends StatelessWidget {
               ),
             ),
             Positioned(
-              left: 20,
-              right: 20,
-              bottom: 20,
+              left: 16,
+              right: 16,
+              bottom: 16,
               child: Container(
                 padding:
-                    const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                    const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
                 decoration: BoxDecoration(
                   color: AppColors.white,
                   borderRadius: BorderRadius.circular(18),
@@ -68,12 +68,18 @@ class OnboardingHeroCard extends StatelessWidget {
                     const Icon(Icons.verified_user_outlined,
                         size: 18, color: AppColors.primary),
                     const SizedBox(width: 8),
-                    Text(
-                      badge,
-                      style: GoogleFonts.dmSans(
-                        fontSize: 13,
-                        fontWeight: FontWeight.w700,
-                        color: AppColors.textPrimary,
+                    Flexible(
+                      child: Text(
+                        badge,
+                        maxLines: 2,
+                        textAlign: TextAlign.center,
+                        overflow: TextOverflow.ellipsis,
+                        style: GoogleFonts.dmSans(
+                          fontSize: 13,
+                          fontWeight: FontWeight.w700,
+                          height: 1.3,
+                          color: AppColors.textPrimary,
+                        ),
                       ),
                     ),
                   ],

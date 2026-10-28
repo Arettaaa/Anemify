@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
-
+import '../../../../core/widgets/app_logo.dart';
 import '../../../../core/theme/app_colors.dart';
 
 TextStyle scanStyle({
@@ -51,7 +51,8 @@ class ScanPageScaffold extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    if (showBack) ScanHeader(showBack: showBack),
+                    // logo selalu tampil, tombol back opsional
+                    ScanHeader(showBack: showBack),
                     const SizedBox(height: 24),
                     ...children,
                   ],
@@ -74,7 +75,7 @@ class ScanHeader extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Image.asset('assets/images/anemify_logo.png', height: 28),
+        const AppLogo(),
         if (showBack) ...[
           const SizedBox(height: 16),
           Material(
@@ -174,6 +175,7 @@ class ScanPrimaryButton extends StatelessWidget {
           elevation: 0,
           backgroundColor: AppColors.primary,
           disabledBackgroundColor: AppColors.primary.withOpacity(0.4),
+          disabledForegroundColor: AppColors.white,
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(16),
           ),
