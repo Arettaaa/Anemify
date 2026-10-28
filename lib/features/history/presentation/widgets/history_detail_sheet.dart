@@ -4,12 +4,14 @@ import '../../../../core/di/injection.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/utils/date_format.dart';
 import '../../../../core/widgets/blur_sheet.dart';
+import '../../../profile/domain/usecases/profile_usecases.dart';
 import '../../../scan/presentation/widgets/risk_badge.dart';
 import '../../../scan/presentation/widgets/scan_messages.dart';
 import '../../../scan/presentation/widgets/scan_widgets.dart';
 import '../../domain/entities/history_entry.dart';
 import '../../domain/usecases/history_usecases.dart';
 import '../history_revision.dart';
+import '../report/scan_report_pdf.dart';
 import 'history_scan_card.dart';
 
 Future<void> showHistoryDetail(BuildContext context, HistoryEntry e) =>
@@ -61,30 +63,50 @@ class HistoryDetailSheet extends StatelessWidget {
       children: [
         const SheetHeader(title: 'Detail hasil skrining'),
         const SizedBox(height: 8),
-        Text(
-          '${formatTglPanjang(entry.createdAt)} · ${formatJam(entry.createdAt)} · ${sumberFoto(entry)}',
-          style: scanStyle(size: 12.5, color: AppColors.textSecondary),
+        FutureBuilder(
+          future: sl<GetActiveProfile>()(),
+          builder: (_, snap) {
+            final name = snap.data?.name;
+            return Text(
+              '${name != null ? '$name · ' : ''}${formatTglPanjang(entry.createdAt)} · ${sumberFoto(entry)}',
+              style: scanStyle(size: 12.5, color: AppColors.textSecondary),
+            );
+          },
         ),
         const SizedBox(height: 16),
         Container(
-          padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 22),
+          padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 24),
           decoration: BoxDecoration(
             color: AppColors.pinkTint,
-            borderRadius: BorderRadius.circular(24),
+            borderRadius: BorderRadius.circular(28),
           ),
           child: Column(
             children: [
+              Container(
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
+                decoration: BoxDecoration(
+                  color: AppColors.white,
+                  borderRadius: BorderRadius.circular(20),
+                ),
+                child: Text('Hasil Skrining',
+                    style: scanStyle(
+                        size: 10.5,
+                        weight: FontWeight.w700,
+                        color: AppColors.primary)),
+              ),
+              const SizedBox(height: 14),
               Text(judulKategori(c),
                   textAlign: TextAlign.center,
                   style: scanStyle(
-                      size: 26, weight: FontWeight.w700, letterSpacing: -0.6)),
-              const SizedBox(height: 10),
-              RiskBadge(category: c),
+                      size: 28, weight: FontWeight.w700, letterSpacing: -0.6)),
               const SizedBox(height: 12),
+              RiskBadge(category: c),
+              const SizedBox(height: 14),
               Text(pesanKategori(c),
                   textAlign: TextAlign.center,
                   style: scanStyle(
-                      size: 13, height: 1.6, color: AppColors.textSecondary)),
+                      size: 13, height: 1.7, color: AppColors.textSecondary)),
               const SizedBox(height: 10),
               Text('Skor risiko skrining: ${(entry.score * 100).round()}/100',
                   style: scanStyle(
@@ -105,37 +127,29 @@ class HistoryDetailSheet extends StatelessWidget {
                 style: scanStyle(size: 12, height: 1.5)),
           ),
         ],
-        const SizedBox(height: 18),
+        const SizedBox(height: 20),
         Text('Langkah selanjutnya',
-            style: scanStyle(size: 16, weight: FontWeight.w700)),
+            style: scanStyle(size: 17, weight: FontWeight.w700)),
         const SizedBox(height: 8),
         Text(saranLanjutan(c),
             style: scanStyle(
-                size: 13.5, height: 1.7, color: AppColors.textSecondary)),
-        const SizedBox(height: 14),
+                size: 14, height: 1.7, color: AppColors.textSecondary)),
+        const SizedBox(height: 12),
         Text(kScanDisclaimer,
             style: scanStyle(
                 size: 11,
                 height: 1.5,
                 color: AppColors.textSecondary.withOpacity(0.8))),
         const SizedBox(height: 20),
-        SizedBox(
-          height: 50,
-          child: OutlinedButton.icon(
-            onPressed: () => _delete(context),
-            style: OutlinedButton.styleFrom(
-              side: const BorderSide(color: AppColors.primarySoft),
-              shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(16)),
-            ),
-            icon: const Icon(Icons.delete_outline_rounded,
-                size: 18, color: AppColors.primary),
-            label: Text('Hapus dari riwayat',
-                style: scanStyle(
-                    size: 14.5,
-                    weight: FontWeight.w700,
-                    color: AppColors.primary)),
-          ),
+        ReportPdfButton(entry: entry),
+        const SizedBox(height: 6),
+        TextButton.icon(
+          onPressed: () => _delete(context),
+          icon: const Icon(Icons.delete_outline_rounded,
+              size: 18, color: AppColors.primary),
+          label: Text('Hapus dari riwayat',
+              style: scanStyle(
+                  size: 14, weight: FontWeight.w700, color: AppColors.primary)),
         ),
       ],
     );

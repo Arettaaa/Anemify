@@ -5,6 +5,8 @@ import 'package:url_launcher/url_launcher.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../domain/entities/risk_category.dart';
 import '../../domain/entities/scan_result.dart';
+import '../../../history/domain/entities/history_entry.dart';
+import '../../../history/presentation/report/scan_report_pdf.dart';
 import '../bloc/scan_bloc.dart';
 import '../bloc/scan_event.dart';
 import '../widgets/scan_messages.dart';
@@ -261,6 +263,11 @@ class ScanResultPage extends StatelessWidget {
             icon: Icons.done_all_rounded,
             iconAfter: false,
             onPressed: () => _finish(context),
+          ),
+          const SizedBox(height: 12),
+          ReportPdfButton(
+            entry: HistoryEntry.fromScanResult(result),
+            outlined: true,
           ),
           const SizedBox(height: 12),
           SizedBox(

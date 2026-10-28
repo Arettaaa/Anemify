@@ -25,7 +25,8 @@ class HistoryPage extends StatefulWidget {
   State<HistoryPage> createState() => _HistoryPageState();
 }
 
-class _HistoryPageState extends State<HistoryPage> {
+class _HistoryPageState extends State<HistoryPage>
+    with SingleTickerProviderStateMixin {
   List<HistoryEntry> _all = [];
   bool _loading = true;
   String _name = 'Profil';
@@ -33,6 +34,16 @@ class _HistoryPageState extends State<HistoryPage> {
   bool _monthly = true;
   DateTime _anchor = DateTime.now();
   RiskCategory? _filter;
+
+  late final AnimationController _fade = AnimationController(
+    vsync: this,
+    duration: const Duration(milliseconds: 300),
+    value: 1,
+  );
+  late final Animation<double> _curve =
+      CurvedAnimation(parent: _fade, curve: Curves.easeOutCubic);
+  late Animation<Offset> _slide =
+      Tween(begin: Offset.zero, end: Offset.zero).animate(_curve);
 
   @override
   void initState() {
@@ -47,6 +58,7 @@ class _HistoryPageState extends State<HistoryPage> {
   void dispose() {
     historyRevision.removeListener(_load);
     ttdRevision.removeListener(_loadName);
+    _fade.dispose();
     super.dispose();
   }
 
@@ -65,12 +77,29 @@ class _HistoryPageState extends State<HistoryPage> {
     setState(() => _name = p?.name ?? 'Profil');
   }
 
+  Future<void> _refresh() async {
+    notifyTtdChanged();
+    await _load();
+  }
+
   Future<void> _switchProfile() async {
     final changed = await openProfileSwitcher(context);
     if (changed) {
-      notifyTtdChanged(); // reload nama + data TTD
+      notifyTtdChanged();
       _load();
     }
+  }
+
+  void _setTab(int i) {
+    if (i == _tab) return;
+    setState(() {
+      _slide = Tween<Offset>(
+        begin: Offset(i == 1 ? 0.06 : -0.06, 0),
+        end: Offset.zero,
+      ).animate(_curve);
+      _tab = i;
+    });
+    _fade.forward(from: 0);
   }
 
   DateTime get _start {
@@ -107,7 +136,7 @@ class _HistoryPageState extends State<HistoryPage> {
         bottom: false,
         child: RefreshIndicator(
           color: AppColors.primary,
-          onRefresh: _load,
+          onRefresh: _refresh,
           child: ListView(
             physics: const AlwaysScrollableScrollPhysics(),
             padding: EdgeInsets.fromLTRB(hPad, 16, hPad, 32),
@@ -123,8 +152,34 @@ class _HistoryPageState extends State<HistoryPage> {
               const SizedBox(height: 16),
               _tabs(),
               const SizedBox(height: 24),
-              if (_tab == 0) ..._scanSection() else const TtdTab(),
+              _pane(
+                0,
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: _scanSection(),
+                ),
+              ),
+              _pane(1, const TtdTab()),
             ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  /// Dua tab tetap hidup (state tidak hilang), yang aktif di-fade masuk.
+  Widget _pane(int i, Widget child) {
+    final active = _tab == i;
+    return Offstage(
+      offstage: !active,
+      child: TickerMode(
+        enabled: active,
+        child: FadeTransition(
+          opacity: active ? _curve : kAlwaysCompleteAnimation,
+          child: SlideTransition(
+            position:
+                active ? _slide : const AlwaysStoppedAnimation(Offset.zero),
+            child: child,
           ),
         ),
       ),
@@ -159,59 +214,73 @@ class _HistoryPageState extends State<HistoryPage> {
 
   // ---------- Tabs ----------
   Widget _tabs() {
-    Widget tab(int i, IconData icon, String label) {
+    Widget item(int i, IconData icon, String label) {
       final active = _tab == i;
+      final color = active ? AppColors.primary : AppColors.textSecondary;
       return Expanded(
         child: GestureDetector(
-          onTap: () => setState(() => _tab = i),
-          child: AnimatedContainer(
-            duration: const Duration(milliseconds: 200),
-            height: 46,
-            decoration: BoxDecoration(
-              color: active ? AppColors.white : Colors.transparent,
-              borderRadius: BorderRadius.circular(16),
-              boxShadow: active
-                  ? [
-                      BoxShadow(
-                        color: Colors.black.withOpacity(0.06),
-                        blurRadius: 10,
-                        offset: const Offset(0, 3),
-                      ),
-                    ]
-                  : null,
-            ),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Icon(icon,
-                    size: 17,
-                    color:
-                        active ? AppColors.primary : AppColors.textSecondary),
-                const SizedBox(width: 8),
-                Text(label,
-                    style: scanStyle(
-                        size: 13.5,
-                        weight: FontWeight.w700,
-                        color: active
-                            ? AppColors.primary
-                            : AppColors.textSecondary)),
-              ],
-            ),
+          behavior: HitTestBehavior.opaque,
+          onTap: () => _setTab(i),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              TweenAnimationBuilder<Color?>(
+                tween: ColorTween(end: color),
+                duration: const Duration(milliseconds: 220),
+                builder: (_, c, __) => Icon(icon, size: 17, color: c),
+              ),
+              const SizedBox(width: 8),
+              AnimatedDefaultTextStyle(
+                duration: const Duration(milliseconds: 220),
+                style: scanStyle(
+                    size: 13.5, weight: FontWeight.w700, color: color),
+                child: Text(label),
+              ),
+            ],
           ),
         ),
       );
     }
 
     return Container(
+      height: 54,
       padding: const EdgeInsets.all(4),
       decoration: BoxDecoration(
         color: AppColors.surface,
         borderRadius: BorderRadius.circular(20),
       ),
-      child: Row(children: [
-        tab(0, Icons.crop_free_rounded, 'Hasil scan'),
-        tab(1, Icons.done_all_rounded, 'Konsumsi TTD'),
-      ]),
+      child: Stack(
+        fit: StackFit.expand,
+        children: [
+          AnimatedAlign(
+            duration: const Duration(milliseconds: 280),
+            curve: Curves.easeOutCubic,
+            alignment:
+                _tab == 0 ? Alignment.centerLeft : Alignment.centerRight,
+            child: FractionallySizedBox(
+              widthFactor: 0.5,
+              heightFactor: 1,
+              child: Container(
+                decoration: BoxDecoration(
+                  color: AppColors.white,
+                  borderRadius: BorderRadius.circular(16),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withOpacity(0.06),
+                      blurRadius: 10,
+                      offset: const Offset(0, 3),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+          Row(children: [
+            item(0, Icons.crop_free_rounded, 'Hasil scan'),
+            item(1, Icons.done_all_rounded, 'Konsumsi TTD'),
+          ]),
+        ],
+      ),
     );
   }
 
@@ -326,7 +395,7 @@ class _HistoryPageState extends State<HistoryPage> {
           _anchor = DateTime.now();
         }),
         child: AnimatedContainer(
-          duration: const Duration(milliseconds: 150),
+          duration: const Duration(milliseconds: 180),
           padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
           decoration: BoxDecoration(
             color: active ? AppColors.textPrimary : Colors.transparent,
@@ -380,7 +449,7 @@ class _HistoryPageState extends State<HistoryPage> {
       child: GestureDetector(
         onTap: () => setState(() => _filter = c),
         child: AnimatedContainer(
-          duration: const Duration(milliseconds: 150),
+          duration: const Duration(milliseconds: 180),
           padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 11),
           decoration: BoxDecoration(
             color: active ? AppColors.textPrimary : AppColors.surface,

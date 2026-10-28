@@ -9,14 +9,6 @@ class HomeHeader extends StatelessWidget {
 
   const HomeHeader({super.key, required this.name, this.onProfileTap});
 
-  String get _greeting {
-    final h = DateTime.now().hour;
-    if (h >= 4 && h < 11) return 'Selamat pagi';
-    if (h >= 11 && h < 15) return 'Selamat siang';
-    if (h >= 15 && h < 18) return 'Selamat sore';
-    return 'Selamat malam';
-  }
-
   @override
   Widget build(BuildContext context) {
     final initial = name.isEmpty ? '?' : name[0].toUpperCase();
@@ -24,9 +16,8 @@ class HomeHeader extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         const AppLogo(),
-        const SizedBox(height: 24),
+        const SizedBox(height: 22),
         Row(
-          crossAxisAlignment: CrossAxisAlignment.end,
           children: [
             Expanded(
               child: Column(
@@ -34,22 +25,22 @@ class HomeHeader extends StatelessWidget {
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   Text(
-                    _greeting,
+                    'Setiap hari, selangkah lebih sehat',
                     style: GoogleFonts.dmSans(
-                      fontSize: 14,
+                      fontSize: 12.5,
                       color: AppColors.textSecondary,
                     ),
                   ),
-                  const SizedBox(height: 2),
+                  const SizedBox(height: 4),
                   Text(
-                    name,
+                    'Halo, $name',
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                     style: GoogleFonts.dmSans(
-                      fontSize: 28,
+                      fontSize: 26,
                       fontWeight: FontWeight.w700,
                       height: 1.2,
-                      letterSpacing: -0.8,
+                      letterSpacing: -0.6,
                       color: AppColors.textPrimary,
                     ),
                   ),
@@ -59,58 +50,44 @@ class HomeHeader extends StatelessWidget {
             const SizedBox(width: 12),
             GestureDetector(
               onTap: onProfileTap,
-              child: _ProfileChip(initial: initial),
+              child: Container(
+                height: 40,
+                padding: const EdgeInsets.fromLTRB(6, 0, 10, 0),
+                decoration: BoxDecoration(
+                  color: AppColors.white,
+                  borderRadius: BorderRadius.circular(20),
+                  border: Border.all(color: AppColors.inactive),
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Container(
+                      width: 28,
+                      height: 28,
+                      alignment: Alignment.center,
+                      decoration: const BoxDecoration(
+                        color: AppColors.pinkTint,
+                        shape: BoxShape.circle,
+                      ),
+                      child: Text(
+                        initial,
+                        style: GoogleFonts.dmSans(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w700,
+                          color: AppColors.primary,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 6),
+                    const Icon(Icons.keyboard_arrow_down_rounded,
+                        size: 18, color: AppColors.textSecondary),
+                  ],
+                ),
+              ),
             ),
           ],
         ),
       ],
-    );
-  }
-}
-
-class _ProfileChip extends StatelessWidget {
-  final String initial;
-
-  const _ProfileChip({required this.initial});
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      height: 40,
-      padding: const EdgeInsets.fromLTRB(6, 0, 10, 0),
-      decoration: BoxDecoration(
-        color: AppColors.white,
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: AppColors.inactive),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Container(
-            width: 28,
-            height: 28,
-            alignment: Alignment.center,
-            decoration: const BoxDecoration(
-              color: AppColors.pinkTint,
-              shape: BoxShape.circle,
-            ),
-            child: Text(
-              initial,
-              style: GoogleFonts.dmSans(
-                fontSize: 12,
-                fontWeight: FontWeight.w700,
-                color: AppColors.primary,
-              ),
-            ),
-          ),
-          const SizedBox(width: 4),
-          const Icon(
-            Icons.keyboard_arrow_down_rounded,
-            size: 18,
-            color: AppColors.textSecondary,
-          ),
-        ],
-      ),
     );
   }
 }

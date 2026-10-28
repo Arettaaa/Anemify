@@ -7,6 +7,7 @@ import '../../../profile/domain/usecases/profile_usecases.dart';
 import '../../../scan/presentation/widgets/scan_widgets.dart';
 import '../../domain/entities/ttd_settings.dart';
 import '../../domain/usecases/ttd_usecases.dart';
+import '../../../../core/widgets/app_toast.dart';
 import '../ttd_revision.dart';
 
 class TtdReminderPage extends StatefulWidget {
@@ -79,25 +80,18 @@ class _TtdReminderPageState extends State<TtdReminderPage> {
     await notif.applyTtd(settings: s, profileId: _profileId, name: _name);
 
     if (!mounted) return;
-    final messenger = ScaffoldMessenger.of(context);
+    if (granted) {
+      showAppToast(context, 'Jadwal TTD berhasil disimpan');
+    } else {
+      showAppToast(
+        context,
+        'Jadwal disimpan, tapi izin notifikasi belum aktif',
+        type: ToastType.warning,
+        actionLabel: 'Izinkan',
+        onAction: notif.openSettings,
+      );
+    }
     Navigator.of(context).pop();
-    messenger.showSnackBar(
-      SnackBar(
-        content: Text(
-          granted
-              ? 'Pengingat disimpan.'
-              : 'Pengingat disimpan, tapi izin notifikasi belum diberikan.',
-          style: scanStyle(size: 13, color: AppColors.white),
-        ),
-        action: granted
-            ? null
-            : SnackBarAction(
-                label: 'Buka pengaturan',
-                textColor: AppColors.primarySoft,
-                onPressed: notif.openSettings,
-              ),
-      ),
-    );
   }
 
   @override

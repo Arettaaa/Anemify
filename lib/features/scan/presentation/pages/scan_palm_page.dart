@@ -14,6 +14,7 @@ import '../widgets/scan_widgets.dart';
 import 'guided_camera_page.dart';
 import 'scan_flow.dart';
 import 'scan_loading_page.dart';
+import '../../../../core/widgets/app_toast.dart';
 
 class ScanPalmPage extends StatefulWidget {
   const ScanPalmPage({super.key});
@@ -26,10 +27,12 @@ class _ScanPalmPageState extends State<ScanPalmPage> {
   Uint8List? _photo;
 
   Future<void> _capture() async {
-    final bytes =
-        await Navigator.of(context, rootNavigator: true).push<Uint8List>(
-      MaterialPageRoute(builder: (_) => const GuidedCameraPage(isEye: false)),
-    );
+    final bytes = await Navigator.of(context, rootNavigator: true)
+        .push<Uint8List>(
+          MaterialPageRoute(
+            builder: (_) => const GuidedCameraPage(isEye: false),
+          ),
+        );
     if (bytes == null || !mounted) return;
     context.read<ScanBloc>().add(PalmPhotoCaptured(bytes));
     setState(() => _photo = bytes);
@@ -37,17 +40,16 @@ class _ScanPalmPageState extends State<ScanPalmPage> {
   }
 
   Future<void> _analyze() async {
-    final failed =
-        await pushScanPage<ScanState>(context, const ScanLoadingPage());
+    final failed = await pushScanPage<ScanState>(
+      context,
+      const ScanLoadingPage(),
+    );
     if (failed == null || failed.failure == null || !mounted) return;
 
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(
-          pesanGagal(failed.failure!, failed.failedPhoto),
-          style: scanStyle(size: 13, color: Colors.white),
-        ),
-      ),
+    showAppToast(
+      context,
+      pesanGagal(failed.failure!, failed.failedPhoto),
+      type: ToastType.error,
     );
     if (failed.failedPhoto == ScanPhotoKind.eye) {
       Navigator.of(context).pop(); // ulangi foto mata saja
@@ -73,7 +75,8 @@ class _ScanPalmPageState extends State<ScanPalmPage> {
         const SizedBox(height: 16),
         const ScanGuideCard(
           title: 'Panduan foto tangan',
-          body: 'Buka telapak dengan santai dan posisikan bagian tengahnya '
+          body:
+              'Buka telapak dengan santai dan posisikan bagian tengahnya '
               'memenuhi kotak. Pastikan tajam, tanpa bayangan atau filter kamera.',
         ),
         const SizedBox(height: 16),
