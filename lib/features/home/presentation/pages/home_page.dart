@@ -16,7 +16,6 @@ import '../../../ttd/domain/entities/ttd_settings.dart';
 import '../../../ttd/domain/usecases/ttd_usecases.dart';
 import '../../../ttd/presentation/pages/ttd_reminder_page.dart';
 import '../../../ttd/presentation/ttd_revision.dart';
-  import '../../../history/domain/usecases/history_usecases.dart';
 import '../widgets/food_card.dart';
 import '../widgets/habit_card.dart';
 import '../widgets/home_header.dart';
