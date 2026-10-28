@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
+
+import '../../../education/presentation/pages/education_page.dart';
+import '../../../history/presentation/pages/history_page.dart';
 import '../../../home/presentation/pages/home_page.dart';
 import '../../../scan/presentation/pages/scan_tab.dart';
-import '../../../history/presentation/pages/history_page.dart';
 import '../widgets/app_bottom_nav.dart';
 
 class MainShell extends StatefulWidget {
@@ -14,16 +16,19 @@ class MainShell extends StatefulWidget {
 class _MainShellState extends State<MainShell> {
   int _index = 0;
 
-  /// Tab yang sudah pernah dibuka. Yang belum, tidak dibangun dulu.
+  /// Tab yang sudah pernah dibuka. Yang belum, tidak dibangun dulu (Lazy Loading).
   final Set<int> _visited = {0};
 
-  void _onTap(int i) => setState(() {
-        _index = i;
-        _visited.add(i);
-      });
+  void _onTap(int i) {
+    setState(() {
+      _index = i;
+      _visited.add(i);
+    });
+  }
 
   Widget _tab(int i) {
     if (!_visited.contains(i)) return const SizedBox.shrink();
+
     switch (i) {
       case 0:
         return HomePage(
@@ -36,19 +41,16 @@ class _MainShellState extends State<MainShell> {
       case 2:
         return const ScanTab();
       case 3:
-        return const _PlaceholderPage('Edukasi'); // TODO: EducationPage()
+        return const EducationPage();
       default:
-        return const _PlaceholderPage('Pengaturan'); // TODO: SettingsPage()
+        return const _PlaceholderPage('Pengaturan');
     }
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: IndexedStack(
-        index: _index,
-        children: List.generate(5, _tab),
-      ),
+      body: IndexedStack(index: _index, children: List.generate(5, _tab)),
       bottomNavigationBar: AppBottomNav(currentIndex: _index, onTap: _onTap),
     );
   }
