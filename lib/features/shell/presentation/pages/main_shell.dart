@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../../../home/presentation/pages/home_page.dart';
 import '../../../scan/presentation/scan_flow.dart';
 import '../widgets/app_bottom_nav.dart';
+import '../../../education/presentation/pages/education_page.dart';
 
 class MainShell extends StatefulWidget {
   const MainShell({super.key});
@@ -37,7 +38,7 @@ class _MainShellState extends State<MainShell> {
             onOpenEducation: () => _onTap(3),
           ),
           const _PlaceholderPage('Riwayat'), // TODO: HistoryPage()
-          const _PlaceholderPage('Edukasi'), // TODO: EducationPage()
+          const EducationPage(), // Halaman Edukasi aktif!
           const _PlaceholderPage('Pengaturan'), // TODO: SettingsPage()
         ],
       ),
