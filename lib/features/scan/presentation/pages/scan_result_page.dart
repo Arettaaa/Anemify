@@ -70,7 +70,7 @@ class ScanResultPage extends StatelessWidget {
   Widget _mapsNote() => Text(
         'Membuka Google Maps; lokasi diatur oleh Maps. Foto dan hasil scan tidak dikirim.',
         style:
-            scanStyle(size: 11, color: AppColors.textSecondary.withOpacity(0.7)),
+            scanStyle(size: 11, color: AppColors.textSecondary.withValues(alpha: 0.7)),
       );
 
   @override
@@ -166,7 +166,7 @@ class ScanResultPage extends StatelessWidget {
                   textAlign: TextAlign.center,
                   style: scanStyle(
                     size: 11.5,
-                    color: AppColors.textSecondary.withOpacity(0.8),
+                    color: AppColors.textSecondary.withValues(alpha: 0.8),
                   ),
                 ),
               ],
@@ -295,7 +295,7 @@ class ScanResultPage extends StatelessWidget {
               style: scanStyle(
                 size: 11,
                 height: 1.5,
-                color: AppColors.textSecondary.withOpacity(0.7),
+                color: AppColors.textSecondary.withValues(alpha: 0.7),
               ),
             ),
           ),

@@ -174,7 +174,7 @@ class ScanPrimaryButton extends StatelessWidget {
         style: ElevatedButton.styleFrom(
           elevation: 0,
           backgroundColor: AppColors.primary,
-          disabledBackgroundColor: AppColors.primary.withOpacity(0.4),
+          disabledBackgroundColor: AppColors.primary.withValues(alpha: 0.4),
           disabledForegroundColor: AppColors.white,
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(16),

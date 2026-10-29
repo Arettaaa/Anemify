@@ -19,7 +19,7 @@ class CrescentPainter extends CustomPainter {
     canvas.drawPath(
       path,
       Paint()
-        ..color = Colors.white.withOpacity(0.06)
+        ..color = Colors.white.withValues(alpha: 0.06)
         ..style = PaintingStyle.fill,
     );
     canvas.drawPath(
@@ -101,7 +101,7 @@ class HandPainter extends CustomPainter {
     canvas.drawPath(
       path,
       Paint()
-        ..color = Colors.white.withOpacity(0.06)
+        ..color = Colors.white.withValues(alpha: 0.06)
         ..style = PaintingStyle.fill,
     );
     canvas.drawPath(
@@ -137,7 +137,7 @@ class HandPainter extends CustomPainter {
     canvas.drawPath(
       lines,
       Paint()
-        ..color = Colors.white.withOpacity(0.55)
+        ..color = Colors.white.withValues(alpha: 0.55)
         ..style = PaintingStyle.stroke
         ..strokeWidth = 1.6
         ..strokeCap = StrokeCap.round,

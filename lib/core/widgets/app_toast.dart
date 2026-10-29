@@ -41,7 +41,7 @@ void showAppToast(
             border: Border.all(color: AppColors.inactive),
             boxShadow: [
               BoxShadow(
-                color: AppColors.textPrimary.withOpacity(0.12),
+                color: AppColors.textPrimary.withValues(alpha: 0.12),
                 blurRadius: 24,
                 offset: const Offset(0, 8),
               ),

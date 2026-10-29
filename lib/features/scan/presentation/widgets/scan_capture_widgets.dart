@@ -101,7 +101,7 @@ class _Pill extends StatelessWidget {
       margin: const EdgeInsets.symmetric(horizontal: 12),
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
       decoration: BoxDecoration(
-        color: Colors.black.withOpacity(0.35),
+        color: Colors.black.withValues(alpha: 0.35),
         borderRadius: BorderRadius.circular(20),
       ),
       child: Row(
@@ -169,7 +169,7 @@ class ScanCaptureFootnote extends StatelessWidget {
         style: scanStyle(
           size: 11,
           height: 1.5,
-          color: AppColors.textSecondary.withOpacity(0.7),
+          color: AppColors.textSecondary.withValues(alpha: 0.7),
         ),
       ),
     );

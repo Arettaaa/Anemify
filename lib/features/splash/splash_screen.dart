@@ -112,8 +112,8 @@ class _SplashScreenState extends State<SplashScreen>
     Navigator.of(context).pushReplacement(
       PageRouteBuilder(
         transitionDuration: const Duration(milliseconds: 500),
-        pageBuilder: (_, __, ___) => next,
-        transitionsBuilder: (_, animation, __, child) {
+        pageBuilder: (_, _, _) => next,
+        transitionsBuilder: (_, animation, _, child) {
           final curved =
               CurvedAnimation(parent: animation, curve: Curves.easeOutCubic);
           return FadeTransition(

@@ -36,7 +36,7 @@ class FoodCard extends StatelessWidget {
                 imageAsset,
                 fit: BoxFit.cover,
                 width: double.infinity,
-                errorBuilder: (_, __, ___) =>
+                errorBuilder: (_, _, _) =>
                     Container(color: AppColors.surface),
               ),
             ),

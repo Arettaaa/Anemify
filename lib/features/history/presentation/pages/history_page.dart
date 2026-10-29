@@ -242,7 +242,7 @@ class _HistoryPageState extends State<HistoryPage>
               TweenAnimationBuilder<Color?>(
                 tween: ColorTween(end: color),
                 duration: const Duration(milliseconds: 220),
-                builder: (_, c, __) => Icon(icon, size: 17, color: c),
+                builder: (_, c, _) => Icon(icon, size: 17, color: c),
               ),
               const SizedBox(width: 8),
               AnimatedDefaultTextStyle(
@@ -283,7 +283,7 @@ class _HistoryPageState extends State<HistoryPage>
                   borderRadius: BorderRadius.circular(16),
                   boxShadow: [
                     BoxShadow(
-                      color: Colors.black.withOpacity(0.06),
+                      color: Colors.black.withValues(alpha: 0.06),
                       blurRadius: 10,
                       offset: const Offset(0, 3),
                     ),
@@ -470,7 +470,7 @@ class _HistoryPageState extends State<HistoryPage>
           icon,
           size: 18,
           color: onTap == null
-              ? AppColors.textSecondary.withOpacity(0.35)
+              ? AppColors.textSecondary.withValues(alpha: 0.35)
               : AppColors.textPrimary,
         ),
       ),

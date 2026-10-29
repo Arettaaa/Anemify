@@ -106,7 +106,7 @@ class _ProfileSetupPageState extends State<ProfileSetupPage> {
                       padding: const EdgeInsets.symmetric(
                           horizontal: 12, vertical: 8),
                       decoration: BoxDecoration(
-                        color: AppColors.primary.withOpacity(0.08),
+                        color: AppColors.primary.withValues(alpha: 0.08),
                         borderRadius: BorderRadius.circular(20),
                       ),
                       child: Row(
@@ -216,7 +216,7 @@ class _ProfileSetupPageState extends State<ProfileSetupPage> {
                     'Tanpa login. Data lokal. Kamu yang memegang kendali.',
                     style: GoogleFonts.dmSans(
                       fontSize: 10,
-                      color: AppColors.textSecondary.withOpacity(0.7),
+                      color: AppColors.textSecondary.withValues(alpha: 0.7),
                     ),
                   ),
                 ],
@@ -307,7 +307,7 @@ class _ProfileSetupPageState extends State<ProfileSetupPage> {
         hintText: hint,
         hintStyle: GoogleFonts.dmSans(
           fontSize: 14,
-          color: AppColors.textSecondary.withOpacity(0.7),
+          color: AppColors.textSecondary.withValues(alpha: 0.7),
         ),
         filled: true,
         fillColor: AppColors.surface,

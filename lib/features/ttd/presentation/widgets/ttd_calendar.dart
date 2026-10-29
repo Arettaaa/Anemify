@@ -74,7 +74,7 @@ class TtdCalendar extends StatelessWidget {
       child = const Icon(Icons.check_rounded, size: 18, color: AppColors.white);
     } else {
       if (future) {
-        fg = AppColors.textSecondary.withOpacity(0.4);
+        fg = AppColors.textSecondary.withValues(alpha: 0.4);
       } else if (scheduled) {
         bg = AppColors.surface;
         fg = AppColors.textPrimary;

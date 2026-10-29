@@ -107,7 +107,7 @@ class _TrendPainter extends CustomPainter {
         ..lineTo(pts.last.dx, y(0))
         ..lineTo(pts.first.dx, y(0))
         ..close();
-      canvas.drawPath(fill, Paint()..color = AppColors.primary.withOpacity(0.07));
+      canvas.drawPath(fill, Paint()..color = AppColors.primary.withValues(alpha: 0.07));
       canvas.drawPath(
         line,
         Paint()

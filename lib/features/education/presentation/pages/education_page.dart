@@ -1,6 +1,8 @@
+import 'package:anemify/features/ttd/presentation/pages/ttd_reminder_page.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
+import '../../../../core/theme/app_colors.dart';
 import '../../data/education_data.dart';
 import '../../data/models/article_model.dart';
 import '../../data/models/food_model.dart';
@@ -12,6 +14,7 @@ import '../widgets/education_hero_card.dart';
 import '../widgets/education_tab_bar.dart';
 import '../widgets/food_card_item.dart';
 import '../widgets/food_detail_sheet.dart';
+import '../widgets/ttd_dosis_card.dart';
 
 class EducationPage extends StatefulWidget {
   const EducationPage({super.key});
@@ -57,9 +60,13 @@ class _EducationPageState extends State<EducationPage> {
 
   @override
   Widget build(BuildContext context) {
-    final List<ArticleModel> currentArticles = _selectedTabIndex == 1
-        ? EducationData.gejalaArticles
-        : EducationData.seputarAnemiaArticles;
+    // Memilih artikel sesuai tab aktif
+    List<ArticleModel> currentArticles = EducationData.seputarAnemiaArticles;
+    if (_selectedTabIndex == 1) {
+      currentArticles = EducationData.gejalaArticles;
+    } else if (_selectedTabIndex == 3) {
+      currentArticles = EducationData.ttdArticles;
+    }
 
     return Scaffold(
       backgroundColor: Colors.white,
@@ -76,7 +83,7 @@ class _EducationPageState extends State<EducationPage> {
               ),
               const SizedBox(height: 24),
 
-              // Tab Bar
+              // Tab Bar (Sudah mendukung auto-center saat di-klik)
               EducationTabBar(
                 tabs: _tabs,
                 selectedIndex: _selectedTabIndex,
@@ -96,28 +103,34 @@ class _EducationPageState extends State<EducationPage> {
                   children: [
                     // Dynamic Hero Card
                     EducationHeroCard(
-                      title: _selectedTabIndex == 2
+                      title: _selectedTabIndex == 3
+                          ? 'Satu kebiasaan, banyak manfaat.'
+                          : _selectedTabIndex == 2
                           ? 'Nutrisi baik, dekat denganmu.'
                           : _selectedTabIndex == 1
                           ? 'Dengarkan tanda dari tubuhmu.'
                           : 'Pahami tubuh, jaga energimu.',
-                      subtitle: _selectedTabIndex == 2
+                      subtitle: _selectedTabIndex == 3
+                          ? 'Kenali TTD dan jadwal pencegahan yang berbeda untuk setiap kelompok.'
+                          : _selectedTabIndex == 2
                           ? 'Sumber zat besi lokal dan perkiraan kandungan gizi untuk melengkapi piringmu.'
                           : _selectedTabIndex == 1
                           ? 'Kenali keluhan yang perlu diperhatikan, tanpa menyimpulkan diagnosis sendiri.'
                           : 'Mulai dari pengertian, penyebab, jenis, hingga siapa yang lebih berisiko.',
-                      icon: _selectedTabIndex == 2
+                      icon: _selectedTabIndex == 3
+                          ? Icons.notifications_none_rounded
+                          : _selectedTabIndex == 2
                           ? Icons.eco_outlined
                           : _selectedTabIndex == 1
                           ? Icons.favorite_border_rounded
                           : Icons.menu_book_rounded,
                     ),
 
+                    // ==========================================
                     // TAB 2: KATALOG MAKANAN
+                    // ==========================================
                     if (_selectedTabIndex == 2) ...[
                       const SizedBox(height: 20),
-
-                      // Input Search
                       Container(
                         decoration: BoxDecoration(
                           color: const Color(0xFFF4F5F7),
@@ -147,8 +160,6 @@ class _EducationPageState extends State<EducationPage> {
                         ),
                       ),
                       const SizedBox(height: 16),
-
-                      // Filter Category Chips
                       SingleChildScrollView(
                         scrollDirection: Axis.horizontal,
                         child: Row(
@@ -190,7 +201,6 @@ class _EducationPageState extends State<EducationPage> {
                         ),
                       ),
                       const SizedBox(height: 24),
-
                       Text(
                         '${_filteredFoods.length} pilihan makanan lokal',
                         style: GoogleFonts.dmSans(
@@ -200,8 +210,6 @@ class _EducationPageState extends State<EducationPage> {
                         ),
                       ),
                       const SizedBox(height: 16),
-
-                      // Grid Makanan 2 Kolom
                       GridView.builder(
                         shrinkWrap: true,
                         physics: const NeverScrollableScrollPhysics(),
@@ -209,8 +217,7 @@ class _EducationPageState extends State<EducationPage> {
                         gridDelegate:
                             const SliverGridDelegateWithFixedCrossAxisCount(
                               crossAxisCount: 2,
-                              childAspectRatio:
-                                  0.72, // Rasio diubah dari 0.82 ke 0.72 biar wadah kartu lebih tinggi
+                              childAspectRatio: 0.72,
                               crossAxisSpacing: 12,
                               mainAxisSpacing: 12,
                             ),
@@ -223,7 +230,6 @@ class _EducationPageState extends State<EducationPage> {
                         },
                       ),
                       const SizedBox(height: 16),
-
                       Text(
                         'Perkiraan per 100 g bahan mentah. Nilai dapat berubah menurut varietas dan pengolahan. Rujukan: USDA FoodData Central. Foto: Unsplash; kredit fotografer tersedia pada detail makanan.',
                         style: GoogleFonts.dmSans(
@@ -234,8 +240,11 @@ class _EducationPageState extends State<EducationPage> {
                       ),
                     ],
 
-                    // TAB 1 & GEJALA
+                    // ==========================================
+                    // TAB UNTUK ARTIKEL (Seputar, Gejala, TTD)
+                    // ==========================================
                     if (_selectedTabIndex != 2) ...[
+                      // Khusus Tab Gejala
                       if (_selectedTabIndex == 1) ...[
                         const SizedBox(height: 20),
                         Wrap(
@@ -297,7 +306,39 @@ class _EducationPageState extends State<EducationPage> {
                           ),
                         ),
                       ],
+
+                      // Khusus Tab Tentang TTD
+                      if (_selectedTabIndex == 3) ...[
+                        const SizedBox(height: 20),
+                        const Row(
+                          children: [
+                            TtdDosisCard(
+                              title: 'Remaja putri',
+                              dosis: '1× / minggu',
+                              subtitle: 'Jadwal umum program pencegahan',
+                            ),
+                            SizedBox(width: 12),
+                            TtdDosisCard(
+                              title: 'Ibu hamil',
+                              dosis: 'Setiap hari',
+                              subtitle: 'Sesuai arahan layanan antenatal',
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 16),
+                        Text(
+                          'Informasi ini bukan resep. Dosis terapi anemia, komposisi tablet, dan durasi konsumsi harus ditentukan tenaga kesehatan.',
+                          textAlign: TextAlign.center,
+                          style: GoogleFonts.dmSans(
+                            fontSize: 11,
+                            height: 1.4,
+                            color: Colors.grey.shade500,
+                          ),
+                        ),
+                      ],
+
                       const SizedBox(height: 32),
+
                       Text(
                         'Baca, pahami, lalu terapkan',
                         style: GoogleFonts.dmSans(
@@ -307,6 +348,8 @@ class _EducationPageState extends State<EducationPage> {
                         ),
                       ),
                       const SizedBox(height: 16),
+
+                      // List Artikel
                       ...currentArticles.map((article) {
                         return ArticleListItem(
                           number: article.number,
@@ -316,6 +359,45 @@ class _EducationPageState extends State<EducationPage> {
                           onTap: () => showArticleDetailModal(context, article),
                         );
                       }),
+
+                      // Tombol CTA Sesuaikan Pengingat TTD (Hanya di Tab TTD)
+                      if (_selectedTabIndex == 3) ...[
+                        const SizedBox(height: 16),
+                        SizedBox(
+                          width: double.infinity,
+                          height: 52,
+                          child: ElevatedButton.icon(
+                            onPressed: () {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) => const TtdReminderPage(),
+                                ),
+                              );
+                            },
+                            icon: const Icon(
+                              Icons.notifications_active_outlined,
+                              color: Colors.white,
+                              size: 20,
+                            ),
+                            label: Text(
+                              'Sesuaikan pengingat TTD',
+                              style: GoogleFonts.dmSans(
+                                fontSize: 14,
+                                fontWeight: FontWeight.bold,
+                                color: Colors.white,
+                              ),
+                            ),
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: AppColors.primary,
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(16),
+                              ),
+                              elevation: 0,
+                            ),
+                          ),
+                        ),
+                      ],
                     ],
 
                     const SizedBox(height: 16),

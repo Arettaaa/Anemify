@@ -111,7 +111,7 @@ class ScreeningHeroCard extends StatelessWidget {
         height: size,
         decoration: BoxDecoration(
           shape: BoxShape.circle,
-          color: AppColors.primarySoft.withOpacity(opacity),
+          color: AppColors.primarySoft.withValues(alpha: opacity),
         ),
       );
 
@@ -125,7 +125,7 @@ class ScreeningHeroCard extends StatelessWidget {
         border: border ? Border.all(color: AppColors.white, width: 3) : null,
         boxShadow: [
           BoxShadow(
-            color: AppColors.primary.withOpacity(0.15),
+            color: AppColors.primary.withValues(alpha: 0.15),
             blurRadius: 16,
             offset: const Offset(0, 6),
           ),
