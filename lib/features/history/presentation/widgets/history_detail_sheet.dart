@@ -111,7 +111,7 @@ class HistoryDetailSheet extends StatelessWidget {
               Text('Skor risiko skrining: ${(entry.score * 100).round()}/100',
                   style: scanStyle(
                       size: 11.5,
-                      color: AppColors.textSecondary.withOpacity(0.8))),
+                      color: AppColors.textSecondary.withValues(alpha: 0.8))),
             ],
           ),
         ),
@@ -139,7 +139,7 @@ class HistoryDetailSheet extends StatelessWidget {
             style: scanStyle(
                 size: 11,
                 height: 1.5,
-                color: AppColors.textSecondary.withOpacity(0.8))),
+                color: AppColors.textSecondary.withValues(alpha: 0.8))),
         const SizedBox(height: 20),
         ReportPdfButton(entry: entry),
         const SizedBox(height: 6),

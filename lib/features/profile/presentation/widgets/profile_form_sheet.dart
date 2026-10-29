@@ -102,7 +102,7 @@ class _ProfileFormSheetState extends State<ProfileFormSheet> {
             style: ElevatedButton.styleFrom(
               backgroundColor: AppColors.primary,
               foregroundColor: AppColors.white,
-              disabledBackgroundColor: AppColors.primary.withOpacity(0.4),
+              disabledBackgroundColor: AppColors.primary.withValues(alpha: 0.4),
               disabledForegroundColor: AppColors.white,
               elevation: 0,
               shape: RoundedRectangleBorder(
@@ -171,7 +171,7 @@ class _ProfileFormSheetState extends State<ProfileFormSheet> {
         hintText: hint,
         hintStyle: GoogleFonts.dmSans(
           fontSize: 14,
-          color: AppColors.textSecondary.withOpacity(0.7),
+          color: AppColors.textSecondary.withValues(alpha: 0.7),
         ),
         filled: true,
         fillColor: AppColors.surface,

@@ -134,7 +134,7 @@ class _OnboardingPageState extends State<OnboardingPage> {
                   textAlign: TextAlign.center,
                   style: GoogleFonts.dmSans(
                     fontSize: 10,
-                    color: AppColors.textSecondary.withOpacity(0.7),
+                    color: AppColors.textSecondary.withValues(alpha: 0.7),
                   ),
                 ),
               ],

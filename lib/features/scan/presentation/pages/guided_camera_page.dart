@@ -256,7 +256,7 @@ class _GuidedCameraPageState extends State<GuidedCameraPage>
                 width: double.infinity,
                 padding: const EdgeInsets.all(14),
                 decoration: BoxDecoration(
-                  color: AppColors.white.withOpacity(0.08),
+                  color: AppColors.white.withValues(alpha: 0.08),
                   borderRadius: BorderRadius.circular(16),
                 ),
                 child: Row(
@@ -279,7 +279,7 @@ class _GuidedCameraPageState extends State<GuidedCameraPage>
                         style: scanStyle(
                           size: 12.5,
                           height: 1.6,
-                          color: AppColors.white.withOpacity(0.85),
+                          color: AppColors.white.withValues(alpha: 0.85),
                         ),
                       ),
                     ),
@@ -304,7 +304,7 @@ class _GuidedCameraPageState extends State<GuidedCameraPage>
                     decoration: BoxDecoration(
                       shape: BoxShape.circle,
                       color: (!ready || _busy)
-                          ? AppColors.primary.withOpacity(0.4)
+                          ? AppColors.primary.withValues(alpha: 0.4)
                           : AppColors.primary,
                     ),
                     child: _busy
@@ -341,7 +341,7 @@ class _CircleBtn extends StatelessWidget {
         width: 44,
         height: 44,
         decoration: BoxDecoration(
-          color: AppColors.white.withOpacity(0.12),
+          color: AppColors.white.withValues(alpha: 0.12),
           shape: BoxShape.circle,
         ),
         child: Icon(icon, size: 20, color: AppColors.white),

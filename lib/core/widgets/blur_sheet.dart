@@ -11,7 +11,7 @@ Future<T?> showBlurSheet<T>(BuildContext context, {required Widget child}) {
     transitionDuration: const Duration(milliseconds: 340),
     pageBuilder: (ctx, animation, _) =>
         _BlurSheet(animation: animation, child: child),
-    transitionBuilder: (_, __, ___, w) => w,
+    transitionBuilder: (_, _, _, w) => w,
   );
 }
 
@@ -37,12 +37,12 @@ class _BlurSheet extends StatelessWidget {
             onTap: () => Navigator.of(context).pop(),
             child: AnimatedBuilder(
               animation: curved,
-              builder: (_, __) {
+              builder: (_, _) {
                 final t = curved.value;
                 return BackdropFilter(
                   filter: ImageFilter.blur(sigmaX: 6 * t, sigmaY: 6 * t),
                   child: Container(
-                    color: AppColors.textPrimary.withOpacity(0.25 * t),
+                    color: AppColors.textPrimary.withValues(alpha: 0.25 * t),
                   ),
                 );
               },

@@ -28,7 +28,7 @@ class SexSelector extends StatelessWidget {
         duration: const Duration(milliseconds: 150),
         height: 56,
         decoration: BoxDecoration(
-          color: selected ? AppColors.primary.withOpacity(0.08) : AppColors.white,
+          color: selected ? AppColors.primary.withValues(alpha: 0.08) : AppColors.white,
           borderRadius: BorderRadius.circular(16),
           border: Border.all(
             color: selected ? AppColors.primarySoft : AppColors.inactive,
@@ -112,7 +112,7 @@ class PregnancySwitch extends StatelessWidget {
                     Switch(
                       value: value,
                       onChanged: onChanged,
-                      activeColor: AppColors.white,
+                      activeThumbColor: AppColors.white,
                       activeTrackColor: AppColors.primary,
                     ),
                   ],

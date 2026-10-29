@@ -168,7 +168,7 @@ class _TtdTabState extends State<TtdTab> {
                       'Langkah yang konsisten',
                       style: scanStyle(
                         size: 11,
-                        color: AppColors.white.withOpacity(0.7),
+                        color: AppColors.white.withValues(alpha: 0.7),
                       ),
                     ),
                     const SizedBox(height: 10),
@@ -199,7 +199,7 @@ class _TtdTabState extends State<TtdTab> {
                       style: scanStyle(
                         size: 10.5,
                         height: 1.4,
-                        color: AppColors.white.withOpacity(0.7),
+                        color: AppColors.white.withValues(alpha: 0.7),
                       ),
                     ),
                   ],
@@ -573,7 +573,7 @@ class _TtdTabState extends State<TtdTab> {
           icon,
           size: 18,
           color: onTap == null
-              ? AppColors.textSecondary.withOpacity(0.35)
+              ? AppColors.textSecondary.withValues(alpha: 0.35)
               : AppColors.textPrimary,
         ),
       ),

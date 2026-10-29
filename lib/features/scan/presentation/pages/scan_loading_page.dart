@@ -190,7 +190,7 @@ class _ScanLoader extends StatelessWidget {
                 ),
                 AnimatedBuilder(
                   animation: scan,
-                  builder: (_, __) {
+                  builder: (_, _) {
                     final t = Curves.easeInOut.transform(scan.value);
                     return Positioned(
                       left: 12,
@@ -203,7 +203,7 @@ class _ScanLoader extends StatelessWidget {
                           borderRadius: BorderRadius.circular(2),
                           boxShadow: [
                             BoxShadow(
-                              color: AppColors.primary.withOpacity(0.45),
+                              color: AppColors.primary.withValues(alpha: 0.45),
                               blurRadius: 8,
                             ),
                           ],
@@ -251,7 +251,7 @@ class _RingPainter extends CustomPainter {
         ..shader = SweepGradient(
           startAngle: 0,
           endAngle: sweep,
-          colors: [AppColors.primary.withOpacity(0), AppColors.primary],
+          colors: [AppColors.primary.withValues(alpha: 0), AppColors.primary],
         ).createShader(rect),
     );
   }

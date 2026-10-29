@@ -25,7 +25,7 @@ class OnboardingSkipRow extends StatelessWidget {
             counter!,
             style: GoogleFonts.dmSans(
               fontSize: 12,
-              color: AppColors.textSecondary.withOpacity(0.7),
+              color: AppColors.textSecondary.withValues(alpha: 0.7),
             ),
           )
         else
