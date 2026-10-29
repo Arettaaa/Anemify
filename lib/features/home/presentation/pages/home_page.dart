@@ -96,9 +96,9 @@ class _HomePageState extends State<HomePage> {
     });
   }
 
-  void _openTtdSettings() => Navigator.of(context).push(
-        MaterialPageRoute(builder: (_) => const TtdReminderPage()),
-      );
+  void _openTtdSettings() => Navigator.of(
+    context,
+  ).push(MaterialPageRoute(builder: (_) => const TtdReminderPage()));
 
   Future<void> _toggleToday() async {
     await sl<SetTtdTaken>()(DateTime.now(), !_takenToday);
@@ -113,8 +113,10 @@ class _HomePageState extends State<HomePage> {
       return LastScreeningCard(
         title: 'Belum ada skrining',
         subtitle: 'Mulai skrining pertamamu',
-        trailing: const Icon(Icons.chevron_right_rounded,
-            color: AppColors.textSecondary),
+        trailing: const Icon(
+          Icons.chevron_right_rounded,
+          color: AppColors.textSecondary,
+        ),
         onTap: widget.onStartScan,
       );
     }
