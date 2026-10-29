@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart'; // Import ini wajib ada
 
 import '../../../education/presentation/pages/education_page.dart';
 import '../../../history/presentation/pages/history_page.dart';
@@ -65,9 +66,18 @@ class _MainShellState extends State<MainShell> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      body: IndexedStack(index: _index, children: List.generate(5, _tab)),
-      bottomNavigationBar: AppBottomNav(currentIndex: _index, onTap: _onTap),
+    return AnnotatedRegion<SystemUiOverlayStyle>(
+      value: const SystemUiOverlayStyle(
+        statusBarColor: Colors.transparent,
+        statusBarIconBrightness: Brightness.dark,
+        systemNavigationBarColor: Colors.white, // Memaksa bar bawah jadi putih
+        systemNavigationBarIconBrightness:
+            Brightness.dark, // Ikon navigasi jadi gelap
+      ),
+      child: Scaffold(
+        body: IndexedStack(index: _index, children: List.generate(5, _tab)),
+        bottomNavigationBar: AppBottomNav(currentIndex: _index, onTap: _onTap),
+      ),
     );
   }
 }

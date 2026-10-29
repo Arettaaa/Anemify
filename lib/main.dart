@@ -1,13 +1,23 @@
 import 'package:anemify/features/splash/splash_screen.dart';
+import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'package:google_fonts/google_fonts.dart';
 
 import 'core/di/injection.dart';
 
-import 'package:flutter/material.dart';
-
-import 'package:google_fonts/google_fonts.dart';
-
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
+
+  // Konfigurasi Status Bar (Atas) & Navigation Bar (Bawah)
+  SystemChrome.setSystemUIOverlayStyle(
+    const SystemUiOverlayStyle(
+      statusBarColor: Colors.transparent,
+      statusBarIconBrightness: Brightness.dark,
+      systemNavigationBarColor: Colors.white,
+      systemNavigationBarIconBrightness: Brightness.dark,
+    ),
+  );
+
   setupInjection();
   runApp(const AnemifyApp());
 }
