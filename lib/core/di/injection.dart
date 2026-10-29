@@ -27,6 +27,7 @@ void setupInjection() {
   sl.registerLazySingleton(() => AddProfile(sl()));
   sl.registerLazySingleton(() => UpdateProfile(sl()));
   sl.registerLazySingleton(() => SetActiveProfile(sl()));
+  sl.registerLazySingleton(() => DeleteProfile(sl()));
 
   // TTD
   sl.registerLazySingleton(() => TtdLocalDataSource(sl()));
@@ -35,6 +36,7 @@ void setupInjection() {
   sl.registerLazySingleton(() => SaveTtdSettings(sl()));
   sl.registerLazySingleton(() => GetTtdLogs(sl()));
   sl.registerLazySingleton(() => SetTtdTaken(sl()));
+  sl.registerLazySingleton(() => ClearTtdData(sl()));
   sl.registerLazySingleton(() => const CalculateTtdStats());
 
   // Scan

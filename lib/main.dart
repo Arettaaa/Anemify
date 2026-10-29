@@ -4,6 +4,8 @@ import 'core/di/injection.dart';
 
 import 'package:flutter/material.dart';
 
+import 'package:google_fonts/google_fonts.dart';
+
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
   setupInjection();
@@ -21,6 +23,7 @@ class AnemifyApp extends StatelessWidget {
       theme: ThemeData(
         useMaterial3: true,
         scaffoldBackgroundColor: Colors.white,
+        fontFamily: GoogleFonts.dmSans().fontFamily,
         colorScheme: ColorScheme.fromSeed(
           seedColor: const Color(0xFFEF233C),
           primary: const Color(0xFFEF233C),

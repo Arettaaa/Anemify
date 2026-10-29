@@ -31,3 +31,9 @@ class SetActiveProfile {
   SetActiveProfile(this._repo);
   Future<void> call(String id) => _repo.setActive(id);
 }
+
+class DeleteProfile {
+  final ProfileRepository _repo;
+  DeleteProfile(this._repo);
+  Future<void> call(String id) => _repo.delete(id);
+}

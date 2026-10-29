@@ -6,4 +6,5 @@ abstract class ProfileRepository {
   Future<void> add(Profile profile, {bool setActive = false});
   Future<void> update(Profile profile);
   Future<void> setActive(String id);
+  Future<void> delete(String id);
 }

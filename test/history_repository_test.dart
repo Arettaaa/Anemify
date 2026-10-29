@@ -24,6 +24,8 @@ class _FakeProfiles implements ProfileRepository {
   Future<void> update(Profile profile) async {}
   @override
   Future<void> setActive(String id) async => activeId = id;
+  @override
+  Future<void> delete(String id) async {}
 }
 
 void main() {

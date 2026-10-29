@@ -17,7 +17,9 @@ import 'scan_loading_page.dart';
 import '../../../../core/widgets/app_toast.dart';
 
 class ScanPalmPage extends StatefulWidget {
-  const ScanPalmPage({super.key});
+  /// true = foto telapak sudah ada, langsung analisis ulang.
+  final bool autoAnalyze;
+  const ScanPalmPage({super.key, this.autoAnalyze = false});
 
   @override
   State<ScanPalmPage> createState() => _ScanPalmPageState();

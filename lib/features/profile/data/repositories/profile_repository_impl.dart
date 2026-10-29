@@ -32,4 +32,15 @@ class ProfileRepositoryImpl implements ProfileRepository {
 
   @override
   Future<void> setActive(String id) => _ds.setActiveId(id);
+
+  @override
+  Future<void> delete(String id) async {
+    final all = await _ds.getAll();
+    final rest = all.where((p) => p.id != id).toList();
+    await _ds.saveAll(rest);
+    final activeId = await _ds.getActiveId();
+    if (activeId == id && rest.isNotEmpty) {
+      await _ds.setActiveId(rest.first.id);
+    }
+  }
 }

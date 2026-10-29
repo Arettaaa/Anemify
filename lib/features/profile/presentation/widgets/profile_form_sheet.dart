@@ -5,11 +5,15 @@ import '../../../../core/widgets/blur_sheet.dart';
 import '../../domain/entities/profile.dart';
 import 'profile_fields.dart';
 
-/// Tambah (initial == null) atau ubah profil. Pop result: Profile
+const kDeleteProfile = 'delete';
+
+/// Tambah (initial == null) atau ubah profil.
+/// Pop result: Profile, atau [kDeleteProfile] (hanya saat ubah & [canDelete]).
 class ProfileFormSheet extends StatefulWidget {
   final Profile? initial;
+  final bool canDelete;
 
-  const ProfileFormSheet({super.key, this.initial});
+  const ProfileFormSheet({super.key, this.initial, this.canDelete = false});
 
   @override
   State<ProfileFormSheet> createState() => _ProfileFormSheetState();
@@ -121,6 +125,29 @@ class _ProfileFormSheetState extends State<ProfileFormSheet> {
             ),
           ),
         ),
+                if (_isEdit && widget.canDelete) ...[
+          const SizedBox(height: 10),
+          SizedBox(
+            height: 46,
+            child: TextButton.icon(
+              onPressed: () => Navigator.of(context).pop(kDeleteProfile),
+              style: TextButton.styleFrom(
+                foregroundColor: AppColors.primary,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(16),
+                ),
+              ),
+              icon: const Icon(Icons.delete_outline_rounded, size: 18),
+              label: Text(
+                'Hapus profil',
+                style: GoogleFonts.dmSans(
+                  fontSize: 13.5,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+            ),
+          ),
+        ],
       ],
     );
   }

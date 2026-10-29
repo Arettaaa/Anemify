@@ -19,6 +19,12 @@ class GetTtdLogs {
   Future<Map<String, DateTime>> call() => _repo.getLogs();
 }
 
+class ClearTtdData {
+  final TtdRepository _repo;
+  ClearTtdData(this._repo);
+  Future<void> call() => _repo.clear();
+}
+
 class SetTtdTaken {
   final TtdRepository _repo;
   SetTtdTaken(this._repo);

@@ -27,7 +27,7 @@ class HabitCard extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.all(14),
         decoration: BoxDecoration(
-          color: AppColors.textPrimary,
+          color: AppColors.pinkTint,
           borderRadius: BorderRadius.circular(20),
         ),
         child: Row(
@@ -35,12 +35,12 @@ class HabitCard extends StatelessWidget {
             Container(
               width: 44,
               height: 44,
-              decoration: BoxDecoration(
-                color: AppColors.white.withOpacity(0.1),
+              decoration: const BoxDecoration(
+                color: AppColors.white,
                 shape: BoxShape.circle,
               ),
               child: const Icon(Icons.notifications_none_rounded,
-                  color: AppColors.white, size: 22),
+                  color: AppColors.primary, size: 22),
             ),
             const SizedBox(width: 14),
             Expanded(
@@ -52,15 +52,15 @@ class HabitCard extends StatelessWidget {
                     style: GoogleFonts.dmSans(
                       fontSize: 14,
                       fontWeight: FontWeight.w700,
-                      color: AppColors.white,
+                      color: AppColors.textPrimary,
                     ),
                   ),
                   const SizedBox(height: 4),
                   Row(
                     children: [
                       if (time != null) ...[
-                        Icon(Icons.access_time_rounded,
-                            size: 12, color: AppColors.white.withOpacity(0.6)),
+                        const Icon(Icons.access_time_rounded,
+                            size: 12, color: AppColors.textSecondary),
                         const SizedBox(width: 4),
                       ],
                       Expanded(
@@ -68,7 +68,7 @@ class HabitCard extends StatelessWidget {
                           time != null ? '$time · $note' : note,
                           style: GoogleFonts.dmSans(
                             fontSize: 10.5,
-                            color: AppColors.white.withOpacity(0.6),
+                            color: AppColors.textSecondary,
                           ),
                         ),
                       ),
@@ -86,18 +86,23 @@ class HabitCard extends StatelessWidget {
                   width: 34,
                   height: 34,
                   decoration: BoxDecoration(
-                    color: done
-                        ? AppColors.primary
-                        : AppColors.white.withOpacity(0.15),
+                    color: done ? AppColors.primary : AppColors.white,
                     shape: BoxShape.circle,
+                    border: Border.all(
+                      color: done ? AppColors.primary : AppColors.primarySoft,
+                      width: 1.5,
+                    ),
                   ),
-                  child: const Icon(Icons.check_rounded,
-                      color: AppColors.white, size: 20),
+                  child: Icon(
+                    Icons.check_rounded,
+                    color: done ? AppColors.white : AppColors.primarySoft,
+                    size: 20,
+                  ),
                 ),
               )
             else
-              Icon(Icons.chevron_right_rounded,
-                  color: AppColors.white.withOpacity(0.7)),
+              const Icon(Icons.chevron_right_rounded,
+                  color: AppColors.primary),
           ],
         ),
       ),

@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
+import '../../../../core/widgets/app_logo.dart';
+
 class EducationHeader extends StatelessWidget {
   const EducationHeader({super.key});
 
@@ -9,8 +11,8 @@ class EducationHeader extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        // Logo Anemify (Tinggi 28px samakan persis dengan HomePage)
-        Image.asset('assets/images/anemify_logo.png', height: 28),
+        // Logo Anemify (SVG, sama dengan Beranda)
+        const AppLogo(),
         const SizedBox(height: 20),
 
         // Judul Utama (DM Sans 26px Bold)

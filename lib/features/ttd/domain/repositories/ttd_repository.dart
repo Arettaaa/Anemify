@@ -8,4 +8,6 @@ abstract class TtdRepository {
   /// dateKey -> waktu dicatat
   Future<Map<String, DateTime>> getLogs();
   Future<void> setTaken(DateTime day, bool taken);
+  /// Hapus pengaturan dan catatan TTD profil aktif.
+  Future<void> clear();
 }

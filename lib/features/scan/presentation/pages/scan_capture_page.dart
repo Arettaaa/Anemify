@@ -29,9 +29,13 @@ class _ScanCapturePageState extends State<ScanCapturePage> {
       MaterialPageRoute(builder: (_) => const GuidedCameraPage(isEye: true)),
     );
     if (bytes == null || !mounted) return;
-    context.read<ScanBloc>().add(EyePhotoCaptured(bytes));
+        final bloc = context.read<ScanBloc>();
+    bloc.add(EyePhotoCaptured(bytes));
     setState(() => _photo = bytes);
-    pushScanPage(context, const ScanPalmPage());
+    // Kalau foto telapak sudah ada (ulang foto mata karena gagal),
+    // langsung analisis lagi tanpa memotret ulang telapak (kontrak bagian 4).
+    final hasPalm = bloc.state.palmPhoto != null;
+    pushScanPage(context, ScanPalmPage(autoAnalyze: hasPalm));
   }
 
   @override

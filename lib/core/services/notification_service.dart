@@ -1,11 +1,14 @@
 import 'dart:io' show Platform;
+import 'dart:ui' show Color;
 
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:timezone/data/latest_all.dart' as tzdata;
 import 'package:timezone/timezone.dart' as tz;
 
+import '../../features/profile/domain/entities/profile.dart';
 import '../../features/ttd/domain/entities/ttd_settings.dart';
+import 'ttd_messages.dart';
 
 /// Notifikasi lokal: pengingat TTD (per profil) & skrining mingguan.
 class NotificationService {
@@ -16,18 +19,36 @@ class NotificationService {
   bool _ready = false;
 
   static const _screeningId = 900;
-  static int _ttdId(String profileId) => 1000 + (profileId.hashCode & 0x7FFF);
 
-  static const _ttdDetails = NotificationDetails(
-    android: AndroidNotificationDetails(
-      'ttd_reminder',
-      'Pengingat TTD',
-      channelDescription: 'Pengingat minum Tablet Tambah Darah',
-      importance: Importance.high,
-      priority: Priority.high,
-    ),
-    iOS: DarwinNotificationDetails(),
-  );
+  /// ID lama (1 notifikasi per profil), dibatalkan saat jadwal diperbarui.
+  static int _legacyTtdId(String profileId) =>
+      1000 + (profileId.hashCode & 0x7FFF);
+
+  /// 8 slot per profil: 0 = mingguan, 1..7 = harian per hari (Senin..Minggu).
+  static int _ttdId(String profileId, int slot) =>
+      100000 + (_stableHash(profileId) & 0xFFFF) * 8 + slot;
+
+  /// Hash FNV-1a: hasilnya sama setiap aplikasi dibuka.
+  static int _stableHash(String s) {
+    var h = 0x811C9DC5;
+    for (final c in s.codeUnits) {
+      h = ((h ^ c) * 0x01000193) & 0xFFFFFFFF;
+    }
+    return h;
+  }
+
+  static NotificationDetails _ttdDetails(String body) => NotificationDetails(
+        android: AndroidNotificationDetails(
+          'ttd_reminder',
+          'Pengingat TTD',
+          channelDescription: 'Pengingat minum Tablet Tambah Darah',
+          importance: Importance.high,
+          priority: Priority.high,
+          color: const Color(0xFFEF233C),
+          styleInformation: BigTextStyleInformation(body),
+        ),
+        iOS: const DarwinNotificationDetails(),
+      );
 
   static const _screeningDetails = NotificationDetails(
     android: AndroidNotificationDetails(
@@ -92,31 +113,36 @@ class NotificationService {
   Future<void> openSettings() => _plugin.openAppNotificationSettings();
 
   /// Jadwalkan ulang sesuai pengaturan terbaru profil ini.
+  /// Pesan menyesuaikan profil (remaja, ibu hamil, laki-laki, umum) dan
+  /// berganti tiap hari dalam seminggu.
   Future<void> applyTtd({
     required TtdSettings settings,
-    required String profileId,
-    required String name,
+    required Profile? profile,
   }) async {
     if (kIsWeb) return;
     await init();
 
-    final id = _ttdId(profileId);
-    await _plugin.cancel(id: id);
+    final pid = profile?.id ?? 'default';
+    await cancelTtd(pid);
+
     if (settings.enabled) {
+      final audience = audienceOf(profile);
+      final name = profile?.name ?? '';
       final weekly = settings.frequency == TtdFrequency.mingguan;
-      await _plugin.zonedSchedule(
-        id: id,
-        title:
-            name.isEmpty ? 'Waktunya minum TTD' : 'Waktunya minum TTD, $name',
-        body: 'Sesuai anjuran tenaga kesehatan. Buka Anemify untuk mencatat.',
-        scheduledDate: _next(settings.hour, settings.minute,
-            weekday: weekly ? settings.weekday : null),
-        notificationDetails: _ttdDetails,
-        androidScheduleMode: AndroidScheduleMode.inexactAllowWhileIdle,
-        matchDateTimeComponents: weekly
-            ? DateTimeComponents.dayOfWeekAndTime
-            : DateTimeComponents.time,
-      );
+      final days = weekly ? [settings.weekday] : [1, 2, 3, 4, 5, 6, 7];
+
+      for (final day in days) {
+        final m = ttdMessage(audience, name, day);
+        await _plugin.zonedSchedule(
+          id: _ttdId(pid, weekly ? 0 : day),
+          title: m.title,
+          body: m.body,
+          scheduledDate: _next(settings.hour, settings.minute, weekday: day),
+          notificationDetails: _ttdDetails(m.body),
+          androidScheduleMode: AndroidScheduleMode.inexactAllowWhileIdle,
+          matchDateTimeComponents: DateTimeComponents.dayOfWeekAndTime,
+        );
+      }
     }
 
     await _plugin.cancel(id: _screeningId);
@@ -130,6 +156,16 @@ class NotificationService {
         androidScheduleMode: AndroidScheduleMode.inexactAllowWhileIdle,
         matchDateTimeComponents: DateTimeComponents.dayOfWeekAndTime,
       );
+    }
+  }
+
+  /// Batalkan semua pengingat TTD milik profil ini (dipakai juga saat hapus profil).
+  Future<void> cancelTtd(String profileId) async {
+    if (kIsWeb) return;
+    await init();
+    await _plugin.cancel(id: _legacyTtdId(profileId));
+    for (var slot = 0; slot < 8; slot++) {
+      await _plugin.cancel(id: _ttdId(profileId, slot));
     }
   }
 

@@ -17,4 +17,7 @@ class TtdRepositoryImpl implements TtdRepository {
 
   @override
   Future<void> setTaken(DateTime day, bool taken) => _ds.setTaken(day, taken);
+
+  @override
+  Future<void> clear() => _ds.clear();
 }

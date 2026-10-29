@@ -36,6 +36,14 @@ class TtdLocalDataSource {
         MapEntry(k, DateTime.fromMillisecondsSinceEpoch(v as int)));
   }
 
+    /// Hapus pengaturan dan catatan TTD profil aktif.
+  Future<void> clear() async {
+    final prefs = await SharedPreferences.getInstance();
+    final pid = await _pid();
+    await prefs.remove('ttd_settings_$pid');
+    await prefs.remove('ttd_logs_$pid');
+  }
+
   Future<void> setTaken(DateTime day, bool taken) async {
     final prefs = await SharedPreferences.getInstance();
     final key = 'ttd_logs_${await _pid()}';

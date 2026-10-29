@@ -7,6 +7,7 @@ import '../../../profile/domain/usecases/profile_usecases.dart';
 import '../../../scan/presentation/widgets/scan_widgets.dart';
 import '../../domain/entities/ttd_settings.dart';
 import '../../domain/usecases/ttd_usecases.dart';
+import '../../../profile/domain/entities/profile.dart';
 import '../../../../core/widgets/app_toast.dart';
 import '../ttd_revision.dart';
 import 'package:flutter/cupertino.dart';
@@ -23,8 +24,9 @@ class _TtdReminderPageState extends State<TtdReminderPage> {
   TtdSettings? _s;
   bool _wasEnabled = false;
   bool _saving = false;
-  String _name = '';
-  String _profileId = 'default';
+  Profile? _profile;
+
+  String get _name => _profile?.name ?? '';
 
   @override
   void initState() {
@@ -39,8 +41,7 @@ class _TtdReminderPageState extends State<TtdReminderPage> {
     setState(() {
       _s = s;
       _wasEnabled = s.enabled;
-      _name = p?.name ?? '';
-      _profileId = p?.id ?? 'default';
+      _profile = p;
     });
   }
 
@@ -103,8 +104,7 @@ class _TtdReminderPageState extends State<TtdReminderPage> {
     if (s.enabled || s.weeklyScreening) {
       granted = await notif.requestPermission();
     }
-    await notif.applyTtd(settings: s, profileId: _profileId, name: _name);
-
+    await notif.applyTtd(settings: s, profile: _profile);
     if (!mounted) return;
     if (granted) {
       showAppToast(context, 'Jadwal TTD berhasil disimpan');
