@@ -27,7 +27,7 @@ import '../widgets/section_header.dart';
 class HomePage extends StatefulWidget {
   final VoidCallback onStartScan;
   final VoidCallback onOpenHistory;
-  final VoidCallback onOpenEducation;
+  final void Function([int tabIndex, String? foodName]) onOpenEducation;
 
   const HomePage({
     super.key,
@@ -64,7 +64,6 @@ class _HomePageState extends State<HomePage> {
     super.dispose();
   }
 
-  /// Profil diganti/diubah dari mana pun -> muat ulang semuanya.
   void _onProfileChanged() {
     _loadName();
     _loadLast();
@@ -78,7 +77,7 @@ class _HomePageState extends State<HomePage> {
   }
 
   Future<void> _loadLast() async {
-    final all = await sl<GetScanHistory>()(); // terbaru dulu
+    final all = await sl<GetScanHistory>()();
     if (!mounted) return;
     setState(() {
       _last = all.isEmpty ? null : all.first;
@@ -195,25 +194,33 @@ class _HomePageState extends State<HomePage> {
             SectionHeader(
               title: 'Isi piring, tambah energi',
               actionLabel: 'Jelajahi semua',
-              onAction: widget.onOpenEducation,
+              onAction: () => widget.onOpenEducation(
+                2,
+              ), // Mengarah langsung ke Tab Katalog Makanan
             ),
             const SizedBox(height: 14),
-            const Row(
+            Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Expanded(
-                  child: FoodCard(
-                    imageAsset: 'assets/foods/bayam.png',
-                    name: 'Bayam',
-                    subtitle: 'Sayuran hijau',
+                  child: GestureDetector(
+                    onTap: () => widget.onOpenEducation(2, 'Bayam'),
+                    child: const FoodCard(
+                      imageAsset: 'assets/foods/bayam.png',
+                      name: 'Bayam',
+                      subtitle: 'Sayuran hijau',
+                    ),
                   ),
                 ),
-                SizedBox(width: 12),
+                const SizedBox(width: 12),
                 Expanded(
-                  child: FoodCard(
-                    imageAsset: 'assets/foods/telur.png',
-                    name: 'Telur',
-                    subtitle: 'Protein sehari-hari',
+                  child: GestureDetector(
+                    onTap: () => widget.onOpenEducation(2, 'Hati Ayam'),
+                    child: const FoodCard(
+                      imageAsset: 'assets/images/hati_ayam.png',
+                      name: 'Hati Ayam',
+                      subtitle: 'Kaya zat besi',
+                    ),
                   ),
                 ),
               ],

@@ -18,14 +18,21 @@ import '../widgets/myth_fact_card.dart';
 import '../widgets/ttd_dosis_card.dart';
 
 class EducationPage extends StatefulWidget {
-  const EducationPage({super.key});
+  final int initialTabIndex;
+  final String? initialFoodName;
+
+  const EducationPage({
+    super.key,
+    this.initialTabIndex = 0,
+    this.initialFoodName,
+  });
 
   @override
   State<EducationPage> createState() => _EducationPageState();
 }
 
 class _EducationPageState extends State<EducationPage> {
-  int _selectedTabIndex = 0;
+  late int _selectedTabIndex;
   String _foodSearchQuery = '';
   String _selectedFoodCategory = 'Semua';
 
@@ -46,6 +53,40 @@ class _EducationPageState extends State<EducationPage> {
   ];
 
   final List<String> _foodCategories = ['Semua', 'Sayuran', 'Hewani', 'Nabati'];
+
+  @override
+  void initState() {
+    super.initState();
+    _selectedTabIndex = widget.initialTabIndex;
+    _checkInitialFood();
+  }
+
+  @override
+  void didUpdateWidget(covariant EducationPage oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.initialTabIndex != widget.initialTabIndex ||
+        oldWidget.initialFoodName != widget.initialFoodName) {
+      setState(() {
+        _selectedTabIndex = widget.initialTabIndex;
+      });
+      _checkInitialFood();
+    }
+  }
+
+  void _checkInitialFood() {
+    if (widget.initialFoodName != null) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted) return;
+        final food = EducationData.foodCatalog.firstWhere(
+          (f) => f.name.toLowerCase().contains(
+            widget.initialFoodName!.toLowerCase(),
+          ),
+          orElse: () => EducationData.foodCatalog.first,
+        );
+        showFoodDetailModal(context, food);
+      });
+    }
+  }
 
   List<FoodModel> get _filteredFoods {
     return EducationData.foodCatalog.where((food) {
@@ -78,12 +119,12 @@ class _EducationPageState extends State<EducationPage> {
             children: [
               // Header
               const Padding(
-                padding: EdgeInsets.fromLTRB(20, 16, 20, 0),
+                padding: EdgeInsets.fromLTRB(24, 16, 24, 0),
                 child: EducationHeader(),
               ),
               const SizedBox(height: 24),
 
-              // Tab Bar dengan Auto-Center Smooth Transition
+              // Tab Bar
               EducationTabBar(
                 tabs: _tabs,
                 selectedIndex: _selectedTabIndex,
@@ -97,7 +138,7 @@ class _EducationPageState extends State<EducationPage> {
 
               // Konten Utama
               Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 20.0),
+                padding: const EdgeInsets.symmetric(horizontal: 24.0),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [

@@ -69,7 +69,7 @@ class _EducationTabBarState extends State<EducationTabBar> {
       controller: _scrollController,
       scrollDirection: Axis.horizontal,
       physics: const BouncingScrollPhysics(), // Scroll terasa alami & smooth
-      padding: const EdgeInsets.symmetric(horizontal: 20),
+      padding: const EdgeInsets.symmetric(horizontal: 24),
       child: Row(
         children: List.generate(widget.tabs.length, (index) {
           final isSelected = widget.selectedIndex == index;

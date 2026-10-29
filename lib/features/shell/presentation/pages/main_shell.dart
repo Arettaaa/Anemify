@@ -16,14 +16,24 @@ class MainShell extends StatefulWidget {
 
 class _MainShellState extends State<MainShell> {
   int _index = 0;
+  int _educationTabIndex = 0;
+  String? _educationFoodName;
 
-  /// Tab yang sudah pernah dibuka. Yang belum, tidak dibangun dulu (Lazy Loading).
   final Set<int> _visited = {0};
 
   void _onTap(int i) {
     setState(() {
       _index = i;
       _visited.add(i);
+    });
+  }
+
+  void _openEducation([int tabIndex = 0, String? foodName]) {
+    setState(() {
+      _educationTabIndex = tabIndex;
+      _educationFoodName = foodName;
+      _index = 3;
+      _visited.add(3);
     });
   }
 
@@ -35,14 +45,17 @@ class _MainShellState extends State<MainShell> {
         return HomePage(
           onStartScan: () => _onTap(2),
           onOpenHistory: () => _onTap(1),
-          onOpenEducation: () => _onTap(3),
+          onOpenEducation: _openEducation,
         );
       case 1:
         return HistoryPage(onStartScan: () => _onTap(2));
       case 2:
         return const ScanTab();
       case 3:
-        return const EducationPage();
+        return EducationPage(
+          initialTabIndex: _educationTabIndex,
+          initialFoodName: _educationFoodName,
+        );
       case 4:
         return const SettingsPage();
       default:
