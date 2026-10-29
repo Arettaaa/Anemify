@@ -14,6 +14,7 @@ import '../widgets/education_hero_card.dart';
 import '../widgets/education_tab_bar.dart';
 import '../widgets/food_card_item.dart';
 import '../widgets/food_detail_sheet.dart';
+import '../widgets/myth_fact_card.dart';
 import '../widgets/ttd_dosis_card.dart';
 
 class EducationPage extends StatefulWidget {
@@ -60,7 +61,6 @@ class _EducationPageState extends State<EducationPage> {
 
   @override
   Widget build(BuildContext context) {
-    // Memilih artikel sesuai tab aktif
     List<ArticleModel> currentArticles = EducationData.seputarAnemiaArticles;
     if (_selectedTabIndex == 1) {
       currentArticles = EducationData.gejalaArticles;
@@ -83,7 +83,7 @@ class _EducationPageState extends State<EducationPage> {
               ),
               const SizedBox(height: 24),
 
-              // Tab Bar (Sudah mendukung auto-center saat di-klik)
+              // Tab Bar dengan Auto-Center Smooth Transition
               EducationTabBar(
                 tabs: _tabs,
                 selectedIndex: _selectedTabIndex,
@@ -103,21 +103,27 @@ class _EducationPageState extends State<EducationPage> {
                   children: [
                     // Dynamic Hero Card
                     EducationHeroCard(
-                      title: _selectedTabIndex == 3
+                      title: _selectedTabIndex == 4
+                          ? 'Bukan katanya. Kenali faktanya.'
+                          : _selectedTabIndex == 3
                           ? 'Satu kebiasaan, banyak manfaat.'
                           : _selectedTabIndex == 2
                           ? 'Nutrisi baik, dekat denganmu.'
                           : _selectedTabIndex == 1
                           ? 'Dengarkan tanda dari tubuhmu.'
                           : 'Pahami tubuh, jaga energimu.',
-                      subtitle: _selectedTabIndex == 3
+                      subtitle: _selectedTabIndex == 4
+                          ? 'Luruskan informasi tentang anemia agar langkah sehatmu lebih tepat.'
+                          : _selectedTabIndex == 3
                           ? 'Kenali TTD dan jadwal pencegahan yang berbeda untuk setiap kelompok.'
                           : _selectedTabIndex == 2
                           ? 'Sumber zat besi lokal dan perkiraan kandungan gizi untuk melengkapi piringmu.'
                           : _selectedTabIndex == 1
                           ? 'Kenali keluhan yang perlu diperhatikan, tanpa menyimpulkan diagnosis sendiri.'
                           : 'Mulai dari pengertian, penyebab, jenis, hingga siapa yang lebih berisiko.',
-                      icon: _selectedTabIndex == 3
+                      icon: _selectedTabIndex == 4
+                          ? Icons.help_outline_rounded
+                          : _selectedTabIndex == 3
                           ? Icons.notifications_none_rounded
                           : _selectedTabIndex == 2
                           ? Icons.eco_outlined
@@ -241,9 +247,37 @@ class _EducationPageState extends State<EducationPage> {
                     ],
 
                     // ==========================================
-                    // TAB UNTUK ARTIKEL (Seputar, Gejala, TTD)
+                    // TAB 4: MITOS VS FAKTA (ACCORDION DROPDOWN)
                     // ==========================================
-                    if (_selectedTabIndex != 2) ...[
+                    if (_selectedTabIndex == 4) ...[
+                      const SizedBox(height: 24),
+                      Text(
+                        '${EducationData.mythFacts.length} mitos yang perlu diluruskan',
+                        style: GoogleFonts.dmSans(
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                          color: const Color(0xFF2B2D42),
+                        ),
+                      ),
+                      const SizedBox(height: 16),
+                      ...EducationData.mythFacts.map((mf) {
+                        return MythFactCard(mythFact: mf);
+                      }),
+                      const SizedBox(height: 8),
+                      Text(
+                        'Rujukan: WHO, NHLBI, dan edukasi TTD Kemenkes.',
+                        style: GoogleFonts.dmSans(
+                          fontSize: 11,
+                          height: 1.4,
+                          color: Colors.grey.shade500,
+                        ),
+                      ),
+                    ],
+
+                    // ==========================================
+                    // TAB ARTIKEL (Seputar, Gejala, TTD)
+                    // ==========================================
+                    if (_selectedTabIndex != 2 && _selectedTabIndex != 4) ...[
                       // Khusus Tab Gejala
                       if (_selectedTabIndex == 1) ...[
                         const SizedBox(height: 20),
