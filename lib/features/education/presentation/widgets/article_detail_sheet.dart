@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:url_launcher/url_launcher.dart';
 import '../../../../core/theme/app_colors.dart';
+import '../../data/article_references.dart';
 import '../../data/models/article_model.dart';
 
 class ArticleDetailSheet extends StatelessWidget {
@@ -141,46 +143,8 @@ class ArticleDetailSheet extends StatelessWidget {
 
                     const SizedBox(height: 8),
 
-                    // Reference Card
-                    Container(
-                      width: double.infinity,
-                      padding: const EdgeInsets.all(16),
-                      decoration: BoxDecoration(
-                        color: const Color(0xFFF6F7F9),
-                        borderRadius: BorderRadius.circular(16),
-                      ),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Row(
-                            children: [
-                              Text(
-                                'Rujukan untuk dibaca lebih lanjut',
-                                style: GoogleFonts.dmSans(
-                                  fontSize: 13,
-                                  fontWeight: FontWeight.w700,
-                                  color: AppColors.textPrimary,
-                                ),
-                              ),
-                              const SizedBox(width: 4),
-                              const Icon(
-                                Icons.north_east_rounded,
-                                size: 14,
-                                color: AppColors.textPrimary,
-                              ),
-                            ],
-                          ),
-                          const SizedBox(height: 6),
-                          Text(
-                            '${article.referenceSource} · ${article.referenceName}',
-                            style: GoogleFonts.dmSans(
-                              fontSize: 12,
-                              color: AppColors.textSecondary,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
+                    // Reference Card (link bisa diklik)
+                    _ReferenceCard(article: article),
 
                     const SizedBox(height: 24),
 
@@ -201,6 +165,84 @@ class ArticleDetailSheet extends StatelessWidget {
             ),
           ],
         ),
+      ),
+    );
+  }
+}
+
+class _ReferenceCard extends StatelessWidget {
+  final ArticleModel article;
+  const _ReferenceCard({required this.article});
+
+  Future<void> _open(String url) async {
+    final uri = Uri.parse(url);
+    final ok = await launchUrl(uri, mode: LaunchMode.externalApplication);
+    if (!ok) await launchUrl(uri);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final refs = kArticleReferences[article.id] ?? const <ArticleReference>[];
+
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: const Color(0xFFF6F7F9),
+        borderRadius: BorderRadius.circular(16),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'Rujukan untuk dibaca lebih lanjut',
+            style: GoogleFonts.dmSans(
+              fontSize: 13,
+              fontWeight: FontWeight.w700,
+              color: AppColors.textPrimary,
+            ),
+          ),
+          const SizedBox(height: 6),
+          if (refs.isEmpty)
+            Text(
+              '${article.referenceSource} · ${article.referenceName}',
+              style: GoogleFonts.dmSans(
+                fontSize: 12,
+                color: AppColors.textSecondary,
+              ),
+            )
+          else
+            for (final r in refs)
+              InkWell(
+                onTap: () => _open(r.url),
+                borderRadius: BorderRadius.circular(8),
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 6),
+                  child: Row(
+                    children: [
+                      Expanded(
+                        child: Text(
+                          r.label,
+                          style: GoogleFonts.dmSans(
+                            fontSize: 12.5,
+                            fontWeight: FontWeight.w600,
+                            color: AppColors.primary,
+                            decoration: TextDecoration.underline,
+                            decorationColor: AppColors.primary,
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 6),
+                      const Icon(
+                        Icons.north_east_rounded,
+                        size: 14,
+                        color: AppColors.primary,
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+        ],
       ),
     );
   }
