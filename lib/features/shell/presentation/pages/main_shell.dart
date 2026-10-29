@@ -4,6 +4,7 @@ import '../../../education/presentation/pages/education_page.dart';
 import '../../../history/presentation/pages/history_page.dart';
 import '../../../home/presentation/pages/home_page.dart';
 import '../../../scan/presentation/pages/scan_tab.dart';
+import '../../../settings/presentation/pages/settings_page.dart';
 import '../widgets/app_bottom_nav.dart';
 
 class MainShell extends StatefulWidget {
@@ -42,8 +43,10 @@ class _MainShellState extends State<MainShell> {
         return const ScanTab();
       case 3:
         return const EducationPage();
+      case 4:
+        return const SettingsPage();
       default:
-        return const _PlaceholderPage('Pengaturan');
+        return const SettingsPage();
     }
   }
 
@@ -52,19 +55,6 @@ class _MainShellState extends State<MainShell> {
     return Scaffold(
       body: IndexedStack(index: _index, children: List.generate(5, _tab)),
       bottomNavigationBar: AppBottomNav(currentIndex: _index, onTap: _onTap),
-    );
-  }
-}
-
-class _PlaceholderPage extends StatelessWidget {
-  final String title;
-  const _PlaceholderPage(this.title);
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(title: Text(title)),
-      body: Center(child: Text('$title (placeholder)')),
     );
   }
 }
