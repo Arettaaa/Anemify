@@ -356,48 +356,50 @@ class EducationData {
   // ==========================================
   // TAB 5: MITOS VS FAKTA
   // ==========================================
-  static const List<MythFactModel> mythFacts = [
-    MythFactModel(
-      id: 'mf_01',
-      number: '01',
-      myth: 'Anemia sama dengan tekanan darah rendah.',
+  static final List<MythFactModel> mythFacts = [
+    const MythFactModel(
+      id: '1',
+      number: '1',
+      myth: 'Anemia sama dengan tekanan darah rendah (hipotensi).',
       fact:
-          'Anemia berkaitan dengan jumlah sel darah merah atau kadar hemoglobin yang lebih rendah dari normal. Tekanan darah rendah berkaitan dengan tekanan aliran darah. Keduanya berbeda, meski sama-sama dapat menyebabkan pusing.',
+          'Anemia berkaitan dengan kurangnya kadar sel darah merah atau hemoglobin, sedangkan tekanan darah rendah berkaitan dengan tekanan aliran darah. Keduanya berbeda meski sama-sama dapat menyebabkan pusing.',
     ),
-    MythFactModel(
-      id: 'mf_02',
-      number: '02',
-      myth: 'Semua anemia cukup diobati dengan zat besi.',
+    const MythFactModel(
+      id: '2',
+      number: '2',
+      myth: 'Semua jenis anemia cukup diobati dengan suplemen zat besi.',
       fact:
-          'Tidak semua. Anemia punya banyak penyebab: kekurangan zat besi, tetapi juga kekurangan vitamin B12 atau folat, penyakit kronis, atau kelainan bawaan seperti thalassemia dan sel sabit. Penanganannya berbeda, jadi penyebabnya perlu dipastikan lewat pemeriksaan tenaga kesehatan.',
+          'Anemia memiliki beragam penyebab, seperti kekurangan zat besi, asam folat, vitamin B12, atau kondisi medis lain. Penanganan yang tepat memerlukan pemeriksaan dan saran dari tenaga kesehatan.',
     ),
-    MythFactModel(
-      id: 'mf_03',
-      number: '03',
-      myth: 'Tidak pucat berarti pasti tidak anemia.',
+    const MythFactModel(
+      id: '3',
+      number: '3',
+      myth: 'Jika tidak terlihat pucat, berarti pasti bebas dari anemia.',
       fact:
-          'Tidak selalu. WHO mencantumkan kulit dan selaput lendir yang pucat di antara tanda pada anemia yang lebih berat. Karena itu, tidak tampak pucat tidak menyingkirkan anemia. Tes darah tetap diperlukan untuk memastikan.',
+          'Gejala awal anemia sering kali tidak terlihat secara fisik. Tanpa penanganan, anemia tetap bisa menyebabkan tubuh mudah lelah, lemas, dan sulit berkonsentrasi.',
     ),
-    MythFactModel(
-      id: 'mf_04',
-      number: '04',
-      myth: 'TTD bikin gemuk dan harus diminum semua orang setiap hari.',
+    const MythFactModel(
+      id: '4',
+      number: '4',
+      myth:
+          'Tablet Tambah Darah (TTD) memicu kenaikan berat badan dan wajib diminum setiap hari.',
       fact:
-          'Jadwal TTD berbeda tiap kelompok: remaja putri 1 tablet seminggu, ibu hamil minimal 90 tablet selama kehamilan. TTD berisi zat besi dan asam folat. Efek samping yang dicatat sumber Kemenkes adalah mual, sembelit, rasa pahit, dan feses lebih gelap.',
+          'TTD tidak mengandung kalori yang menyebabkan kenaikan berat badan. Aturan konsumsinya pun berbeda: remaja putri dianjurkan 1 kali seminggu, sedangkan ibu hamil disesuaikan dengan petunjuk bidan atau dokter.',
     ),
-    MythFactModel(
-      id: 'mf_05',
-      number: '05',
-      myth: 'Bayam saja sudah cukup menyembuhkan anemia.',
+    const MythFactModel(
+      id: '5',
+      number: '5',
+      myth: 'Sayur bayam saja sudah cukup untuk menyembuhkan anemia.',
       fact:
-          'Tidak cukup. Zat besi dari tumbuhan (nonheme) hanya diserap sekitar 2–20%, sedangkan zat besi heme dari pangan hewani diserap sekitar 15–35%. Tanin dalam teh, kalsium, polifenol, dan fitat dapat mengurangi serapan, sedangkan vitamin C membantu. Anemia juga punya banyak penyebab, jadi perlu diperiksa.',
+          'Zat besi dari tumbuh-tumbuhan (nabati) lebih sulit diserap tubuh dibandingkan zat besi dari bahan hewani seperti daging atau hati. Konsumsi bayam sebaiknya dilengkapi dengan pangan hewani dan TTD.',
     ),
-    MythFactModel(
-      id: 'mf_06',
-      number: '06',
-      myth: 'Hasil scan normal membuat tes darah tidak perlu.',
+    const MythFactModel(
+      id: '6',
+      number: '6',
+      myth:
+          'Jika hasil scan Anemify normal, tes darah laboratorium tidak diperlukan lagi.',
       fact:
-          'Skrining visual hanya alat bantu awal dan tidak mengukur kadar hemoglobin. Anemia ditegakkan lewat tes darah, misalnya pemeriksaan hemoglobin dan complete blood count. Hasil normal tidak menyingkirkan anemia.',
+          'Scan Anemify berfungsi sebagai skrining awal secara praktis. Jika mengalami gejala yang berlanjut, tes darah di puskesmas atau fasilitas kesehatan tetap menjadi rujukan medis utama.',
     ),
   ];
 
