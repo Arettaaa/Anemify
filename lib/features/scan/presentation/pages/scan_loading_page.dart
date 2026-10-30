@@ -48,7 +48,7 @@ class _ScanLoadingPageState extends State<ScanLoadingPage>
   @override
   void initState() {
     super.initState();
-    context.read<ScanBloc>().add(const ScanSubmitted());
+    _start();
     _timer = Timer.periodic(const Duration(milliseconds: 1500), (t) {
       if (!mounted || _step >= _steps.length - 1) {
         t.cancel();
@@ -56,6 +56,21 @@ class _ScanLoadingPageState extends State<ScanLoadingPage>
       }
       setState(() => _step++);
     });
+  }
+
+  /// Tunggu model siap dulu (kalau belum), baru analisis.
+  Future<void> _start() async {
+    final bloc = context.read<ScanBloc>();
+    if (!bloc.state.modelReady) {
+      if (bloc.state.status != ScanStatus.loadingModel) {
+        bloc.add(const ScanStarted());
+      }
+      await bloc.stream
+          .firstWhere((s) => s.modelReady || s.status == ScanStatus.failure)
+          .timeout(const Duration(seconds: 20), onTimeout: () => bloc.state);
+      if (!mounted || !bloc.state.modelReady) return;
+    }
+    bloc.add(const ScanSubmitted());
   }
 
   @override

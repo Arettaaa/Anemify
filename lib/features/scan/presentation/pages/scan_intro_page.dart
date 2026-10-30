@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 import '../../../../core/theme/app_colors.dart';
+import '../bloc/scan_bloc.dart';
+import '../bloc/scan_event.dart';
 import '../widgets/scan_widgets.dart';
 import 'scan_capture_page.dart';
 import 'scan_flow.dart';
@@ -17,7 +20,17 @@ class ScanIntroPage extends StatefulWidget {
 class _ScanIntroPageState extends State<ScanIntroPage> {
   bool _agreed = false;
 
-    @override
+  void _start() {
+    // Sesi baru: buang foto & hasil lama supaya tidak ikut dianalisis
+    context.read<ScanBloc>().add(const ScanReset());
+    pushScanPage(
+      context,
+      const ScanCapturePage(),
+      name: kScanCaptureRoute,
+    );
+  }
+
+  @override
   Widget build(BuildContext context) {
     return ScanPageScaffold(
       showBack: false,
@@ -144,13 +157,7 @@ class _ScanIntroPageState extends State<ScanIntroPage> {
         const SizedBox(height: 20),
         ScanPrimaryButton(
           label: 'Mulai ambil foto',
-          onPressed: _agreed
-              ? () => pushScanPage(
-                    context,
-                    const ScanCapturePage(),
-                    name: kScanCaptureRoute,
-                  )
-              : null,
+          onPressed: _agreed ? _start : null,
         ),
         const SizedBox(height: 20),
         Center(

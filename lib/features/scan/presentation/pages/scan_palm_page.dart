@@ -14,6 +14,7 @@ import '../widgets/scan_widgets.dart';
 import 'guided_camera_page.dart';
 import 'scan_flow.dart';
 import 'scan_loading_page.dart';
+import '../../../../core/theme/app_colors.dart';
 import '../../../../core/widgets/app_toast.dart';
 
 class ScanPalmPage extends StatefulWidget {
@@ -27,6 +28,10 @@ class ScanPalmPage extends StatefulWidget {
 
 class _ScanPalmPageState extends State<ScanPalmPage> {
   Uint8List? _photo;
+
+  /// true = analisis gagal bukan karena foto (mis. model belum siap),
+  /// jadi cukup coba analisis lagi tanpa memotret ulang.
+  bool _canRetry = false;
 
   @override
   void initState() {
@@ -53,6 +58,7 @@ class _ScanPalmPageState extends State<ScanPalmPage> {
   }
 
   Future<void> _analyze() async {
+    setState(() => _canRetry = false);
     final failed = await pushScanPage<ScanState>(
       context,
       const ScanLoadingPage(),
@@ -66,6 +72,8 @@ class _ScanPalmPageState extends State<ScanPalmPage> {
     );
     if (failed.failedPhoto == ScanPhotoKind.eye) {
       Navigator.of(context).pop(); // ulangi foto mata saja
+    } else if (failed.failedPhoto == null && _photo != null) {
+      setState(() => _canRetry = true);
     }
   }
 
@@ -99,6 +107,32 @@ class _ScanPalmPageState extends State<ScanPalmPage> {
           iconAfter: false,
           onPressed: _capture,
         ),
+        if (_canRetry) ...[
+          const SizedBox(height: 12),
+          SizedBox(
+            width: double.infinity,
+            height: 52,
+            child: OutlinedButton.icon(
+              onPressed: _analyze,
+              style: OutlinedButton.styleFrom(
+                backgroundColor: AppColors.white,
+                side: const BorderSide(color: AppColors.inactive),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(16),
+                ),
+              ),
+              icon: const Icon(
+                Icons.refresh_rounded,
+                size: 18,
+                color: AppColors.textPrimary,
+              ),
+              label: Text(
+                'Coba analisis lagi',
+                style: scanStyle(size: 15, weight: FontWeight.w700),
+              ),
+            ),
+          ),
+        ],
         const SizedBox(height: 14),
         const ScanCaptureFootnote(),
       ],
