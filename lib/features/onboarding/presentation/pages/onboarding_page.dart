@@ -10,7 +10,9 @@ import '../widgets/onboarding_skip_row.dart';
 import '../widgets/onboarding_slide.dart';
 
 class OnboardingPage extends StatefulWidget {
-  const OnboardingPage({super.key});
+  /// true = dibuka dari Pengaturan: hanya melihat, tanpa membuat profil.
+  final bool viewOnly;
+  const OnboardingPage({super.key, this.viewOnly = false});
 
   @override
   State<OnboardingPage> createState() => _OnboardingPageState();
@@ -53,9 +55,25 @@ class _OnboardingPageState extends State<OnboardingPage> {
     ),
   ];
 
-  OnboardingItem get _item => _items[_current];
+  /// Mode lihat saja: tanpa centang persetujuan, tombol akhir "Selesai".
+  late final List<OnboardingItem> _pages = widget.viewOnly
+      ? [
+          for (final i in _items)
+            OnboardingItem(
+              eyebrow: i.eyebrow,
+              title: i.title,
+              description: i.description,
+              badge: i.badge,
+              imageAsset: i.imageAsset,
+              footnote: i.footnote,
+              buttonLabel: identical(i, _items.last) ? 'Selesai' : i.buttonLabel,
+            ),
+        ]
+      : _items;
+
+  OnboardingItem get _item => _pages[_current];
   bool get _isFirst => _current == 0;
-  bool get _isLast => _current == _items.length - 1;
+  bool get _isLast => _current == _pages.length - 1;
   bool get _canNext => !_item.requiresConsent || _consent;
 
   void _go(int page) => _controller.animateToPage(
@@ -65,7 +83,9 @@ class _OnboardingPageState extends State<OnboardingPage> {
       );
 
   void _next() {
-    if (_isLast) {
+    if (_isLast && widget.viewOnly) {
+      Navigator.of(context).pop();
+    } else if (_isLast) {
       Navigator.of(context).push(
         MaterialPageRoute(builder: (_) => const ProfileSetupPage()),
       );
@@ -92,21 +112,21 @@ class _OnboardingPageState extends State<OnboardingPage> {
               const OnboardingHeader(),
               const SizedBox(height: 20),
               OnboardingSkipRow(
-                onSkip: () => _go(_items.length - 1),
+                onSkip: () => _go(_pages.length - 1),
                 counter: _isLast
-                    ? '0${_current + 1} / 0${_items.length}'
+                    ? '0${_current + 1} / 0${_pages.length}'
                     : null,
               ),
               const SizedBox(height: 16),
               Expanded(
                 child: PageView.builder(
                   controller: _controller,
-                  itemCount: _items.length,
+                  itemCount: _pages.length,
                   onPageChanged: (i) => setState(() => _current = i),
                   itemBuilder: (_, i) => OnboardingSlide(
-                    item: _items[i],
+                    item: _pages[i],
                     index: i,
-                    total: _items.length,
+                    total: _pages.length,
                     consent: _consent,
                     onConsentChanged: (v) => setState(() => _consent = v),
                   ),

@@ -20,13 +20,19 @@ class NotificationService {
 
   static const _screeningId = 900;
 
-  /// ID lama (1 notifikasi per profil), dibatalkan saat jadwal diperbarui.
+  /// Berapa hari ke depan pengingat TTD dijadwalkan. Jadwal diisi ulang
+  /// setiap aplikasi dibuka / data TTD berubah.
+  static const _daysAhead = 30;
+
+  /// ID versi lama, hanya untuk dibatalkan.
   static int _legacyTtdId(String profileId) =>
       1000 + (profileId.hashCode & 0x7FFF);
-
-  /// 8 slot per profil: 0 = mingguan, 1..7 = harian per hari (Senin..Minggu).
-  static int _ttdId(String profileId, int slot) =>
+  static int _weeklySlotId(String profileId, int slot) =>
       100000 + (_stableHash(profileId) & 0xFFFF) * 8 + slot;
+
+  /// ID sekarang: satu slot per hari (0.._daysAhead-1) per profil.
+  static int _ttdId(String profileId, int slot) =>
+      3000000 + (_stableHash(profileId) & 0xFFFF) * 32 + slot;
 
   /// Hash FNV-1a: hasilnya sama setiap aplikasi dibuka.
   static int _stableHash(String s) {
@@ -112,51 +118,69 @@ class NotificationService {
 
   Future<void> openSettings() => _plugin.openAppNotificationSettings();
 
-  /// Jadwalkan ulang sesuai pengaturan terbaru profil ini.
-  /// Pesan menyesuaikan profil (remaja, ibu hamil, laki-laki, umum) dan
-  /// berganti tiap hari dalam seminggu.
+  /// Jadwalkan ulang pengingat TTD profil ini untuk [_daysAhead] hari ke depan.
+  /// Hari yang sudah dicatat minum ([takenDays], berisi dateKey) dilewati,
+  /// jadi tidak ada notifikasi kalau TTD hari itu sudah diminum.
+  /// Pesan menyesuaikan profil (remaja, ibu hamil, laki-laki, umum).
   Future<void> applyTtd({
     required TtdSettings settings,
     required Profile? profile,
+    Set<String> takenDays = const {},
   }) async {
     if (kIsWeb) return;
     await init();
 
     final pid = profile?.id ?? 'default';
     await cancelTtd(pid);
+    if (!settings.enabled) return;
 
-    if (settings.enabled) {
-      final audience = audienceOf(profile);
-      final name = profile?.name ?? '';
-      final weekly = settings.frequency == TtdFrequency.mingguan;
-      final days = weekly ? [settings.weekday] : [1, 2, 3, 4, 5, 6, 7];
+    final audience = audienceOf(profile);
+    final name = profile?.name ?? '';
+    final now = tz.TZDateTime.now(tz.local);
+    final today = dayOnly(DateTime.now());
 
-      for (final day in days) {
-        final m = ttdMessage(audience, name, day);
-        await _plugin.zonedSchedule(
-          id: _ttdId(pid, weekly ? 0 : day),
-          title: m.title,
-          body: m.body,
-          scheduledDate: _next(settings.hour, settings.minute, weekday: day),
-          notificationDetails: _ttdDetails(m.body),
-          androidScheduleMode: AndroidScheduleMode.inexactAllowWhileIdle,
-          matchDateTimeComponents: DateTimeComponents.dayOfWeekAndTime,
-        );
-      }
-    }
+    for (var i = 0; i < _daysAhead; i++) {
+      final day = addDays(today, i);
+      if (!settings.isScheduled(day)) continue;
+      if (takenDays.contains(dateKey(day))) continue;
 
-    await _plugin.cancel(id: _screeningId);
-    if (settings.weeklyScreening) {
+      final at = tz.TZDateTime(
+        tz.local,
+        day.year,
+        day.month,
+        day.day,
+        settings.hour,
+        settings.minute,
+      );
+      if (!at.isAfter(now)) continue;
+
+      final m = ttdMessage(audience, name, day.weekday);
       await _plugin.zonedSchedule(
-        id: _screeningId,
-        title: 'Waktunya skrining mingguan',
-        body: 'Cek risiko anemia dengan foto mata dan telapak tangan.',
-        scheduledDate: _next(8, 0, weekday: DateTime.monday),
-        notificationDetails: _screeningDetails,
+        id: _ttdId(pid, i),
+        title: m.title,
+        body: m.body,
+        scheduledDate: at,
+        notificationDetails: _ttdDetails(m.body),
         androidScheduleMode: AndroidScheduleMode.inexactAllowWhileIdle,
-        matchDateTimeComponents: DateTimeComponents.dayOfWeekAndTime,
       );
     }
+  }
+
+  /// Pengingat skrining mingguan (Senin 08.00), satu untuk seluruh aplikasi.
+  Future<void> applyWeeklyScreening(bool enabled) async {
+    if (kIsWeb) return;
+    await init();
+    await _plugin.cancel(id: _screeningId);
+    if (!enabled) return;
+    await _plugin.zonedSchedule(
+      id: _screeningId,
+      title: 'Waktunya skrining mingguan',
+      body: 'Cek risiko anemia dengan foto mata dan telapak tangan.',
+      scheduledDate: _next(8, 0, weekday: DateTime.monday),
+      notificationDetails: _screeningDetails,
+      androidScheduleMode: AndroidScheduleMode.inexactAllowWhileIdle,
+      matchDateTimeComponents: DateTimeComponents.dayOfWeekAndTime,
+    );
   }
 
   /// Batalkan semua pengingat TTD milik profil ini (dipakai juga saat hapus profil).
@@ -165,6 +189,9 @@ class NotificationService {
     await init();
     await _plugin.cancel(id: _legacyTtdId(profileId));
     for (var slot = 0; slot < 8; slot++) {
+      await _plugin.cancel(id: _weeklySlotId(profileId, slot));
+    }
+    for (var slot = 0; slot < 32; slot++) {
       await _plugin.cancel(id: _ttdId(profileId, slot));
     }
   }

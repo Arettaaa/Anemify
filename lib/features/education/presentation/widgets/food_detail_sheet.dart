@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../data/models/food_model.dart';
+import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 void showFoodDetailModal(BuildContext context, FoodModel food) {
   showModalBottomSheet(
@@ -81,7 +82,7 @@ class FoodDetailSheet extends StatelessWidget {
                               shape: BoxShape.circle,
                             ),
                             child: const Icon(
-                              Icons.close_rounded,
+                              LucideIcons.x,
                               size: 18,
                               color: Colors.black87,
                             ),

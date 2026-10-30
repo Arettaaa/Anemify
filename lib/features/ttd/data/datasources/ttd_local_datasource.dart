@@ -11,12 +11,12 @@ class TtdLocalDataSource {
   final ProfileRepository _profiles;
   TtdLocalDataSource(this._profiles);
 
-  Future<String> _pid() async =>
-      (await _profiles.getActive())?.id ?? 'default';
+   Future<String> _pid([String? profileId]) async =>
+      profileId ?? (await _profiles.getActive())?.id ?? 'default';
 
-  Future<TtdSettings> getSettings() async {
+  Future<TtdSettings> getSettings([String? profileId]) async {
     final prefs = await SharedPreferences.getInstance();
-    final raw = prefs.getString('ttd_settings_${await _pid()}');
+    final raw = prefs.getString('ttd_settings_${await _pid(profileId)}');
     if (raw == null) return TtdSettings.initial();
     return TtdSettingsModel.fromJson(jsonDecode(raw) as Map<String, dynamic>);
   }
@@ -27,9 +27,9 @@ class TtdLocalDataSource {
         'ttd_settings_${await _pid()}', jsonEncode(TtdSettingsModel.toJson(s)));
   }
 
-  Future<Map<String, DateTime>> getLogs() async {
+  Future<Map<String, DateTime>> getLogs([String? profileId]) async {
     final prefs = await SharedPreferences.getInstance();
-    final raw = prefs.getString('ttd_logs_${await _pid()}');
+    final raw = prefs.getString('ttd_logs_${await _pid(profileId)}');
     if (raw == null) return {};
     final m = jsonDecode(raw) as Map<String, dynamic>;
     return m.map((k, v) =>

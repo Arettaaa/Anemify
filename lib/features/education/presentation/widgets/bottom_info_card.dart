@@ -4,6 +4,8 @@ import 'package:google_fonts/google_fonts.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../pages/how_it_works_page.dart';
 
+import 'package:lucide_icons_flutter/lucide_icons.dart';
+
 class BottomInfoCard extends StatelessWidget {
   const BottomInfoCard({super.key});
 
@@ -35,7 +37,7 @@ class BottomInfoCard extends StatelessWidget {
                   borderRadius: BorderRadius.circular(10),
                 ),
                 child: const Icon(
-                  Icons.shield_outlined,
+                  LucideIcons.shieldCheck,
                   color: Color(0xFF6C757D),
                   size: 20,
                 ),
@@ -65,7 +67,7 @@ class BottomInfoCard extends StatelessWidget {
                 ),
               ),
               const Icon(
-                Icons.chevron_right_rounded,
+                LucideIcons.chevronRight,
                 color: Colors.grey,
                 size: 22,
               ),

@@ -13,6 +13,7 @@ import '../../domain/entities/ttd_settings.dart';
 import '../../domain/usecases/ttd_usecases.dart';
 import '../ttd_revision.dart';
 import '../../../../core/widgets/app_switch.dart';
+import '../ttd_reminder_sync.dart';
 
 class TtdReminderPage extends StatefulWidget {
   const TtdReminderPage({super.key});
@@ -106,7 +107,7 @@ class _TtdReminderPageState extends State<TtdReminderPage> {
     if (s.enabled || s.weeklyScreening) {
       granted = await notif.requestPermission();
     }
-    await notif.applyTtd(settings: s, profile: _profile);
+    await syncTtdReminders();
     if (!mounted) return;
     if (granted) {
       showAppToast(context, 'Jadwal TTD berhasil disimpan');

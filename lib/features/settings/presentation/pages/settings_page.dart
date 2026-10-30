@@ -60,7 +60,7 @@ class _SettingsPageState extends State<SettingsPage> {
 
   void _openOnboarding() {
     Navigator.of(context, rootNavigator: true).push(
-      MaterialPageRoute(builder: (_) => const OnboardingPage()),
+      MaterialPageRoute(builder: (_) => const OnboardingPage(viewOnly: true)),
     );
   }
 

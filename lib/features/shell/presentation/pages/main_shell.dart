@@ -7,6 +7,9 @@ import '../../../home/presentation/pages/home_page.dart';
 import '../../../scan/presentation/pages/scan_tab.dart';
 import '../../../settings/presentation/pages/settings_page.dart';
 import '../widgets/app_bottom_nav.dart';
+import '../../../profile/presentation/profile_revision.dart';
+import '../../../ttd/presentation/ttd_reminder_sync.dart';
+import '../../../ttd/presentation/ttd_revision.dart';
 
 class MainShell extends StatefulWidget {
   const MainShell({super.key});
@@ -21,6 +24,21 @@ class _MainShellState extends State<MainShell> {
   String? _educationFoodName;
 
   final Set<int> _visited = {0};
+
+    @override
+  void initState() {
+    super.initState();
+    ttdRevision.addListener(syncTtdReminders);
+    profileRevision.addListener(syncTtdReminders);
+    syncTtdReminders(); // isi ulang jadwal tiap aplikasi dibuka
+  }
+
+  @override
+  void dispose() {
+    ttdRevision.removeListener(syncTtdReminders);
+    profileRevision.removeListener(syncTtdReminders);
+    super.dispose();
+  }
 
   void _onTap(int i) {
     setState(() {

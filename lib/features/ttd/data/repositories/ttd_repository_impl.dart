@@ -7,13 +7,15 @@ class TtdRepositoryImpl implements TtdRepository {
   TtdRepositoryImpl(this._ds);
 
   @override
-  Future<TtdSettings> getSettings() => _ds.getSettings();
+  Future<TtdSettings> getSettings([String? profileId]) =>
+      _ds.getSettings(profileId);
 
   @override
   Future<void> saveSettings(TtdSettings settings) => _ds.saveSettings(settings);
-
+  
   @override
-  Future<Map<String, DateTime>> getLogs() => _ds.getLogs();
+  Future<Map<String, DateTime>> getLogs([String? profileId]) =>
+      _ds.getLogs(profileId);
 
   @override
   Future<void> setTaken(DateTime day, bool taken) => _ds.setTaken(day, taken);

@@ -4,7 +4,7 @@ import '../repositories/ttd_repository.dart';
 class GetTtdSettings {
   final TtdRepository _repo;
   GetTtdSettings(this._repo);
-  Future<TtdSettings> call() => _repo.getSettings();
+  Future<TtdSettings> call([String? profileId]) => _repo.getSettings(profileId);
 }
 
 class SaveTtdSettings {
@@ -16,7 +16,8 @@ class SaveTtdSettings {
 class GetTtdLogs {
   final TtdRepository _repo;
   GetTtdLogs(this._repo);
-  Future<Map<String, DateTime>> call() => _repo.getLogs();
+  Future<Map<String, DateTime>> call([String? profileId]) =>
+      _repo.getLogs(profileId);
 }
 
 class ClearTtdData {

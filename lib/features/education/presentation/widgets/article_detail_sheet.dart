@@ -4,7 +4,7 @@ import 'package:url_launcher/url_launcher.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../data/article_references.dart';
 import '../../data/models/article_model.dart';
-
+import 'package:lucide_icons_flutter/lucide_icons.dart';
 class ArticleDetailSheet extends StatelessWidget {
   final ArticleModel article;
 
@@ -70,7 +70,7 @@ class ArticleDetailSheet extends StatelessWidget {
                               shape: BoxShape.circle,
                             ),
                             child: const Icon(
-                              Icons.close_rounded,
+                              LucideIcons.x,
                               size: 18,
                               color: Colors.black87,
                             ),

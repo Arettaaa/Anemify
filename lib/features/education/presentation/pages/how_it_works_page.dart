@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
-
+import 'package:lucide_icons_flutter/lucide_icons.dart';
 import '../../../../core/theme/app_colors.dart';
 
 class HowItWorksPage extends StatelessWidget {
@@ -27,7 +27,7 @@ class HowItWorksPage extends StatelessWidget {
                     shape: BoxShape.circle,
                   ),
                   child: const Icon(
-                    Icons.arrow_back_rounded,
+                    LucideIcons.arrowLeft,
                     color: AppColors.textPrimary,
                     size: 20,
                   ),
@@ -73,7 +73,7 @@ class HowItWorksPage extends StatelessWidget {
                         borderRadius: BorderRadius.circular(12),
                       ),
                       child: const Icon(
-                        Icons.shield_outlined,
+                        LucideIcons.shieldCheck,
                         color: Colors.white,
                         size: 20,
                       ),

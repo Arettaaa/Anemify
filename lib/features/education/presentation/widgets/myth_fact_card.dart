@@ -3,6 +3,7 @@ import 'package:google_fonts/google_fonts.dart';
 
 import '../../../../core/theme/app_colors.dart';
 import '../../data/models/myth_fact_model.dart';
+import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 class MythFactCard extends StatefulWidget {
   final MythFactModel mythFact;
@@ -82,7 +83,7 @@ class _MythFactCardState extends State<MythFactCard> {
                     duration: const Duration(milliseconds: 250),
                     curve: Curves.easeInOut,
                     child: const Icon(
-                      Icons.keyboard_arrow_down_rounded,
+                      LucideIcons.chevronDown,
                       color: Colors.grey,
                       size: 24,
                     ),
@@ -110,7 +111,7 @@ class _MythFactCardState extends State<MythFactCard> {
                     Row(
                       children: [
                         const Icon(
-                          Icons.check_rounded,
+                          LucideIcons.check,
                           size: 16,
                           color: Color(0xFF2B2D42),
                         ),

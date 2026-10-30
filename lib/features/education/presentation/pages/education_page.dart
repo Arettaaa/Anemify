@@ -17,6 +17,7 @@ import '../widgets/food_detail_sheet.dart';
 import '../widgets/myth_fact_card.dart';
 import '../widgets/ttd_dosis_card.dart';
 import '../../../../core/widgets/pinned_header.dart';
+import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 class EducationPage extends StatefulWidget {
   final int initialTabIndex;
@@ -169,14 +170,14 @@ class _EducationPageState extends State<EducationPage> {
                           ? 'Kenali keluhan yang perlu diperhatikan, tanpa menyimpulkan diagnosis sendiri.'
                           : 'Mulai dari pengertian, penyebab, jenis, hingga siapa yang lebih berisiko.',
                       icon: _selectedTabIndex == 4
-                          ? Icons.help_outline_rounded
+                          ? LucideIcons.eye
                           : _selectedTabIndex == 3
-                          ? Icons.notifications_none_rounded
+                          ? LucideIcons.bell
                           : _selectedTabIndex == 2
-                          ? Icons.eco_outlined
+                          ? LucideIcons.leaf
                           : _selectedTabIndex == 1
-                          ? Icons.favorite_border_rounded
-                          : Icons.menu_book_rounded,
+                          ? LucideIcons.heartPulse
+                          : LucideIcons.bookOpen,
                     ),
 
                     // ==========================================
@@ -202,7 +203,7 @@ class _EducationPageState extends State<EducationPage> {
                               color: Colors.grey.shade500,
                             ),
                             prefixIcon: const Icon(
-                              Icons.search_rounded,
+                              LucideIcons.search,
                               color: Colors.grey,
                             ),
                             border: InputBorder.none,
@@ -367,7 +368,7 @@ class _EducationPageState extends State<EducationPage> {
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               const Icon(
-                                Icons.info_outline_rounded,
+                                LucideIcons.info,
                                 color: Color(0xFFE63946),
                                 size: 20,
                               ),
@@ -457,7 +458,7 @@ class _EducationPageState extends State<EducationPage> {
                               );
                             },
                             icon: const Icon(
-                              Icons.notifications_active_outlined,
+                              LucideIcons.bellRing,
                               color: Colors.white,
                               size: 20,
                             ),

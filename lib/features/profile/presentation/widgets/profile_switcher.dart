@@ -41,7 +41,6 @@ Future<bool> _editActive(BuildContext context) async {
 
   if (res is Profile) {
     await sl<UpdateProfile>()(res);
-    await _refreshTtdNotification(res); // nama/kategori bisa berubah
     return true;
   }
 
