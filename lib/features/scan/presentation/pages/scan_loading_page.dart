@@ -15,6 +15,7 @@ import '../bloc/scan_state.dart';
 import '../widgets/scan_widgets.dart';
 import 'scan_flow.dart';
 import 'scan_result_page.dart';
+import '../../domain/entities/scan_failure.dart';
 
 /// Kirim ScanSubmitted. Sukses -> simpan riwayat + ke hasil. Gagal -> pop(state).
 class ScanLoadingPage extends StatefulWidget {
@@ -59,6 +60,7 @@ class _ScanLoadingPageState extends State<ScanLoadingPage>
   }
 
   /// Tunggu model siap dulu (kalau belum), baru analisis.
+    /// Tunggu model siap dulu (kalau belum), baru analisis.
   Future<void> _start() async {
     final bloc = context.read<ScanBloc>();
     if (!bloc.state.modelReady) {
@@ -68,7 +70,17 @@ class _ScanLoadingPageState extends State<ScanLoadingPage>
       await bloc.stream
           .firstWhere((s) => s.modelReady || s.status == ScanStatus.failure)
           .timeout(const Duration(seconds: 20), onTimeout: () => bloc.state);
-      if (!mounted || !bloc.state.modelReady) return;
+      if (!mounted) return;
+      if (!bloc.state.modelReady) {
+        // Gagal dimuat -> listener sudah menutup halaman.
+        // Timeout -> tutup di sini supaya pengguna tidak terjebak.
+        if (bloc.state.status != ScanStatus.failure) {
+          Navigator.of(context).pop(
+            bloc.state.withFailure(ScanFailureType.modelNotReady),
+          );
+        }
+        return;
+      }
     }
     bloc.add(const ScanSubmitted());
   }

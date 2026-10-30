@@ -8,7 +8,6 @@ import 'core/di/injection.dart';
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
 
-  // Konfigurasi Status Bar (Atas) & Navigation Bar (Bawah)
   SystemChrome.setSystemUIOverlayStyle(
     const SystemUiOverlayStyle(
       statusBarColor: Colors.transparent,
@@ -40,7 +39,6 @@ class AnemifyApp extends StatelessWidget {
           onSurface: const Color(0xFF2B2D42),
         ),
       ),
-      // SEMENTARA untuk cek paritas model; nanti diganti halaman utama
       home: const SplashScreen(),
     );
   }
