@@ -1,11 +1,16 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_svg/flutter_svg.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 import '../../../../core/di/injection.dart';
 import '../../../../core/theme/app_colors.dart';
+import '../../../../core/widgets/app_logo.dart';
+import '../../../onboarding/presentation/pages/onboarding_page.dart';
 import '../../../profile/domain/entities/profile.dart';
 import '../../../profile/domain/usecases/profile_usecases.dart';
+import '../../../profile/presentation/profile_revision.dart';
+import '../../../profile/presentation/widgets/profile_switcher.dart';
+import '../../../ttd/presentation/pages/ttd_reminder_page.dart';
 
 class SettingsPage extends StatefulWidget {
   const SettingsPage({super.key});
@@ -15,205 +20,228 @@ class SettingsPage extends StatefulWidget {
 }
 
 class _SettingsPageState extends State<SettingsPage> {
-  Profile? _activeProfile;
-  bool _isLoading = true;
+  Profile? _active;
+  int _profileCount = 0;
+  bool _loading = true;
 
   @override
   void initState() {
     super.initState();
-    _loadActiveProfile();
+    profileRevision.addListener(_load);
+    _load();
   }
 
-  Future<void> _loadActiveProfile() async {
-    final profile = await sl<GetActiveProfile>()();
+  @override
+  void dispose() {
+    profileRevision.removeListener(_load);
+    super.dispose();
+  }
+
+  Future<void> _load() async {
+    final active = await sl<GetActiveProfile>()();
+    final all = await sl<GetProfiles>()();
     if (!mounted) return;
     setState(() {
-      _activeProfile = profile;
-      _isLoading = false;
+      _active = active;
+      _profileCount = all.length;
+      _loading = false;
     });
   }
 
-  String _getCategoryLabel(Profile? profile) {
-    if (profile == null) return 'Umum';
-    if (profile.isPregnant) return 'Ibu hamil';
-    if (profile.age >= 10 &&
-        profile.age <= 19 &&
-        profile.sex == Sex.perempuan) {
+  String _categoryLabel(Profile p) {
+    if (p.isPregnant) return 'Ibu hamil';
+    if (p.age >= 10 && p.age <= 19 && p.sex == Sex.perempuan) {
       return 'Remaja putri';
     }
     return 'Umum';
   }
 
+  // ---------- aksi ----------
+
+  void _openOnboarding() {
+    Navigator.of(context, rootNavigator: true).push(
+      MaterialPageRoute(builder: (_) => const OnboardingPage()),
+    );
+  }
+
+  Future<void> _editProfile() => openActiveProfileEditor(context);
+
+  Future<void> _manageProfiles() => openProfileSwitcher(context);
+
+  void _openTtd() {
+    Navigator.of(context).push(
+      MaterialPageRoute(builder: (_) => const TtdReminderPage()),
+    );
+  }
+
+  // ---------- UI ----------
+
   @override
   Widget build(BuildContext context) {
-    final profileName = _activeProfile?.name.trim().isNotEmpty == true
-        ? _activeProfile!.name
-        : 'Pengguna';
-    final avatarInitial = profileName.isNotEmpty
-        ? profileName[0].toUpperCase()
-        : 'A';
-    final age = _activeProfile?.age ?? 0;
-    final categoryLabel = _getCategoryLabel(_activeProfile);
+    final hPad = MediaQuery.sizeOf(context).width < 360 ? 16.0 : 24.0;
 
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: AppColors.white,
       body: SafeArea(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
+        bottom: false,
+        child: ListView(
+          padding: EdgeInsets.fromLTRB(hPad, 16, hPad, 120),
+          children: [
+            const AppLogo(),
+            const SizedBox(height: 24),
+            Text(
+              'Ruang pribadimu',
+              style: GoogleFonts.dmSans(
+                fontSize: 26,
+                fontWeight: FontWeight.w700,
+                height: 1.2,
+                letterSpacing: -0.6,
+                color: AppColors.textPrimary,
+              ),
+            ),
+            const SizedBox(height: 4),
+            Text(
+              'Kamu yang memegang kendali atas datamu.',
+              style: GoogleFonts.dmSans(
+                fontSize: 14,
+                color: AppColors.textSecondary,
+              ),
+            ),
+            const SizedBox(height: 22),
+            _profileCard(),
+            const SizedBox(height: 30),
+            _sectionTitle('Untuk kamu & keluarga'),
+            const SizedBox(height: 14),
+            _group([
+              _item(
+                icon: LucideIcons.bookOpen,
+                title: 'Lihat onboarding awal',
+                subtitle: 'Pengenalan aplikasi & setup profil lokal',
+                onTap: _openOnboarding,
+              ),
+              _item(
+                icon: LucideIcons.users,
+                title: 'Kelola profil keluarga',
+                subtitle: '$_profileCount profil di perangkat ini',
+                onTap: _manageProfiles,
+              ),
+              _item(
+                icon: LucideIcons.bell,
+                title: 'Pengingat TTD & skrining',
+                subtitle: 'Atur rutinitas sehatmu',
+                onTap: _openTtd,
+              ),
+            ]),
+            const SizedBox(height: 30),
+            _sectionTitle('Data & privasi'),
+            const SizedBox(height: 14),
+            _group([
+              _item(
+                icon: LucideIcons.shieldCheck,
+                title: 'Tentang privasi data',
+                subtitle: 'Lokal. Pribadi. Milikmu.',
+                onTap: () {},
+              ),
+              _item(
+                icon: LucideIcons.download,
+                title: 'Ekspor data',
+                subtitle: 'Unduh cadangan profil dan riwayat',
+                onTap: () {},
+              ),
+              _item(
+                icon: LucideIcons.trash2,
+                title: 'Hapus semua data lokal',
+                subtitle: 'Hapus profil, riwayat, dan preferensi',
+                destructive: true,
+                onTap: () {},
+              ),
+            ]),
+            const SizedBox(height: 28),
+            _privacyNote(),
+            const SizedBox(height: 28),
+            Center(
+              child: Text(
+                'Anemify · Prototipe desain 1.0\n'
+                'Dibuat untuk langkah sehat yang lebih mudah',
+                textAlign: TextAlign.center,
+                style: GoogleFonts.dmSans(
+                  fontSize: 11,
+                  height: 1.7,
+                  color: AppColors.textSecondary.withValues(alpha: 0.75),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _profileCard() {
+    final p = _active;
+    final name = (p?.name.trim().isNotEmpty ?? false) ? p!.name : 'Pengguna';
+    final subtitle = p == null ? '' : '${p.age} tahun · ${_categoryLabel(p)}';
+
+    return Material(
+      color: AppColors.surface,
+      borderRadius: BorderRadius.circular(24),
+      child: InkWell(
+        onTap: _loading ? null : _editProfile,
+        borderRadius: BorderRadius.circular(24),
+        child: Padding(
+          padding: const EdgeInsets.all(20),
+          child: Row(
             children: [
-              // Header Logo App (SVG)
-              SvgPicture.asset('assets/images/anemify_logo.svg', height: 28),
-              const SizedBox(height: 24),
-
-              // Judul & Subjudul
-              Text(
-                'Ruang pribadimu',
-                style: GoogleFonts.dmSans(
-                  fontSize: 24,
-                  fontWeight: FontWeight.bold,
-                  color: const Color(0xFF2B2D42),
+              Container(
+                width: 54,
+                height: 54,
+                alignment: Alignment.center,
+                decoration: const BoxDecoration(
+                  color: AppColors.white,
+                  shape: BoxShape.circle,
+                ),
+                child: Text(
+                  name[0].toUpperCase(),
+                  style: GoogleFonts.dmSans(
+                    fontSize: 18,
+                    fontWeight: FontWeight.w700,
+                    color: AppColors.textPrimary,
+                  ),
                 ),
               ),
-              const SizedBox(height: 4),
-              Text(
-                'Kamu yang memegang kendali atas datamu.',
-                style: GoogleFonts.dmSans(
-                  fontSize: 13,
-                  color: AppColors.textSecondary,
-                ),
-              ),
-              const SizedBox(height: 20),
-
-              // Card Profil Aktif (Dinamis dari Onboarding/Storage)
-              _isLoading
-                  ? const Center(
-                      child: Padding(
-                        padding: EdgeInsets.all(16.0),
-                        child: CircularProgressIndicator(
-                          color: AppColors.primary,
+              const SizedBox(width: 18),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      name,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: GoogleFonts.dmSans(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w700,
+                        color: AppColors.textPrimary,
+                      ),
+                    ),
+                    if (subtitle.isNotEmpty) ...[
+                      const SizedBox(height: 4),
+                      Text(
+                        subtitle,
+                        style: GoogleFonts.dmSans(
+                          fontSize: 12.5,
+                          color: AppColors.textSecondary,
                         ),
                       ),
-                    )
-                  : _buildProfileCard(
-                      name: profileName,
-                      subtitle: '$age tahun · $categoryLabel',
-                      avatarInitial: avatarInitial,
-                      onTap: () {},
-                    ),
-              const SizedBox(height: 28),
-
-              // Section 1: Untuk Kamu & Keluarga
-              _buildSectionTitle('Untuk kamu & keluarga'),
-              const SizedBox(height: 12),
-              _buildGroupedCard([
-                _buildMenuItem(
-                  icon: Icons
-                      .menu_book_rounded, // Icon disesuaikan dengan Edukasi
-                  title: 'Lihat onboarding awal',
-                  subtitle: 'Pengenalan aplikasi & setup profil lokal',
-                  onTap: () {},
-                ),
-                _buildDivider(),
-                _buildMenuItem(
-                  icon: Icons.people_outline_rounded,
-                  title: 'Kelola profil keluarga',
-                  subtitle: '1 profil di perangkat ini',
-                  onTap: () {},
-                ),
-                _buildDivider(),
-                _buildMenuItem(
-                  icon: Icons.notifications_none_rounded,
-                  title: 'Pengingat TTD & skrining',
-                  subtitle: 'Atur rutinitas sehatmu',
-                  onTap: () {},
-                ),
-              ]),
-              const SizedBox(height: 28),
-
-              // Section 2: Data & Privasi
-              _buildSectionTitle('Data & privasi'),
-              const SizedBox(height: 12),
-              _buildGroupedCard([
-                _buildMenuItem(
-                  icon: Icons.shield_outlined,
-                  title: 'Tentang privasi data',
-                  subtitle: 'Lokal. Pribadi. Milikmu.',
-                  onTap: () {},
-                ),
-                _buildDivider(),
-                _buildMenuItem(
-                  icon: Icons.file_download_outlined,
-                  title: 'Ekspor data',
-                  subtitle: 'Unduh cadangan profil dan riwayat',
-                  onTap: () {},
-                ),
-                _buildDivider(),
-                _buildMenuItem(
-                  icon: Icons.delete_outline_rounded,
-                  title: 'Hapus semua data lokal',
-                  subtitle: 'Hapus profil, riwayat, dan preferensi',
-                  isDestructive: true,
-                  onTap: () {},
-                ),
-              ]),
-              const SizedBox(height: 24),
-
-              // Box Catatan Keamanan
-              Container(
-                width: double.infinity,
-                padding: const EdgeInsets.all(20),
-                decoration: BoxDecoration(
-                  color: const Color(0xFFF8F9FA),
-                  borderRadius: BorderRadius.circular(20),
-                ),
-                child: Column(
-                  children: [
-                    const Icon(
-                      Icons.lock_outline_rounded,
-                      color: Color(0xFF8D99AE),
-                      size: 24,
-                    ),
-                    const SizedBox(height: 12),
-                    Text(
-                      'Tidak ada akun. Tidak ada unggahan biometrik.\nEkspor berkala agar perjalanan sehatmu tetap tersimpan.',
-                      textAlign: TextAlign.center,
-                      style: GoogleFonts.dmSans(
-                        fontSize: 12,
-                        height: 1.5,
-                        color: const Color(0xFF6C757D),
-                      ),
-                    ),
+                    ],
                   ],
                 ),
               ),
-              const SizedBox(height: 32),
-
-              // Footer Versi Aplikasi
-              Center(
-                child: Column(
-                  children: [
-                    Text(
-                      'Anemify · Prototipe desain 1.0',
-                      style: GoogleFonts.dmSans(
-                        fontSize: 11,
-                        fontWeight: FontWeight.w500,
-                        color: Colors.grey.shade500,
-                      ),
-                    ),
-                    const SizedBox(height: 2),
-                    Text(
-                      'Dibuat untuk langkah sehat yang lebih mudah',
-                      style: GoogleFonts.dmSans(
-                        fontSize: 11,
-                        color: Colors.grey.shade400,
-                      ),
-                    ),
-                  ],
-                ),
+              const Icon(
+                LucideIcons.chevronRight,
+                size: 20,
+                color: AppColors.textPrimary,
               ),
-              const SizedBox(height: 120),
             ],
           ),
         ),
@@ -221,121 +249,57 @@ class _SettingsPageState extends State<SettingsPage> {
     );
   }
 
-  Widget _buildSectionTitle(String title) {
-    return Text(
-      title,
-      style: GoogleFonts.dmSans(
-        fontSize: 16,
-        fontWeight: FontWeight.bold,
-        color: const Color(0xFF2B2D42),
-      ),
-    );
-  }
-
-  Widget _buildProfileCard({
-    required String name,
-    required String subtitle,
-    required String avatarInitial,
-    required VoidCallback onTap,
-  }) {
-    return Container(
-      decoration: BoxDecoration(
-        color: const Color(0xFFF8F9FA),
-        borderRadius: BorderRadius.circular(20),
-      ),
-      child: Material(
-        color: Colors.transparent,
-        child: InkWell(
-          onTap: onTap,
-          borderRadius: BorderRadius.circular(20),
-          child: Padding(
-            padding: const EdgeInsets.all(16),
-            child: Row(
-              children: [
-                CircleAvatar(
-                  radius: 28,
-                  backgroundColor: Colors.white,
-                  child: Text(
-                    avatarInitial,
-                    style: GoogleFonts.dmSans(
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
-                      color: const Color(0xFF2B2D42),
-                    ),
-                  ),
-                ),
-                const SizedBox(width: 14),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        name,
-                        style: GoogleFonts.dmSans(
-                          fontSize: 16,
-                          fontWeight: FontWeight.bold,
-                          color: const Color(0xFF2B2D42),
-                        ),
-                      ),
-                      const SizedBox(height: 2),
-                      Text(
-                        subtitle,
-                        style: GoogleFonts.dmSans(
-                          fontSize: 12,
-                          color: AppColors.textSecondary,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                const Icon(
-                  Icons.chevron_right_rounded,
-                  color: Colors.grey,
-                  size: 22,
-                ),
-              ],
-            ),
-          ),
+  Widget _sectionTitle(String text) => Text(
+        text,
+        style: GoogleFonts.dmSans(
+          fontSize: 16,
+          fontWeight: FontWeight.w700,
+          color: AppColors.textPrimary,
         ),
-      ),
-    );
-  }
+      );
 
-  Widget _buildGroupedCard(List<Widget> children) {
+  Widget _group(List<Widget> items) {
     return Container(
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppColors.white,
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: const Color(0xFFF0F0F2), width: 1),
+        border: Border.all(color: AppColors.inactive),
       ),
-      child: Column(children: children),
+      clipBehavior: Clip.antiAlias,
+      child: Column(
+        children: [
+          for (var i = 0; i < items.length; i++) ...[
+            if (i > 0)
+              const Divider(height: 1, thickness: 1, color: AppColors.inactive),
+            items[i],
+          ],
+        ],
+      ),
     );
   }
 
-  Widget _buildMenuItem({
+  Widget _item({
     required IconData icon,
     required String title,
     required String subtitle,
     required VoidCallback onTap,
-    bool isDestructive = false,
+    bool destructive = false,
   }) {
-    final titleColor = isDestructive
-        ? const Color(0xFFE63946)
-        : const Color(0xFF2B2D42);
-    final iconColor = isDestructive
-        ? const Color(0xFFE63946)
-        : const Color(0xFF6C757D);
+    final color = destructive ? AppColors.primary : AppColors.textPrimary;
 
     return Material(
       color: Colors.transparent,
       child: InkWell(
         onTap: onTap,
-        borderRadius: BorderRadius.circular(20),
         child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+          padding: const EdgeInsets.fromLTRB(16, 20, 16, 20),
           child: Row(
             children: [
-              Icon(icon, color: iconColor, size: 22),
+              Icon(
+                icon,
+                size: 20,
+                color: destructive ? AppColors.primary : AppColors.textSecondary,
+              ),
               const SizedBox(width: 14),
               Expanded(
                 child: Column(
@@ -345,25 +309,26 @@ class _SettingsPageState extends State<SettingsPage> {
                       title,
                       style: GoogleFonts.dmSans(
                         fontSize: 14,
-                        fontWeight: FontWeight.bold,
-                        color: titleColor,
+                        fontWeight: FontWeight.w700,
+                        color: color,
                       ),
                     ),
-                    const SizedBox(height: 2),
+                    const SizedBox(height: 6),
                     Text(
                       subtitle,
                       style: GoogleFonts.dmSans(
-                        fontSize: 12,
+                        fontSize: 11.5,
                         color: AppColors.textSecondary,
                       ),
                     ),
                   ],
                 ),
               ),
-              const Icon(
-                Icons.chevron_right_rounded,
-                color: Colors.grey,
-                size: 20,
+              const SizedBox(width: 8),
+              Icon(
+                LucideIcons.chevronRight,
+                size: 18,
+                color: AppColors.textSecondary.withValues(alpha: 0.7),
               ),
             ],
           ),
@@ -372,12 +337,34 @@ class _SettingsPageState extends State<SettingsPage> {
     );
   }
 
-  Widget _buildDivider() {
-    return const Divider(
-      height: 1,
-      thickness: 1,
-      color: Color(0xFFF0F0F2),
-      indent: 52,
+  Widget _privacyNote() {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.fromLTRB(20, 24, 20, 24),
+      decoration: BoxDecoration(
+        color: AppColors.surface,
+        borderRadius: BorderRadius.circular(20),
+      ),
+      child: Column(
+        children: [
+          const Icon(
+            LucideIcons.lock,
+            size: 22,
+            color: AppColors.textSecondary,
+          ),
+          const SizedBox(height: 14),
+          Text(
+            'Tidak ada akun. Tidak ada unggahan biometrik. Ekspor berkala '
+            'agar perjalanan sehatmu tetap tersimpan.',
+            textAlign: TextAlign.center,
+            style: GoogleFonts.dmSans(
+              fontSize: 12.5,
+              height: 1.8,
+              color: AppColors.textSecondary,
+            ),
+          ),
+        ],
+      ),
     );
   }
 }

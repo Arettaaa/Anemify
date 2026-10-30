@@ -22,6 +22,44 @@ Future<bool> openProfileSwitcher(BuildContext context) async {
   return changed;
 }
 
+/// Langsung buka form ubah profil aktif (dipakai di Pengaturan).
+Future<bool> openActiveProfileEditor(BuildContext context) async {
+  final changed = await _editActive(context);
+  if (changed) notifyProfileChanged();
+  return changed;
+}
+
+Future<bool> _editActive(BuildContext context) async {
+  final active = await sl<GetActiveProfile>()();
+  final all = await sl<GetProfiles>()();
+  if (active == null || !context.mounted) return false;
+
+  final res = await showBlurSheet<Object>(
+    context,
+    child: ProfileFormSheet(initial: active, canDelete: all.length > 1),
+  );
+
+  if (res is Profile) {
+    await sl<UpdateProfile>()(res);
+    await _refreshTtdNotification(res); // nama/kategori bisa berubah
+    return true;
+  }
+
+  if (res == kDeleteProfile && context.mounted) {
+    final ok = await showBlurSheet<bool>(
+      context,
+      child: _DeleteConfirmSheet(profile: active),
+    );
+    if (ok != true) return false;
+    await _deleteActive(active);
+    if (context.mounted) {
+      showAppToast(context, 'Profil ${active.name} dihapus');
+    }
+    return true;
+  }
+  return false;
+}
+
 Future<bool> _open(BuildContext context) async {
   final action =
       await showBlurSheet<String>(context, child: const ProfilePickerSheet());
@@ -38,35 +76,7 @@ Future<bool> _open(BuildContext context) async {
     return true;
   }
 
-  if (action == 'edit') {
-    final active = await sl<GetActiveProfile>()();
-    final all = await sl<GetProfiles>()();
-    if (active == null || !context.mounted) return false;
-
-    final res = await showBlurSheet<Object>(
-      context,
-      child: ProfileFormSheet(initial: active, canDelete: all.length > 1),
-    );
-
-    if (res is Profile) {
-      await sl<UpdateProfile>()(res);
-      await _refreshTtdNotification(res); // nama/kategori bisa berubah
-      return true;
-    }
-
-    if (res == kDeleteProfile && context.mounted) {
-      final ok = await showBlurSheet<bool>(
-        context,
-        child: _DeleteConfirmSheet(profile: active),
-      );
-      if (ok != true) return false;
-      await _deleteActive(active);
-      if (context.mounted) {
-        showAppToast(context, 'Profil ${active.name} dihapus');
-      }
-      return true;
-    }
-  }
+  if (action == 'edit') return _editActive(context);
 
   return action == 'changed';
 }

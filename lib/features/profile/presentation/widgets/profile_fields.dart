@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../domain/entities/profile.dart';
+import '../../../../core/widgets/app_switch.dart';
 /// Pilihan jenis kelamin (2 kartu).
 class SexSelector extends StatelessWidget {
   final Sex? value;
@@ -109,12 +110,8 @@ class PregnancySwitch extends StatelessWidget {
                         ],
                       ),
                     ),
-                    Switch(
-                      value: value,
-                      onChanged: onChanged,
-                      activeThumbColor: AppColors.white,
-                      activeTrackColor: AppColors.primary,
-                    ),
+                    const SizedBox(width: 12),
+                    AppSwitch(value: value, onChanged: onChanged),
                   ],
                 ),
               ),

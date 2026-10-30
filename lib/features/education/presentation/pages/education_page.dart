@@ -16,6 +16,7 @@ import '../widgets/food_card_item.dart';
 import '../widgets/food_detail_sheet.dart';
 import '../widgets/myth_fact_card.dart';
 import '../widgets/ttd_dosis_card.dart';
+import '../../../../core/widgets/pinned_header.dart';
 
 class EducationPage extends StatefulWidget {
   final int initialTabIndex;
@@ -113,32 +114,37 @@ class _EducationPageState extends State<EducationPage> {
       backgroundColor: Colors.white,
       body: SafeArea(
         bottom: false,
-        child: SingleChildScrollView(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // Header
-              const Padding(
-                padding: EdgeInsets.fromLTRB(24, 16, 24, 0),
+               child: CustomScrollView(
+          slivers: [
+            // Header (ikut scroll)
+            const SliverToBoxAdapter(
+              child: Padding(
+                padding: EdgeInsets.fromLTRB(24, 16, 24, 13),
                 child: EducationHeader(),
               ),
-              const SizedBox(height: 24),
+            ),
 
-              // Tab Bar
-              EducationTabBar(
-                tabs: _tabs,
-                selectedIndex: _selectedTabIndex,
-                onTabSelected: (index) {
-                  setState(() {
-                    _selectedTabIndex = index;
-                  });
-                },
+            // Tab Bar (menempel di atas)
+            PinnedHeader(
+              height: 62,
+              child: Align(
+                alignment: Alignment.centerLeft,
+                child: EducationTabBar(
+                  tabs: _tabs,
+                  selectedIndex: _selectedTabIndex,
+                  onTabSelected: (index) {
+                    setState(() {
+                      _selectedTabIndex = index;
+                    });
+                  },
+                ),
               ),
-              const SizedBox(height: 24),
+            ),
 
-              // Konten Utama
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 24.0),
+            // Konten Utama
+            SliverToBoxAdapter(
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(24, 13, 24, 0),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
@@ -492,8 +498,8 @@ class _EducationPageState extends State<EducationPage> {
                   ],
                 ),
               ),
-            ],
-          ),
+            ),
+          ],
         ),
       ),
     );

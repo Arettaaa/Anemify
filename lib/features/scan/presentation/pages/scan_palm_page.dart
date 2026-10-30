@@ -28,6 +28,17 @@ class ScanPalmPage extends StatefulWidget {
 class _ScanPalmPageState extends State<ScanPalmPage> {
   Uint8List? _photo;
 
+  @override
+  void initState() {
+    super.initState();
+    _photo = context.read<ScanBloc>().state.palmPhoto;
+    if (widget.autoAnalyze && _photo != null) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) _analyze();
+      });
+    }
+  }
+
   Future<void> _capture() async {
     final bytes = await Navigator.of(context, rootNavigator: true)
         .push<Uint8List>(

@@ -12,6 +12,7 @@ import '../../../scan/presentation/widgets/scan_widgets.dart';
 import '../../domain/entities/ttd_settings.dart';
 import '../../domain/usecases/ttd_usecases.dart';
 import '../ttd_revision.dart';
+import '../../../../core/widgets/app_switch.dart';
 
 class TtdReminderPage extends StatefulWidget {
   const TtdReminderPage({super.key});
@@ -322,12 +323,8 @@ class _TtdReminderPageState extends State<TtdReminderPage> {
             ],
           ),
         ),
-        Switch(
-          value: value,
-          onChanged: onChanged,
-          activeThumbColor: AppColors.white,
-          activeTrackColor: AppColors.primary,
-        ),
+        const SizedBox(width: 12),
+        AppSwitch(value: value, onChanged: onChanged),
       ],
     );
   }

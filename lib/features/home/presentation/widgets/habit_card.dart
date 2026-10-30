@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../../../core/theme/app_colors.dart';
+import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 class HabitCard extends StatelessWidget {
   final String title;
@@ -39,8 +40,8 @@ class HabitCard extends StatelessWidget {
                 color: AppColors.white,
                 shape: BoxShape.circle,
               ),
-              child: const Icon(Icons.notifications_none_rounded,
-                  color: AppColors.primary, size: 22),
+              child: const Icon(LucideIcons.bell,
+                  color: AppColors.primary, size: 20),
             ),
             const SizedBox(width: 14),
             Expanded(

@@ -17,6 +17,7 @@ import '../history_revision.dart';
 import '../widgets/history_detail_sheet.dart';
 import '../widgets/history_scan_card.dart';
 import '../widgets/risk_trend_chart.dart';
+import '../../../../core/widgets/pinned_header.dart';
 
 class HistoryPage extends StatefulWidget {
   final VoidCallback onStartScan;
@@ -135,7 +136,7 @@ class _HistoryPageState extends State<HistoryPage>
     return '${formatTglPendek(_start)} – ${formatTglPendek(last)}';
   }
 
-  @override
+   @override
   Widget build(BuildContext context) {
     final hPad = MediaQuery.sizeOf(context).width < 360 ? 16.0 : 24.0;
     return Scaffold(
@@ -145,36 +146,77 @@ class _HistoryPageState extends State<HistoryPage>
         child: RefreshIndicator(
           color: AppColors.primary,
           onRefresh: _refresh,
-          child: ListView(
+          child: CustomScrollView(
             physics: const AlwaysScrollableScrollPhysics(),
-            padding: EdgeInsets.fromLTRB(hPad, 16, hPad, 32),
-            children: [
-              const AppLogo(),
-              const SizedBox(height: 24),
-              const ScanTitle(
-                title: 'Perjalanan sehatmu',
-                subtitle: TextSpan(text: 'Pantau setiap langkah sehatmu.'),
-              ),
-              const SizedBox(height: 18),
-              Center(child: _profileChip()),
-              const SizedBox(height: 16),
-              _tabs(),
-              const SizedBox(height: 24),
-              _pane(
-                0,
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: _scanSection(),
+            slivers: [
+              // Header (ikut scroll)
+              SliverPadding(
+                padding: EdgeInsets.fromLTRB(hPad, 16, hPad, 6),
+                sliver: SliverToBoxAdapter(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      const AppLogo(),
+                      const SizedBox(height: 24),
+                      Text(
+                        'Perjalanan sehatmu',
+                        style: scanStyle(
+                          size: 26,
+                          weight: FontWeight.w700,
+                          height: 1.2,
+                          letterSpacing: -0.6,
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        'Pantau setiap langkah sehatmu.',
+                        style: scanStyle(
+                          size: 14,
+                          color: AppColors.textSecondary,
+                        ),
+                      ),
+                      const SizedBox(height: 18),
+                      Center(child: _profileChip()),
+                    ],
+                  ),
                 ),
               ),
-              _pane(1, const TtdTab()),
+
+              // Tab (menempel di atas)
+              PinnedHeader(
+                height: 75,
+                child: Padding(
+                  padding:
+                      EdgeInsets.symmetric(horizontal: hPad, vertical: 10),
+                  child: _tabs(),
+                ),
+              ),
+
+              // Isi tab
+              SliverPadding(
+                padding: EdgeInsets.fromLTRB(hPad, 14, hPad, 32),
+                sliver: SliverToBoxAdapter(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      _pane(
+                        0,
+                        Column(
+                          crossAxisAlignment: CrossAxisAlignment.stretch,
+                          children: _scanSection(),
+                        ),
+                      ),
+                      _pane(1, const TtdTab()),
+                    ],
+                  ),
+                ),
+              ),
             ],
           ),
         ),
       ),
     );
   }
-
   /// Dua tab tetap hidup (state tidak hilang), yang aktif di-fade masuk.
   Widget _pane(int i, Widget child) {
     final active = _tab == i;
