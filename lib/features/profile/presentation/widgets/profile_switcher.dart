@@ -91,12 +91,6 @@ Future<void> _deleteActive(Profile p) async {
   notifyTtdChanged();
 }
 
-Future<void> _refreshTtdNotification(Profile p) async {
-  final s = await sl<GetTtdSettings>()();
-  if (!s.enabled && !s.weeklyScreening) return;
-  await NotificationService.instance.applyTtd(settings: s, profile: p);
-}
-
 class _DeleteConfirmSheet extends StatelessWidget {
   final Profile profile;
   const _DeleteConfirmSheet({required this.profile});

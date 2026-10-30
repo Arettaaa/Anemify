@@ -76,19 +76,30 @@ class _OnboardingPageState extends State<OnboardingPage> {
   bool get _isLast => _current == _pages.length - 1;
   bool get _canNext => !_item.requiresConsent || _consent;
 
+  bool _precached = false;
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    // Muat gambar maskot lebih dulu supaya geser slide tidak patah-patah.
+    if (_precached) return;
+    _precached = true;
+    for (final item in _items) {
+      precacheImage(AssetImage(item.imageAsset), context);
+    }
+  }
+
   void _go(int page) => _controller.animateToPage(
         page,
-        duration: const Duration(milliseconds: 350),
-        curve: Curves.easeOut,
+        duration: const Duration(milliseconds: 420),
+        curve: Curves.easeOutCubic,
       );
 
   void _next() {
     if (_isLast && widget.viewOnly) {
       Navigator.of(context).pop();
     } else if (_isLast) {
-      Navigator.of(context).push(
-        MaterialPageRoute(builder: (_) => const ProfileSetupPage()),
-      );
+      Navigator.of(context).push(_fadeRoute(const ProfileSetupPage()));
     } else {
       _go(_current + 1);
     }
@@ -135,29 +146,60 @@ class _OnboardingPageState extends State<OnboardingPage> {
               const SizedBox(height: 16),
               Row(
                 children: [
-                  if (!_isFirst) ...[
-                    OnboardingBackButton(onPressed: () => _go(_current - 1)),
-                    const SizedBox(width: 12),
-                  ],
+                  // Tombol kembali muncul/hilang dengan halus (tidak loncat)
+                  AnimatedSize(
+                    duration: const Duration(milliseconds: 300),
+                    curve: Curves.easeOutCubic,
+                    child: AnimatedSwitcher(
+                      duration: const Duration(milliseconds: 220),
+                      child: _isFirst
+                          ? const SizedBox(key: ValueKey('none'))
+                          : Padding(
+                              key: const ValueKey('back'),
+                              padding: const EdgeInsets.only(right: 12),
+                              child: OnboardingBackButton(
+                                onPressed: () => _go(_current - 1),
+                              ),
+                            ),
+                    ),
+                  ),
                   Expanded(
-                    child: OnboardingPrimaryButton(
-                      label: _item.buttonLabel,
-                      onPressed: _canNext ? _next : null,
+                    child: AnimatedSwitcher(
+                      duration: const Duration(milliseconds: 220),
+                      child: OnboardingPrimaryButton(
+                        key: ValueKey(_item.buttonLabel),
+                        label: _item.buttonLabel,
+                        onPressed: _canNext ? _next : null,
+                      ),
                     ),
                   ),
                 ],
               ),
-              if (_item.footnote != null) ...[
-                const SizedBox(height: 12),
-                Text(
-                  _item.footnote!,
-                  textAlign: TextAlign.center,
-                  style: GoogleFonts.dmSans(
-                    fontSize: 10,
-                    color: AppColors.textSecondary.withValues(alpha: 0.7),
-                  ),
+              AnimatedSize(
+                duration: const Duration(milliseconds: 300),
+                curve: Curves.easeOutCubic,
+                child: AnimatedSwitcher(
+                  duration: const Duration(milliseconds: 220),
+                  child: _item.footnote == null
+                      ? const SizedBox(
+                          key: ValueKey('no-note'),
+                          width: double.infinity,
+                        )
+                      : Padding(
+                          key: ValueKey(_item.footnote),
+                          padding: const EdgeInsets.only(top: 12),
+                          child: Text(
+                            _item.footnote!,
+                            textAlign: TextAlign.center,
+                            style: GoogleFonts.dmSans(
+                              fontSize: 10,
+                              color: AppColors.textSecondary
+                                  .withValues(alpha: 0.7),
+                            ),
+                          ),
+                        ),
                 ),
-              ],
+              ),
             ],
           ),
         ),
@@ -165,3 +207,27 @@ class _OnboardingPageState extends State<OnboardingPage> {
     );
   }
 }
+
+/// Transisi halus (fade + geser sedikit) ke halaman berikutnya.
+Route<T> _fadeRoute<T>(Widget page) => PageRouteBuilder<T>(
+      transitionDuration: const Duration(milliseconds: 380),
+      reverseTransitionDuration: const Duration(milliseconds: 300),
+      pageBuilder: (context, animation, secondary) => page,
+      transitionsBuilder: (context, animation, secondary, child) {
+        final curved = CurvedAnimation(
+          parent: animation,
+          curve: Curves.easeOutCubic,
+          reverseCurve: Curves.easeInCubic,
+        );
+        return FadeTransition(
+          opacity: curved,
+          child: SlideTransition(
+            position: Tween(
+              begin: const Offset(0.06, 0),
+              end: Offset.zero,
+            ).animate(curved),
+            child: child,
+          ),
+        );
+      },
+    );
