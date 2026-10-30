@@ -137,9 +137,12 @@ class _ProfileTile extends StatelessWidget {
               width: 44,
               height: 44,
               alignment: Alignment.center,
-              decoration: const BoxDecoration(
-                color: AppColors.surface,
+              decoration: BoxDecoration(
+                color: AppColors.white,
                 shape: BoxShape.circle,
+                border: Border.all(
+                  color: selected ? AppColors.white : AppColors.inactive,
+                ),
               ),
               child: Text(
                 profile.initial,
