@@ -69,12 +69,115 @@ class _SettingsPageState extends State<SettingsPage> {
   Future<void> _manageProfiles() => openProfileSwitcher(context);
 
   void _openTtd() {
-    Navigator.of(context).push(
-      MaterialPageRoute(builder: (_) => const TtdReminderPage()),
+    Navigator.of(
+      context,
+    ).push(MaterialPageRoute(builder: (_) => const TtdReminderPage()));
+  }
+
+  // ---------- Modal Privasi (UX Friendly) ----------
+
+  void _showPrivacyDialog() {
+    showDialog(
+      context: context,
+      builder: (dialogContext) => Dialog(
+        backgroundColor: Colors.white,
+        surfaceTintColor: Colors.transparent,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(28)),
+        insetPadding: const EdgeInsets.symmetric(horizontal: 24, vertical: 24),
+        child: Padding(
+          padding: const EdgeInsets.all(24),
+          child: SingleChildScrollView(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                // Header & Tombol Tutup (X)
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Expanded(
+                      child: Text(
+                        'Privasimu adalah prioritas',
+                        style: GoogleFonts.dmSans(
+                          fontSize: 18,
+                          fontWeight: FontWeight.w700,
+                          color: AppColors.textPrimary,
+                        ),
+                      ),
+                    ),
+                    InkWell(
+                      onTap: () => Navigator.pop(dialogContext),
+                      borderRadius: BorderRadius.circular(20),
+                      child: Container(
+                        padding: const EdgeInsets.all(6),
+                        decoration: const BoxDecoration(
+                          color: AppColors.surface,
+                          shape: BoxShape.circle,
+                        ),
+                        child: const Icon(
+                          LucideIcons.x,
+                          size: 18,
+                          color: AppColors.textSecondary,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 20),
+
+                // Icon Perisai
+                Container(
+                  width: 44,
+                  height: 44,
+                  alignment: Alignment.center,
+                  decoration: BoxDecoration(
+                    color: AppColors.primary.withValues(alpha: 0.1),
+                    shape: BoxShape.circle,
+                  ),
+                  child: const Icon(
+                    LucideIcons.shieldCheck,
+                    color: AppColors.primary,
+                    size: 22,
+                  ),
+                ),
+                const SizedBox(height: 20),
+
+                // Teks Penjelasan Ramah Pengguna
+                _privacyParagraph(
+                  '1. Tersimpan di Perangkatmu\n'
+                  'Seluruh data profil, riwayat skrining, dan pengingat TTD disimpan langsung di ponselmu. Tidak ada akun, kata sandi, atau server luar yang menyimpan datamu.',
+                ),
+                _privacyParagraph(
+                  '2. Privasi Pemindaian Foto\n'
+                  'Foto mata atau telapak tangan hanya digunakan saat sesi pemindaian berlangsung. Gambar yang tersimpan di riwayat akan otomatis disamarkan (diblur) demi kenyamanan dan privasimu.',
+                ),
+                _privacyParagraph(
+                  '3. Kendali Penuh Ada di Tanganmu\n'
+                  'Karena data tersimpan lokal, kamu bisa mengunduh file cadangan kapan saja atau menghapus seluruh isi data dari ponsel ini kapan pun kamu inginkan.',
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
     );
   }
 
-  // ---------- UI ----------
+  Widget _privacyParagraph(String text) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 16),
+      child: Text(
+        text,
+        style: GoogleFonts.dmSans(
+          fontSize: 13,
+          height: 1.6,
+          color: AppColors.textSecondary,
+        ),
+      ),
+    );
+  }
+
+  // ---------- UI Utama ----------
 
   @override
   Widget build(BuildContext context) {
@@ -85,7 +188,8 @@ class _SettingsPageState extends State<SettingsPage> {
       body: SafeArea(
         bottom: false,
         child: ListView(
-          padding: EdgeInsets.fromLTRB(hPad, 16, hPad, 120),
+          // Padding bawah disesuaikan jadi 32 agar scroll berhenti pas di akhir teks
+          padding: EdgeInsets.fromLTRB(hPad, 16, hPad, 32),
           children: [
             const AppLogo(),
             const SizedBox(height: 24),
@@ -140,7 +244,7 @@ class _SettingsPageState extends State<SettingsPage> {
                 icon: LucideIcons.shieldCheck,
                 title: 'Tentang privasi data',
                 subtitle: 'Lokal. Pribadi. Milikmu.',
-                onTap: () {},
+                onTap: _showPrivacyDialog,
               ),
               _item(
                 icon: LucideIcons.download,
@@ -161,7 +265,7 @@ class _SettingsPageState extends State<SettingsPage> {
             const SizedBox(height: 28),
             Center(
               child: Text(
-                'Anemify · Prototipe desain 1.0\n'
+                'Anemify v1.0.0\n'
                 'Dibuat untuk langkah sehat yang lebih mudah',
                 textAlign: TextAlign.center,
                 style: GoogleFonts.dmSans(
@@ -250,13 +354,13 @@ class _SettingsPageState extends State<SettingsPage> {
   }
 
   Widget _sectionTitle(String text) => Text(
-        text,
-        style: GoogleFonts.dmSans(
-          fontSize: 16,
-          fontWeight: FontWeight.w700,
-          color: AppColors.textPrimary,
-        ),
-      );
+    text,
+    style: GoogleFonts.dmSans(
+      fontSize: 16,
+      fontWeight: FontWeight.w700,
+      color: AppColors.textPrimary,
+    ),
+  );
 
   Widget _group(List<Widget> items) {
     return Container(
@@ -298,7 +402,9 @@ class _SettingsPageState extends State<SettingsPage> {
               Icon(
                 icon,
                 size: 20,
-                color: destructive ? AppColors.primary : AppColors.textSecondary,
+                color: destructive
+                    ? AppColors.primary
+                    : AppColors.textSecondary,
               ),
               const SizedBox(width: 14),
               Expanded(
