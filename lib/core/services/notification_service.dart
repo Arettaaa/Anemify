@@ -44,17 +44,17 @@ class NotificationService {
   }
 
   static NotificationDetails _ttdDetails(String body) => NotificationDetails(
-        android: AndroidNotificationDetails(
-          'ttd_reminder',
-          'Pengingat TTD',
-          channelDescription: 'Pengingat minum Tablet Tambah Darah',
-          importance: Importance.high,
-          priority: Priority.high,
-          color: const Color(0xFFEF233C),
-          styleInformation: BigTextStyleInformation(body),
-        ),
-        iOS: const DarwinNotificationDetails(),
-      );
+    android: AndroidNotificationDetails(
+      'ttd_reminder',
+      'Pengingat TTD',
+      channelDescription: 'Pengingat minum Tablet Tambah Darah',
+      importance: Importance.high,
+      priority: Priority.high,
+      color: const Color(0xFFEF233C),
+      styleInformation: BigTextStyleInformation(body),
+    ),
+    iOS: const DarwinNotificationDetails(),
+  );
 
   static const _screeningDetails = NotificationDetails(
     android: AndroidNotificationDetails(
@@ -102,14 +102,16 @@ class NotificationService {
     if (Platform.isAndroid) {
       return await _plugin
               .resolvePlatformSpecificImplementation<
-                  AndroidFlutterLocalNotificationsPlugin>()
+                AndroidFlutterLocalNotificationsPlugin
+              >()
               ?.requestNotificationsPermission() ??
           true;
     }
     if (Platform.isIOS) {
       return await _plugin
               .resolvePlatformSpecificImplementation<
-                  IOSFlutterLocalNotificationsPlugin>()
+                IOSFlutterLocalNotificationsPlugin
+              >()
               ?.requestPermissions(alert: true, badge: true, sound: true) ??
           false;
     }
@@ -203,5 +205,33 @@ class NotificationService {
       d = d.add(const Duration(days: 1));
     }
     return d;
+  }
+
+  /// Tampilkan notifikasi seketika (langsung muncul saat ekspor/unduh selesai)
+  Future<void> showInstantNotification({
+    required String title,
+    required String body,
+  }) async {
+    if (kIsWeb) return;
+    await init();
+
+    const details = NotificationDetails(
+      android: AndroidNotificationDetails(
+        'export_notification',
+        'Notifikasi Ekspor',
+        channelDescription: 'Notifikasi status unduh ekspor data',
+        importance: Importance.high,
+        priority: Priority.high,
+        color: Color(0xFFEF233C),
+      ),
+      iOS: DarwinNotificationDetails(),
+    );
+
+    await _plugin.show(
+      id: DateTime.now().millisecondsSinceEpoch ~/ 1000,
+      title: title,
+      body: body,
+      notificationDetails: details,
+    );
   }
 }

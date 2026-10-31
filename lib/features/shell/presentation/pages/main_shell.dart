@@ -1,15 +1,15 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart'; // Import ini wajib ada
+import 'package:flutter/services.dart';
 
 import '../../../education/presentation/pages/education_page.dart';
 import '../../../history/presentation/pages/history_page.dart';
 import '../../../home/presentation/pages/home_page.dart';
+import '../../../profile/presentation/profile_revision.dart';
 import '../../../scan/presentation/pages/scan_tab.dart';
 import '../../../settings/presentation/pages/settings_page.dart';
-import '../widgets/app_bottom_nav.dart';
-import '../../../profile/presentation/profile_revision.dart';
 import '../../../ttd/presentation/ttd_reminder_sync.dart';
 import '../../../ttd/presentation/ttd_revision.dart';
+import '../widgets/app_bottom_nav.dart';
 
 class MainShell extends StatefulWidget {
   const MainShell({super.key});
@@ -25,12 +25,12 @@ class _MainShellState extends State<MainShell> {
 
   final Set<int> _visited = {0};
 
-    @override
+  @override
   void initState() {
     super.initState();
     ttdRevision.addListener(syncTtdReminders);
     profileRevision.addListener(syncTtdReminders);
-    syncTtdReminders(); // isi ulang jadwal tiap aplikasi dibuka
+    syncTtdReminders(); // Isi ulang jadwal tiap aplikasi dibuka
   }
 
   @override
@@ -88,9 +88,10 @@ class _MainShellState extends State<MainShell> {
       value: const SystemUiOverlayStyle(
         statusBarColor: Colors.transparent,
         statusBarIconBrightness: Brightness.dark,
-        systemNavigationBarColor: Colors.white, // Memaksa bar bawah jadi putih
-        systemNavigationBarIconBrightness:
-            Brightness.dark, // Ikon navigasi jadi gelap
+        // Dibuat transparan agar bayangan overlay dialog menyatu sampai paling bawah HP
+        systemNavigationBarColor: Colors.transparent,
+        systemNavigationBarDividerColor: Colors.transparent,
+        systemNavigationBarIconBrightness: Brightness.dark,
       ),
       child: Scaffold(
         body: IndexedStack(index: _index, children: List.generate(5, _tab)),
