@@ -8,6 +8,7 @@ import '../../features/scan/data/repositories/scan_repository_impl.dart';
 import '../../features/scan/domain/repositories/scan_repository.dart';
 import '../../features/scan/domain/usecases/classify_anemia_risk.dart';
 import '../../features/scan/presentation/bloc/scan_bloc.dart';
+import '../../features/settings/data/data_transfer_service.dart';
 import '../../features/profile/data/datasources/profile_local_datasource.dart';
 import '../../features/profile/data/repositories/profile_repository_impl.dart';
 import '../../features/profile/domain/repositories/profile_repository.dart';
@@ -52,4 +53,7 @@ void setupInjection() {
   sl.registerFactory(() => GetHistoryEntry(sl()));
   sl.registerFactory(() => DeleteHistoryEntry(sl()));
   sl.registerFactory(() => ClearHistory(sl()));
+
+  // Ekspor & impor data
+  sl.registerLazySingleton(() => DataTransferService(sl(), sl(), sl()));
 }

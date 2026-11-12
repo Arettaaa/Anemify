@@ -234,7 +234,7 @@ class _EducationPageState extends State<EducationPage> {
                                   ),
                                   decoration: BoxDecoration(
                                     color: isSelected
-                                        ? const Color(0xFF2B2D42)
+                                        ? AppColors.active
                                         : const Color(0xFFF4F5F7),
                                     borderRadius: BorderRadius.circular(20),
                                   ),

@@ -21,5 +21,9 @@ class TtdRepositoryImpl implements TtdRepository {
   Future<void> setTaken(DateTime day, bool taken) => _ds.setTaken(day, taken);
 
   @override
+  Future<void> restoreLogs(String profileId, Map<String, DateTime> logs) =>
+      _ds.restoreLogs(profileId, logs);
+
+  @override
   Future<void> clear() => _ds.clear();
 }

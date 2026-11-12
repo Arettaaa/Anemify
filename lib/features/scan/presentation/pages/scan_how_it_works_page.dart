@@ -47,6 +47,19 @@ class ScanHowItWorksPage extends StatelessWidget {
   Widget build(BuildContext context) {
     return ScanPageScaffold(
       showBack: !isGate,
+      bottom: isGate
+          ? ScanPrimaryButton(
+              label: 'Saya mengerti, lanjut',
+              onPressed: () async {
+                final nav = Navigator.of(context);
+                final prefs = await SharedPreferences.getInstance();
+                await prefs.setBool(kScanHowtoSeenKey, true);
+                nav.pushReplacement(
+                  MaterialPageRoute(builder: (_) => const ScanIntroPage()),
+                );
+              },
+            )
+          : null,
       children: [
         const ScanTitle(
           title: 'Cara Kerja & Akurasi',
@@ -59,7 +72,7 @@ class ScanHowItWorksPage extends StatelessWidget {
           width: double.infinity,
           padding: const EdgeInsets.all(24),
           decoration: BoxDecoration(
-            color: AppColors.textPrimary,
+            gradient: AppColors.heroGradient,
             borderRadius: BorderRadius.circular(28),
           ),
           child: Column(
@@ -78,7 +91,7 @@ class ScanHowItWorksPage extends StatelessWidget {
                 'Analisis berjalan di perangkatmu. Hasil tidak menggantikan '
                 'pemeriksaan hemoglobin oleh tenaga kesehatan.',
                 style: scanStyle(
-                    size: 12.5, height: 1.7, color: const Color(0xFFD5D8E0)),
+                    size: 12.5, height: 1.7, color: AppColors.white.withValues(alpha: 0.85)),
               ),
             ],
           ),
@@ -102,20 +115,6 @@ class ScanHowItWorksPage extends StatelessWidget {
             style: scanStyle(size: 13, height: 1.7, color: AppColors.primary),
           ),
         ),
-        if (isGate) ...[
-          const SizedBox(height: 24),
-          ScanPrimaryButton(
-            label: 'Saya mengerti, lanjut',
-            onPressed: () async {
-              final nav = Navigator.of(context);
-              final prefs = await SharedPreferences.getInstance();
-              await prefs.setBool(kScanHowtoSeenKey, true);
-              nav.pushReplacement(
-                MaterialPageRoute(builder: (_) => const ScanIntroPage()),
-              );
-            },
-          ),
-        ],
       ],
     );
   }

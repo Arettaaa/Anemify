@@ -28,7 +28,7 @@ class ScanLoadingPage extends StatefulWidget {
 class _ScanLoadingPageState extends State<ScanLoadingPage>
     with TickerProviderStateMixin {
   static const _steps = [
-    'Memeriksa kualitas foto…',
+    'Menyiapkan foto…',
     'Menganalisis foto…',
     'Menyiapkan hasil…',
   ];
@@ -154,8 +154,8 @@ class _ScanLoadingPageState extends State<ScanLoadingPage>
                               ),
                               const SizedBox(height: 12),
                               Text(
-                                'Dicek kualitasnya lalu dianalisis di perangkatmu.\n'
-                                'Foto tidak dikirim ke server.',
+                                'Foto sudah lolos cek kualitas dan kini dianalisis\n'
+                                'di perangkatmu. Foto tidak dikirim ke server.',
                                 textAlign: TextAlign.center,
                                 style: scanStyle(
                                     size: 13,

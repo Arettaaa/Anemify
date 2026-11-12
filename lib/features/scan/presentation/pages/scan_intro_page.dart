@@ -34,6 +34,10 @@ class _ScanIntroPageState extends State<ScanIntroPage> {
   Widget build(BuildContext context) {
     return ScanPageScaffold(
       showBack: false,
+      bottom: ScanPrimaryButton(
+        label: _agreed ? 'Mulai ambil foto' : 'Centang persetujuan dulu',
+        onPressed: _agreed ? _start : null,
+      ),
       children: [
         ScanTitle(
           title: 'Kenali, lalu jaga.',
@@ -154,12 +158,7 @@ class _ScanIntroPageState extends State<ScanIntroPage> {
             ],
           ),
         ),
-        const SizedBox(height: 20),
-        ScanPrimaryButton(
-          label: 'Mulai ambil foto',
-          onPressed: _agreed ? _start : null,
-        ),
-        const SizedBox(height: 20),
+        const SizedBox(height: 12),
         Center(
           child: GestureDetector(
             onTap: () => Navigator.push(

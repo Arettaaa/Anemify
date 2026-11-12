@@ -90,7 +90,7 @@ class NotificationService {
       return indo[offset.inHours]!;
     }
     for (final loc in tz.timeZoneDatabase.locations.values) {
-      if (loc.currentTimeZone.offset == offset.inMilliseconds) return loc.name;
+      if (loc.currentTimeZone.offset == offset) return loc.name;
     }
     return 'UTC';
   }

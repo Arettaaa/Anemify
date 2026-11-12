@@ -21,19 +21,59 @@ TextStyle scanStyle({
   );
 }
 
-class ScanPageScaffold extends StatelessWidget {
+/// Kerangka halaman scan. Isi bisa digulir; [bottom] (biasanya tombol utama)
+/// menempel di bawah layar supaya selalu terlihat tanpa menggulir. Saat isi
+/// lebih panjang dari layar, muncul petunjuk kecil "gulir ke bawah".
+class ScanPageScaffold extends StatefulWidget {
   final List<Widget> children;
   final bool showBack;
+  final Widget? bottom;
   const ScanPageScaffold({
     super.key,
     required this.children,
     this.showBack = true,
+    this.bottom,
   });
+
+  @override
+  State<ScanPageScaffold> createState() => _ScanPageScaffoldState();
+}
+
+class _ScanPageScaffoldState extends State<ScanPageScaffold> {
+  final _ctrl = ScrollController();
+  bool _moreBelow = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _ctrl.addListener(_update);
+    WidgetsBinding.instance.addPostFrameCallback((_) => _update());
+  }
+
+  @override
+  void didUpdateWidget(covariant ScanPageScaffold oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    WidgetsBinding.instance.addPostFrameCallback((_) => _update());
+  }
+
+  void _update() {
+    if (!mounted || !_ctrl.hasClients) return;
+    final p = _ctrl.position;
+    final more = p.maxScrollExtent > 24 && p.pixels < p.maxScrollExtent - 24;
+    if (more != _moreBelow) setState(() => _moreBelow = more);
+  }
+
+  @override
+  void dispose() {
+    _ctrl.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
     final w = MediaQuery.sizeOf(context).width;
     final hPad = w < 360 ? 16.0 : 24.0;
+    final bottom = widget.bottom;
 
     return MediaQuery(
       data: MediaQuery.of(context).copyWith(
@@ -46,19 +86,99 @@ class ScanPageScaffold extends StatelessWidget {
           child: Center(
             child: ConstrainedBox(
               constraints: const BoxConstraints(maxWidth: 520),
-              child: SingleChildScrollView(
-                padding: EdgeInsets.fromLTRB(hPad, 16, hPad, 32),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    // logo selalu tampil, tombol back opsional
-                    ScanHeader(showBack: showBack),
-                    const SizedBox(height: 24),
-                    ...children,
-                  ],
-                ),
+              child: Column(
+                children: [
+                  Expanded(
+                    child: Stack(
+                      children: [
+                        SingleChildScrollView(
+                          controller: _ctrl,
+                          padding: EdgeInsets.fromLTRB(
+                              hPad, 16, hPad, bottom == null ? 32 : 20),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              // logo selalu tampil, tombol back opsional
+                              ScanHeader(showBack: widget.showBack),
+                              const SizedBox(height: 24),
+                              ...widget.children,
+                            ],
+                          ),
+                        ),
+                        Positioned(
+                          left: 0,
+                          right: 0,
+                          bottom: 0,
+                          child: IgnorePointer(
+                            child: AnimatedOpacity(
+                              duration: const Duration(milliseconds: 250),
+                              opacity: _moreBelow ? 1 : 0,
+                              child: const _ScrollHint(),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  if (bottom != null)
+                    Container(
+                      width: double.infinity,
+                      padding: EdgeInsets.fromLTRB(hPad, 12, hPad, 16),
+                      decoration: const BoxDecoration(
+                        color: AppColors.white,
+                        border: Border(top: BorderSide(color: AppColors.inactive)),
+                      ),
+                      child: bottom,
+                    ),
+                ],
               ),
             ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// Gradasi putih + panah kecil di tepi bawah area gulir: "masih ada isi di bawah".
+class _ScrollHint extends StatelessWidget {
+  const _ScrollHint();
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      height: 56,
+      alignment: Alignment.bottomCenter,
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topCenter,
+          end: Alignment.bottomCenter,
+          colors: [
+            AppColors.white.withValues(alpha: 0),
+            AppColors.white.withValues(alpha: 0.95),
+          ],
+        ),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.only(bottom: 6),
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 5),
+          decoration: BoxDecoration(
+            color: AppColors.pinkTint,
+            borderRadius: BorderRadius.circular(20),
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Icon(Icons.keyboard_double_arrow_down_rounded,
+                  size: 14, color: AppColors.primary),
+              const SizedBox(width: 4),
+              Text(
+                'Gulir ke bawah',
+                style: scanStyle(
+                    size: 11, weight: FontWeight.w700, color: AppColors.primary),
+              ),
+            ],
           ),
         ),
       ),

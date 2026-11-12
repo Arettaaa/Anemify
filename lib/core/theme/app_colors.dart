@@ -16,4 +16,14 @@ class AppColors {
   static const pinkTint = Color(0xFFFFEBEC);
   static const Color warningSoft = Color(0xFFFFF3C4);
   static const Color warning = Color(0xFF8A4B00);
+
+  /// Latar kartu "hero" (pengganti kartu navy gelap): merah utama -> merah tua.
+  static const heroGradient = LinearGradient(
+    begin: Alignment.topLeft,
+    end: Alignment.bottomRight,
+    colors: [primary, primaryDark],
+  );
+
+  /// Latar chip/toggle yang aktif.
+  static const active = primary;
 }

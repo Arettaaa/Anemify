@@ -10,6 +10,7 @@ import '../../../history/presentation/report/scan_report_pdf.dart';
 import '../bloc/scan_bloc.dart';
 import '../bloc/scan_event.dart';
 import '../widgets/scan_messages.dart';
+import '../widgets/score_breakdown.dart';
 import '../widgets/scan_widgets.dart';
 import 'scan_flow.dart';
 
@@ -37,16 +38,28 @@ class ScanResultPage extends StatelessWidget {
     if (!ok) await launchUrl(uri);
   }
 
-  String _nextSteps(RiskCategory c) => switch (c) {
-        RiskCategory.tinggi =>
-          'Kategori ini perlu ditindaklanjuti dengan pemeriksaan di fasilitas '
-              'kesehatan. Jangan memulai atau mengubah pengobatan berdasarkan aplikasi.',
-        RiskCategory.perluPerhatian =>
-          'Lakukan pemeriksaan kadar hemoglobin (Hb). Lengkapi menu dengan sumber '
-              'zat besi dan vitamin C, dan ikuti anjuran TTD dari tenaga kesehatan.',
-        RiskCategory.rendah =>
-          'Lengkapi menu dengan sumber zat besi dan vitamin C. Ikuti anjuran TTD '
-              'dari tenaga kesehatan. Periksakan keluhan meski kategori tampak rendah.',
+  List<String> _nextSteps(RiskCategory c) => switch (c) {
+        RiskCategory.tinggi => const [
+            'Periksakan diri ke puskesmas atau klinik untuk cek kadar Hb — '
+                'sebaiknya dalam waktu dekat.',
+            'Unduh laporan PDF di halaman ini dan tunjukkan ke petugas '
+                'kesehatan saat periksa.',
+            'Jangan memulai atau mengubah pengobatan sendiri berdasarkan '
+                'hasil aplikasi.',
+          ],
+        RiskCategory.perluPerhatian => const [
+            'Jadwalkan pemeriksaan kadar hemoglobin (Hb) di fasilitas '
+                'kesehatan terdekat.',
+            'Bawa laporan PDF dari halaman ini saat periksa.',
+            'Lengkapi menu dengan sumber zat besi dan vitamin C; ikuti '
+                'anjuran TTD dari tenaga kesehatan.',
+          ],
+        RiskCategory.rendah => const [
+            'Pertahankan menu dengan sumber zat besi dan vitamin C.',
+            'Ikuti anjuran TTD dari tenaga kesehatan.',
+            'Tetap periksakan diri bila ada keluhan, meski kategori '
+                'tampak rendah.',
+          ],
       };
 
   ({String badge, Color bg, Color fg}) _style(RiskCategory c) => switch (c) {
@@ -159,15 +172,12 @@ class ScanResultPage extends StatelessWidget {
                   style: scanStyle(
                       size: 13.5, height: 1.7, color: AppColors.textSecondary),
                 ),
-                const SizedBox(height: 12),
-                Text(
-                  'Skor risiko skrining: ${(result.score * 100).round()}/100'
-                  '${result.usesFusion ? ' · mata + telapak' : ''}',
-                  textAlign: TextAlign.center,
-                  style: scanStyle(
-                    size: 11.5,
-                    color: AppColors.textSecondary.withValues(alpha: 0.8),
-                  ),
+                const SizedBox(height: 14),
+                ScoreBreakdown(
+                  score: result.score,
+                  palmScore: result.palmScore,
+                  eyeScore: result.eyeScore,
+                  usesFusion: result.usesFusion,
                 ),
               ],
             ),
@@ -180,16 +190,7 @@ class ScanResultPage extends StatelessWidget {
             ],
           ],
           const SizedBox(height: 18),
-          Text(
-            'Langkah selanjutnya',
-            style: scanStyle(size: 17, weight: FontWeight.w700),
-          ),
-          const SizedBox(height: 10),
-          Text(
-            _nextSteps(c),
-            style: scanStyle(
-                size: 14, height: 1.7, color: AppColors.textSecondary),
-          ),
+          _NextStepsCard(steps: _nextSteps(c)),
           if (c == RiskCategory.perluPerhatian) ...[
             const SizedBox(height: 20),
             SizedBox(
@@ -299,6 +300,72 @@ class ScanResultPage extends StatelessWidget {
               ),
             ),
           ),
+        ],
+      ),
+    );
+  }
+}
+
+/// Kartu "Apa yang harus saya lakukan?" — langkah bernomor, konkret.
+class _NextStepsCard extends StatelessWidget {
+  final List<String> steps;
+  const _NextStepsCard({required this.steps});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(18),
+      decoration: BoxDecoration(
+        color: AppColors.white,
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: AppColors.pinkTint, width: 1.5),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'Apa yang harus saya lakukan?',
+            style: scanStyle(size: 16, weight: FontWeight.w700),
+          ),
+          const SizedBox(height: 14),
+          for (var i = 0; i < steps.length; i++) ...[
+            if (i > 0) const SizedBox(height: 12),
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Container(
+                  width: 24,
+                  height: 24,
+                  alignment: Alignment.center,
+                  decoration: const BoxDecoration(
+                    color: AppColors.pinkTint,
+                    shape: BoxShape.circle,
+                  ),
+                  child: Text(
+                    '${i + 1}',
+                    style: scanStyle(
+                        size: 12.5,
+                        weight: FontWeight.w700,
+                        color: AppColors.primary),
+                  ),
+                ),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: Padding(
+                    padding: const EdgeInsets.only(top: 2),
+                    child: Text(
+                      steps[i],
+                      style: scanStyle(
+                          size: 13.5,
+                          height: 1.6,
+                          color: AppColors.textPrimary),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ],
         ],
       ),
     );

@@ -60,7 +60,7 @@ class HowItWorksPage extends StatelessWidget {
                 width: double.infinity,
                 padding: const EdgeInsets.all(20),
                 decoration: BoxDecoration(
-                  color: const Color(0xFF2B2D42),
+                  gradient: AppColors.heroGradient,
                   borderRadius: BorderRadius.circular(20),
                 ),
                 child: Column(
@@ -89,7 +89,7 @@ class HowItWorksPage extends StatelessWidget {
                     ),
                     const SizedBox(height: 8),
                     Text(
-                      'Prototipe ini belum memuat model TFLite atau segmentasi ML. Tidak ada angka akurasi klinis yang dapat diklaim.',
+                      'Analisis dilakukan oleh model di perangkatmu dan hasilnya berupa kategori risiko. Model belum divalidasi secara klinis, jadi hasil tidak menggantikan pemeriksaan hemoglobin.',
                       style: GoogleFonts.dmSans(
                         fontSize: 12,
                         height: 1.5,

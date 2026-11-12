@@ -44,6 +44,17 @@ class TtdLocalDataSource {
     await prefs.remove('ttd_logs_$pid');
   }
 
+  /// Pulihkan catatan dari cadangan: digabung dengan yang ada,
+  /// catatan di perangkat ini menang bila tanggalnya sama.
+  Future<void> restoreLogs(String profileId, Map<String, DateTime> logs) async {
+    final prefs = await SharedPreferences.getInstance();
+    final merged = {...logs, ...await getLogs(profileId)};
+    await prefs.setString(
+      'ttd_logs_$profileId',
+      jsonEncode(merged.map((k, v) => MapEntry(k, v.millisecondsSinceEpoch))),
+    );
+  }
+
   Future<void> setTaken(DateTime day, bool taken) async {
     final prefs = await SharedPreferences.getInstance();
     final key = 'ttd_logs_${await _pid()}';

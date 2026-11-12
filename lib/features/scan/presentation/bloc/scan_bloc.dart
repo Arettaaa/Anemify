@@ -1,6 +1,9 @@
+import 'dart:typed_data';
+
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../domain/entities/scan_failure.dart';
+import '../../domain/entities/scan_result.dart';
 import '../../domain/repositories/scan_repository.dart';
 import '../../domain/usecases/classify_anemia_risk.dart';
 import 'scan_event.dart';
@@ -12,8 +15,8 @@ class ScanBloc extends Bloc<ScanEvent, ScanState> {
         _classify = classify,
         super(const ScanState()) {
     on<ScanStarted>(_onStarted);
-    on<PalmPhotoCaptured>((e, emit) => emit(state.copyWith(palmPhoto: e.bytes, status: _idle)));
-    on<EyePhotoCaptured>((e, emit) => emit(state.copyWith(eyePhoto: e.bytes, status: _idle)));
+    on<PalmPhotoCaptured>((e, emit) => _onPhoto(e.bytes, ScanPhotoKind.palm, emit));
+    on<EyePhotoCaptured>((e, emit) => _onPhoto(e.bytes, ScanPhotoKind.eye, emit));
     on<ScanSubmitted>(_onSubmitted);
     on<ScanReset>((e, emit) => emit(ScanState(status: _idle, modelReady: state.modelReady)));
   }
@@ -32,6 +35,33 @@ class ScanBloc extends Bloc<ScanEvent, ScanState> {
       emit(state.copyWith(status: ScanStatus.ready, modelReady: true));
     } catch (_) {
       emit(state.withFailure(ScanFailureType.modelNotReady));
+    }
+  }
+
+  /// Foto baru dicek SEGERA: lolos -> disimpan; ditolak -> failure dengan
+  /// [failedPhoto] terisi, foto lama (kalau ada) tetap dipertahankan.
+  Future<void> _onPhoto(Uint8List bytes, ScanPhotoKind kind, Emitter<ScanState> emit) async {
+    final isEye = kind == ScanPhotoKind.eye;
+    if (!state.modelReady) {
+      // Model belum siap -> tidak bisa dicek; tolak dengan alasan yang jelas.
+      emit(state.withFailure(ScanFailureType.modelNotReady, photo: kind));
+      return;
+    }
+    emit(state.copyWith(status: ScanStatus.checkingPhoto));
+    try {
+      final check = await _repository.checkPhoto(photo: bytes, isEye: isEye);
+      final warnings = Map<ScanPhotoKind, List<ScanWarning>>.from(state.photoWarnings)
+        ..[kind] = check.warnings;
+      emit(state.copyWith(
+        status: ScanStatus.ready,
+        palmPhoto: isEye ? null : bytes,
+        eyePhoto: isEye ? bytes : null,
+        photoWarnings: warnings,
+      ));
+    } on ScanFailure catch (f) {
+      emit(state.withFailure(f.type, photo: f.photo ?? kind, metrics: f.metrics));
+    } catch (_) {
+      emit(state.withFailure(ScanFailureType.unknown, photo: kind));
     }
   }
 

@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
+import '../../../../core/theme/app_colors.dart';
+
 class EducationHeroCard extends StatelessWidget {
   final String title;
   final String subtitle;
@@ -19,7 +21,7 @@ class EducationHeroCard extends StatelessWidget {
       width: double.infinity,
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: const Color(0xFF2B2D42),
+        gradient: AppColors.heroGradient,
         borderRadius: BorderRadius.circular(20),
       ),
       child: Column(

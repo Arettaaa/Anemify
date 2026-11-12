@@ -1,5 +1,6 @@
 import 'dart:typed_data';
 
+import 'package:anemify/features/scan/domain/entities/quality_metrics.dart';
 import 'package:anemify/features/scan/domain/entities/risk_category.dart';
 import 'package:anemify/features/scan/domain/entities/scan_failure.dart';
 import 'package:anemify/features/scan/domain/entities/scan_result.dart';
@@ -12,6 +13,19 @@ import 'package:flutter_test/flutter_test.dart';
 
 class _FakeRepo implements ScanRepository {
   Uint8List? lastPalm;
+
+  /// Foto dengan byte pertama 0 dianggap buram (ditolak saat cek).
+  @override
+  Future<PhotoCheck> checkPhoto({required Uint8List photo, required bool isEye}) async {
+    if (photo.isNotEmpty && photo[0] == 0) {
+      throw ScanFailure(ScanFailureType.blurry,
+          photo: isEye ? ScanPhotoKind.eye : ScanPhotoKind.palm);
+    }
+    return const PhotoCheck(
+      metrics: QualityMetrics(brightness: 120, saturation: 0.3),
+      warnings: [ScanWarning.dullColor],
+    );
+  }
 
   @override
   Future<void> init() async {}
@@ -44,6 +58,7 @@ void main() {
     bloc.add(PalmPhotoCaptured(palm));
     final withPhoto = await bloc.stream.firstWhere((s) => s.palmPhoto != null);
     expect(withPhoto.canSubmit, isTrue);
+    expect(withPhoto.photoWarnings[ScanPhotoKind.palm], [ScanWarning.dullColor]);
 
     bloc.add(const ScanSubmitted());
     final done = await bloc.stream.firstWhere(
@@ -51,6 +66,39 @@ void main() {
     expect(done.status, ScanStatus.success);
     expect(done.result!.category, RiskCategory.tinggi);
     expect(repo.lastPalm, palm);
+  });
+
+  test('foto mata ditolak saat dicek -> failure, foto tidak disimpan', () async {
+    bloc.add(const ScanStarted());
+    await bloc.stream.firstWhere((s) => s.status == ScanStatus.ready);
+
+    bloc.add(EyePhotoCaptured(Uint8List.fromList([0, 9, 9])));
+    final s = await bloc.stream.firstWhere((s) => s.status == ScanStatus.failure);
+    expect(s.failure, ScanFailureType.blurry);
+    expect(s.failedPhoto, ScanPhotoKind.eye);
+    expect(s.eyePhoto, isNull);
+    expect(s.hasPhoto, isFalse);
+
+    // Foto ulang yang bagus -> diterima.
+    final ok = Uint8List.fromList([5, 5]);
+    bloc.add(EyePhotoCaptured(ok));
+    final s2 = await bloc.stream.firstWhere((s) => s.status == ScanStatus.ready);
+    expect(identical(s2.eyePhoto, ok), isTrue);
+    expect(s2.failure, isNull);
+  });
+
+  test('foto ditolak tidak menghapus foto lain yang sudah diterima', () async {
+    bloc.add(const ScanStarted());
+    await bloc.stream.firstWhere((s) => s.status == ScanStatus.ready);
+    final eye = Uint8List.fromList([7]);
+    bloc.add(EyePhotoCaptured(eye));
+    await bloc.stream.firstWhere((s) => s.eyePhoto != null);
+
+    bloc.add(PalmPhotoCaptured(Uint8List.fromList([0])));
+    final s = await bloc.stream.firstWhere((s) => s.status == ScanStatus.failure);
+    expect(s.failedPhoto, ScanPhotoKind.palm);
+    expect(s.palmPhoto, isNull);
+    expect(identical(s.eyePhoto, eye), isTrue);
   });
 
   test('analisis tanpa foto -> gagal noPhoto', () async {

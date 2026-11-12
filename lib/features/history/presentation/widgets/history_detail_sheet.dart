@@ -8,6 +8,7 @@ import '../../../profile/domain/usecases/profile_usecases.dart';
 import '../../../scan/presentation/widgets/risk_badge.dart';
 import '../../../scan/presentation/widgets/scan_messages.dart';
 import '../../../scan/presentation/widgets/scan_widgets.dart';
+import '../../../scan/presentation/widgets/score_breakdown.dart';
 import '../../domain/entities/history_entry.dart';
 import '../../domain/usecases/history_usecases.dart';
 import '../history_revision.dart';
@@ -107,11 +108,13 @@ class HistoryDetailSheet extends StatelessWidget {
                   textAlign: TextAlign.center,
                   style: scanStyle(
                       size: 13, height: 1.7, color: AppColors.textSecondary)),
-              const SizedBox(height: 10),
-              Text('Skor risiko skrining: ${(entry.score * 100).round()}/100',
-                  style: scanStyle(
-                      size: 11.5,
-                      color: AppColors.textSecondary.withValues(alpha: 0.8))),
+              const SizedBox(height: 14),
+              ScoreBreakdown(
+                score: entry.score,
+                palmScore: entry.palmScore,
+                eyeScore: entry.eyeScore,
+                usesFusion: entry.usesFusion,
+              ),
             ],
           ),
         ),

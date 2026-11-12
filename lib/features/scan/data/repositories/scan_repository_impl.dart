@@ -28,6 +28,15 @@ RoiTensor prepareTensorJob(({Uint8List photo, bool isEye}) job) {
   return t;
 }
 
+/// Foto yang sudah lolos [checkPhoto]; dipakai ulang oleh [classify] supaya
+/// foto tidak diproses dua kali.
+class _Verified {
+  const _Verified(this.photo, this.tensor, this.check);
+  final Uint8List photo;
+  final RoiTensor tensor;
+  final PhotoCheck check;
+}
+
 class ScanRepositoryImpl implements ScanRepository {
   ScanRepositoryImpl({TfliteDataSource? models}) : _models = models ?? TfliteDataSource();
 
@@ -35,6 +44,7 @@ class ScanRepositoryImpl implements ScanRepository {
   QualityChecker? _quality;
   OodConfig? _ood;
   RiskDecider? _decider; // diisi paling akhir = tanda semua siap
+  final _cache = <ScanPhotoKind, _Verified>{};
 
   @override
   Future<void> init() async {
@@ -53,54 +63,78 @@ class ScanRepositoryImpl implements ScanRepository {
   }
 
   @override
+  Future<PhotoCheck> checkPhoto({required Uint8List photo, required bool isEye}) async {
+    final kind = isEye ? ScanPhotoKind.eye : ScanPhotoKind.palm;
+    return (await _prepare(photo, kind)).check;
+  }
+
+  @override
   Future<ScanResult> classify({Uint8List? palmPhoto, Uint8List? eyePhoto}) async {
-    final decider = _decider, quality = _quality, ood = _ood;
-    if (decider == null || quality == null || ood == null) {
-      throw const ScanFailure(ScanFailureType.modelNotReady);
-    }
+    final decider = _decider;
+    if (decider == null) throw const ScanFailure(ScanFailureType.modelNotReady);
     final extra = <ScanWarning>[];
     double? palm, eye;
     QualityMetrics? pq, eq;
     if (palmPhoto != null) {
-      final t = await compute(prepareTensorJob, (photo: palmPhoto, isEye: false));
-      pq = _verify(quality, ood, t, ScanPhotoKind.palm, extra);
-      palm = _models.predictPalm(t);
+      final v = await _prepare(palmPhoto, ScanPhotoKind.palm);
+      pq = v.check.metrics;
+      extra.addAll(v.check.warnings);
+      palm = _models.predictPalm(v.tensor);
     }
     if (eyePhoto != null) {
-      final t = await compute(prepareTensorJob, (photo: eyePhoto, isEye: true));
-      eq = _verify(quality, ood, t, ScanPhotoKind.eye, extra);
-      eye = _models.predictKonj(t);
+      final v = await _prepare(eyePhoto, ScanPhotoKind.eye);
+      eq = v.check.metrics;
+      extra.addAll(v.check.warnings);
+      eye = _models.predictKonj(v.tensor);
     }
+    _cache.clear();
     return decider
         .decide(palm: palm, eye: eye)
         .withExtra(warnings: extra, palmQuality: pq, eyeQuality: eq);
   }
 
+  /// Potong + resize (isolate), lalu cek kualitas dan objek. Hasil disimpan
+  /// per jenis foto; foto yang sama (objek bytes identik) tidak diproses ulang.
+  Future<_Verified> _prepare(Uint8List photo, ScanPhotoKind kind) async {
+    final quality = _quality, ood = _ood;
+    if (quality == null || ood == null || _decider == null) {
+      throw const ScanFailure(ScanFailureType.modelNotReady);
+    }
+    final hit = _cache[kind];
+    if (hit != null && identical(hit.photo, photo)) return hit;
+    final t = await compute(prepareTensorJob, (photo: photo, isEye: kind == ScanPhotoKind.eye));
+    final check = _verify(quality, ood, t, kind);
+    final v = _Verified(photo, t, check);
+    _cache[kind] = v;
+    return v;
+  }
+
   /// Urutan: kualitas (gelap/terang/blur) -> OOD (bukan telapak/konjungtiva).
-  /// Lolos -> metrik + jarak OOD dikembalikan, peringatan ditambahkan ke [extra].
-  QualityMetrics _verify(
-      QualityChecker c, OodConfig ood, RoiTensor t, ScanPhotoKind kind, List<ScanWarning> extra) {
+  /// Lolos -> metrik + jarak OOD dikembalikan beserta peringatan ringan.
+  PhotoCheck _verify(QualityChecker c, OodConfig ood, RoiTensor t, ScanPhotoKind kind) {
     final isEye = kind == ScanPhotoKind.eye;
     var q = QualityChecker.measure(t);
     final v = c.check(q, isEye: isEye);
     if (v.failure != null) throw ScanFailure(v.failure!, photo: kind, metrics: q);
     final d = _models.predictOod(t);
     q = q.withOod(isEye ? d.konj : d.palm);
+    final warnings = <ScanWarning>[];
     switch (ood.level(q.oodDistance!, isEye: isEye)) {
       case OodLevel.foreign:
         throw ScanFailure(ScanFailureType.notTarget, photo: kind, metrics: q);
       case OodLevel.unusual:
-        extra.add(ScanWarning.atypicalPhoto);
+        warnings.add(ScanWarning.atypicalPhoto);
       case OodLevel.ok:
         break;
     }
-    extra.addAll(v.warnings);
-    return q;
+    warnings.addAll(v.warnings);
+    return PhotoCheck(metrics: q, warnings: warnings);
   }
 
   @override
   void dispose() {
     _models.close();
+    _cache.clear();
     _quality = null;
     _ood = null;
     _decider = null;

@@ -158,7 +158,7 @@ class _TtdTabState extends State<TtdTab> {
               child: Container(
                 padding: const EdgeInsets.all(16),
                 decoration: BoxDecoration(
-                  color: AppColors.textPrimary,
+                  gradient: AppColors.heroGradient,
                   borderRadius: BorderRadius.circular(20),
                 ),
                 child: Column(

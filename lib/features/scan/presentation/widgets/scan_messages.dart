@@ -32,6 +32,89 @@ String pesanGagal(ScanFailureType t, ScanPhotoKind? p) {
   }
 }
 
+/// Penjelasan penolakan foto untuk kartu di halaman ambil foto:
+/// judul singkat, apa yang terdeteksi, dan cara memperbaikinya.
+({String judul, String alasan, List<String> tips}) alasanTolak(
+    ScanFailureType t, ScanPhotoKind? p) {
+  final isEye = p == ScanPhotoKind.eye;
+  final foto = isEye ? 'mata' : 'telapak tangan';
+  final objek = isEye ? 'konjungtiva' : 'telapak tangan';
+  return switch (t) {
+    ScanFailureType.tooDark => (
+        judul: 'Foto terlalu gelap',
+        alasan: 'Cahaya pada foto $foto kurang, sehingga warna $objek tidak bisa dinilai.',
+        tips: [
+          'Pindah ke dekat jendela atau ruangan yang terang.',
+          'Jangan pakai flash; cahaya flash membuat warna tidak alami.',
+          'Pastikan tidak ada bayangan yang menutupi $objek.',
+        ],
+      ),
+    ScanFailureType.tooBright => (
+        judul: 'Foto terlalu terang',
+        alasan: 'Sebagian foto $foto terlalu silau, sehingga warna $objek hilang.',
+        tips: [
+          'Hindari cahaya matahari atau lampu yang langsung mengarah ke kamera.',
+          'Matikan flash.',
+          'Geser sedikit posisi agar tidak memantulkan cahaya.',
+        ],
+      ),
+    ScanFailureType.blurry => (
+        judul: 'Foto kurang tajam',
+        alasan: 'Foto $foto buram, biasanya karena HP bergerak atau belum fokus.',
+        tips: [
+          'Tahan HP dengan dua tangan atau sandarkan siku.',
+          'Tunggu kamera fokus (gambar tampak jelas) sebelum menekan tombol.',
+          'Bersihkan lensa kamera dengan kain lembut.',
+        ],
+      ),
+    ScanFailureType.notTarget => (
+        judul: isEye ? 'Konjungtiva tidak terdeteksi' : 'Telapak tangan tidak terdeteksi',
+        alasan: isEye
+            ? 'Bagian di dalam frame sabit tidak dikenali sebagai konjungtiva (bagian dalam kelopak mata bawah).'
+            : 'Bagian di dalam kotak tidak dikenali sebagai telapak tangan.',
+        tips: isEye
+            ? [
+                'Tarik kelopak mata bawah perlahan sampai bagian dalam yang kemerahan terlihat.',
+                'Isi frame sabit hanya dengan bagian kemerahan itu, bukan bola mata atau bulu mata.',
+                'Dekatkan HP sekitar 15-20 cm dari mata.',
+              ]
+            : [
+                'Buka telapak tangan dengan santai menghadap kamera.',
+                'Posisikan bagian tengah telapak memenuhi kotak panduan.',
+                'Pastikan tidak ada benda lain di dalam kotak.',
+              ],
+      ),
+    ScanFailureType.roiTooSmall => (
+        judul: 'Area foto terlalu kecil',
+        alasan: 'Bagian $objek yang tertangkap di dalam frame terlalu sedikit.',
+        tips: [
+          'Dekatkan HP sampai $objek memenuhi frame panduan.',
+          'Pastikan frame tidak tertutup jari atau benda lain.',
+        ],
+      ),
+    ScanFailureType.invalidImage => (
+        judul: 'Foto tidak terbaca',
+        alasan: 'File foto $foto rusak atau tidak bisa dibuka.',
+        tips: ['Ambil ulang foto dari kamera.'],
+      ),
+    ScanFailureType.modelNotReady => (
+        judul: 'Model belum siap',
+        alasan: 'Model analisis masih dimuat, jadi foto belum bisa dicek.',
+        tips: ['Tunggu beberapa detik, lalu ambil foto lagi.'],
+      ),
+    ScanFailureType.noPhoto => (
+        judul: 'Belum ada foto',
+        alasan: 'Ambil minimal satu foto terlebih dahulu.',
+        tips: const [],
+      ),
+    ScanFailureType.unknown => (
+        judul: 'Terjadi kesalahan',
+        alasan: 'Foto $foto tidak bisa diproses.',
+        tips: ['Coba ambil foto lagi.'],
+      ),
+  };
+}
+
 String judulKategori(RiskCategory c) => switch (c) {
       RiskCategory.rendah => 'Risiko rendah',
       RiskCategory.perluPerhatian => 'Perlu perhatian',

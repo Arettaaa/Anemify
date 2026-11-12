@@ -470,7 +470,7 @@ class _HistoryPageState extends State<HistoryPage>
           duration: const Duration(milliseconds: 180),
           padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
           decoration: BoxDecoration(
-            color: active ? AppColors.textPrimary : Colors.transparent,
+            color: active ? AppColors.active : Colors.transparent,
             borderRadius: BorderRadius.circular(20),
           ),
           child: Text(
@@ -529,7 +529,7 @@ class _HistoryPageState extends State<HistoryPage>
           duration: const Duration(milliseconds: 180),
           padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 11),
           decoration: BoxDecoration(
-            color: active ? AppColors.textPrimary : AppColors.surface,
+            color: active ? AppColors.active : AppColors.surface,
             borderRadius: BorderRadius.circular(22),
           ),
           child: Text(
@@ -554,12 +554,16 @@ class _HistoryPageState extends State<HistoryPage>
       ),
       child: Column(
         children: [
-          const Icon(
-            Icons.history_rounded,
-            size: 32,
-            color: AppColors.textSecondary,
+          Image.asset(
+            'assets/images/welcome_mascot.png',
+            height: 110,
+            errorBuilder: (_, _, _) => const Icon(
+              Icons.history_rounded,
+              size: 32,
+              color: AppColors.textSecondary,
+            ),
           ),
-          const SizedBox(height: 10),
+          const SizedBox(height: 12),
           Text(
             'Belum ada hasil scan di sini.',
             style: scanStyle(size: 14, weight: FontWeight.w700),

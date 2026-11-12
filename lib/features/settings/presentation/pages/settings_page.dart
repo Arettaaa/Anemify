@@ -1,6 +1,7 @@
-import 'dart:convert';
-
+import 'package:file_selector/file_selector.dart';
 import 'package:flutter/material.dart';
+import 'package:printing/printing.dart';
+import 'package:share_plus/share_plus.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -9,13 +10,14 @@ import '../../../../core/di/injection.dart';
 import '../../../../core/services/notification_service.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/widgets/app_logo.dart';
-import '../../../history/domain/usecases/history_usecases.dart';
+import '../../../history/presentation/history_revision.dart';
+import '../../../ttd/presentation/ttd_revision.dart';
+import '../../data/data_transfer_service.dart';
 import '../../../onboarding/presentation/pages/onboarding_page.dart';
 import '../../../profile/domain/entities/profile.dart';
 import '../../../profile/domain/usecases/profile_usecases.dart';
 import '../../../profile/presentation/profile_revision.dart';
 import '../../../profile/presentation/widgets/profile_switcher.dart';
-import '../../../ttd/domain/usecases/ttd_usecases.dart';
 import '../../../ttd/presentation/pages/ttd_reminder_page.dart';
 
 class SettingsPage extends StatefulWidget {
@@ -300,7 +302,8 @@ class _SettingsPageState extends State<SettingsPage> {
                 icon: LucideIcons.fileCode,
                 title: 'File Cadangan (.json)',
                 subtitle:
-                    'Format data mentah untuk dipulihkan kembali jika ganti perangkat.',
+                    'Data lengkap semua profil, untuk dipulihkan lewat menu '
+                    '"Impor data" di perangkat lain.',
                 onTap: () {
                   Navigator.pop(bottomSheetContext);
                   _processExport(isPdf: false);
@@ -382,77 +385,86 @@ class _SettingsPageState extends State<SettingsPage> {
     );
   }
 
-  /// Eksekusi Proses Ekspor + Validasi Data Kosong (Alert In-App + Notifikasi HP)
+  /// Ekspor sungguhan: tulis berkas lalu buka share sheet (pengguna memilih
+  /// "simpan ke perangkat", kirim WA, dsb). Tidak ada klaim "tersimpan"
+  /// sebelum berkasnya benar-benar ada.
   Future<void> _processExport({required bool isPdf}) async {
+    final svc = sl<DataTransferService>();
     try {
-      final profiles = await sl<GetProfiles>()();
-      final history = await sl<GetScanHistory>()();
-      final ttdLogs = await sl<GetTtdLogs>()();
-
-      // VALIDASI DATA KOSONG: Munculkan Alert In-App Sektika
-      if (history.isEmpty && ttdLogs.isEmpty) {
+      if (!await svc.hasAnyData()) {
         _showAppAlert(
           title: 'Belum Ada Data',
           message:
-              'Ekspor baru bisa dilakukan setelah kamu memiliki setidaknya satu riwayat skrining atau catatan konsumsi TTD. Cek kondisimu sekarang, yuk!',
+              'Ekspor baru bisa dilakukan setelah ada setidaknya satu riwayat '
+              'skrining atau catatan konsumsi TTD.',
           isError: true,
-        );
-
-        // Backup pemicu notifikasi HP
-        NotificationService.instance.showInstantNotification(
-          title: 'Belum Ada Data',
-          body:
-              'Ekspor baru bisa dilakukan setelah kamu memiliki setidaknya satu riwayat skrining atau catatan konsumsi TTD. Cek kondisimu sekarang, yuk!',
         );
         return;
       }
 
-      final payload = {
-        'exportedAt': DateTime.now().toIso8601String(),
-        'profiles': profiles
-            .map(
-              (p) => {
-                'id': p.id,
-                'name': p.name,
-                'age': p.age,
-                'sex': p.sex.name,
-                'isPregnant': p.isPregnant,
-              },
-            )
-            .toList(),
-        'history': history
-            .map(
-              (h) => {
-                'id': h.id,
-                'category': h.category.name,
-                'createdAt': h.createdAt.toIso8601String(),
-              },
-            )
-            .toList(),
-        'ttdLogs': ttdLogs,
-      };
+      String two(int n) => n.toString().padLeft(2, '0');
+      final d = DateTime.now();
+      final stamp = '${d.year}${two(d.month)}${two(d.day)}';
 
-      jsonEncode(payload);
-
-      final fileName = isPdf
-          ? 'laporan_anemify_${DateTime.now().millisecondsSinceEpoch}.pdf'
-          : 'cadangan_anemify_${DateTime.now().millisecondsSinceEpoch}.json';
-
-      // Alert In-App Berhasil
-      _showAppAlert(
-        title: 'Ekspor Berhasil',
-        message: '$fileName telah tersimpan di perangkatmu.',
-      );
-
-      // Notifikasi HP System
-      await NotificationService.instance.showInstantNotification(
-        title: 'File berhasil terunduh',
-        body: '$fileName telah tersimpan di perangkatmu.',
-      );
+      if (isPdf) {
+        final bytes = await svc.buildSummaryPdf();
+        await Printing.sharePdf(
+          bytes: bytes,
+          filename: 'Ringkasan_Anemify_$stamp.pdf',
+        );
+      } else {
+        final fileName = 'cadangan_anemify_$stamp.json';
+        final file = await svc.writeJsonFile(fileName);
+        await SharePlus.instance.share(ShareParams(
+          files: [XFile(file.path, mimeType: 'application/json')],
+          fileNameOverrides: [fileName],
+          subject: 'Cadangan data Anemify',
+        ));
+      }
     } catch (_) {
       _showAppAlert(
         title: 'Ekspor Gagal',
-        message: 'Terjadi kesalahan saat mengunduh data.',
+        message: 'Terjadi kesalahan saat menyiapkan berkas ekspor.',
+        isError: true,
+      );
+    }
+  }
+
+  /// Impor cadangan .json: pilih berkas, pulihkan profil + riwayat + log TTD
+  /// (dengan dedup, jadi impor dua kali tidak menggandakan data).
+  Future<void> _processImport() async {
+    const group = XTypeGroup(
+      label: 'Cadangan Anemify',
+      extensions: ['json'],
+      mimeTypes: ['application/json'],
+    );
+    final picked = await openFile(acceptedTypeGroups: const [group]);
+    if (picked == null) return;
+
+    try {
+      final summary =
+          await sl<DataTransferService>().importFromJson(await picked.readAsString());
+      notifyProfileChanged();
+      notifyHistoryChanged();
+      notifyTtdChanged();
+      await _load();
+      _showAppAlert(
+        title: 'Impor Berhasil',
+        message: '${summary.profilesAdded} profil baru, '
+            '${summary.historyAdded} riwayat dipulihkan '
+            '(${summary.historySkipped} dilewati karena sudah ada), '
+            '${summary.ttdDays} hari catatan TTD digabungkan.',
+      );
+    } on FormatException catch (e) {
+      _showAppAlert(
+        title: 'Impor Gagal',
+        message: e.message,
+        isError: true,
+      );
+    } catch (_) {
+      _showAppAlert(
+        title: 'Impor Gagal',
+        message: 'Terjadi kesalahan saat membaca berkas cadangan.',
         isError: true,
       );
     }
@@ -690,8 +702,14 @@ class _SettingsPageState extends State<SettingsPage> {
               _item(
                 icon: LucideIcons.download,
                 title: 'Ekspor data',
-                subtitle: 'Unduh cadangan profil dan riwayat',
+                subtitle: 'Bagikan cadangan profil, riwayat, dan catatan TTD',
                 onTap: _showExportOptionsModal,
+              ),
+              _item(
+                icon: LucideIcons.upload,
+                title: 'Impor data',
+                subtitle: 'Pulihkan dari file cadangan (.json)',
+                onTap: _processImport,
               ),
               _item(
                 icon: LucideIcons.trash2,

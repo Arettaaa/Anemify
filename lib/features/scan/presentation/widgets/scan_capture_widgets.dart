@@ -156,6 +156,133 @@ class ScanGuideCard extends StatelessWidget {
   }
 }
 
+/// Kartu merah "foto ditolak": alasan + cara memperbaiki. Tampil di halaman
+/// ambil foto segera setelah foto dicek, supaya pengguna tahu apa yang salah.
+class ScanRejectCard extends StatelessWidget {
+  final String judul;
+  final String alasan;
+  final List<String> tips;
+  const ScanRejectCard({
+    super.key,
+    required this.judul,
+    required this.alasan,
+    required this.tips,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(18),
+      decoration: BoxDecoration(
+        color: AppColors.pinkTint,
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: AppColors.primarySoft),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Container(
+                width: 34,
+                height: 34,
+                decoration: const BoxDecoration(
+                  color: AppColors.primary,
+                  shape: BoxShape.circle,
+                ),
+                child: const Icon(Icons.priority_high_rounded,
+                    size: 18, color: AppColors.white),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Text(
+                  judul,
+                  style: scanStyle(
+                      size: 15.5,
+                      weight: FontWeight.w700,
+                      color: AppColors.primary),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 10),
+          Text(
+            alasan,
+            style: scanStyle(size: 13.5, height: 1.6, color: AppColors.textPrimary),
+          ),
+          if (tips.isNotEmpty) ...[
+            const SizedBox(height: 12),
+            Text(
+              'Cara memperbaiki',
+              style: scanStyle(size: 12.5, weight: FontWeight.w700),
+            ),
+            const SizedBox(height: 6),
+            for (final t in tips)
+              Padding(
+                padding: const EdgeInsets.only(bottom: 5),
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Padding(
+                      padding: EdgeInsets.only(top: 6),
+                      child: Icon(Icons.circle, size: 5, color: AppColors.primary),
+                    ),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        t,
+                        style: scanStyle(
+                            size: 13, height: 1.5, color: AppColors.textSecondary),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+          ],
+        ],
+      ),
+    );
+  }
+}
+
+/// Kartu hijau kecil "foto diterima" + peringatan ringan bila ada.
+class ScanAcceptedCard extends StatelessWidget {
+  final List<String> warnings;
+  const ScanAcceptedCard({super.key, this.warnings = const []});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: warnings.isEmpty ? AppColors.successSoft : AppColors.warningSoft,
+        borderRadius: BorderRadius.circular(16),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Icon(
+            warnings.isEmpty ? Icons.check_circle_rounded : Icons.info_rounded,
+            size: 18,
+            color: warnings.isEmpty ? AppColors.success : AppColors.warning,
+          ),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Text(
+              warnings.isEmpty
+                  ? 'Foto diterima dan lolos cek kualitas.'
+                  : 'Foto diterima. ${warnings.join(' ')}',
+              style: scanStyle(size: 12.5, height: 1.55),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
 class ScanCaptureFootnote extends StatelessWidget {
   const ScanCaptureFootnote({super.key});
 
