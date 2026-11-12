@@ -24,10 +24,10 @@ class _Row {
 }
 
 class _DebugParityPageState extends State<DebugParityPage> {
-  // Skor acuan dari Colab (sel 3A)
+  // Skor acuan dari Colab (model v5 fp16, sel_paritas_v5)
   static const _colab = {
-    'konj_1.png': 0.8533, 'konj_2.png': 0.8248, 'konj_3.png': 0.2041,
-    'palm_1.png': 0.9479, 'palm_2.png': 0.9933, 'palm_3.png': 0.0101,
+    'konj_1.png': 0.8710, 'konj_2.png': 0.8499, 'konj_3.png': 0.1531,
+    'palm_1.png': 0.9268, 'palm_2.png': 0.9820, 'palm_3.png': 0.0842,
   };
 
   final _rows = <_Row>[];
