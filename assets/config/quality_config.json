@@ -3,13 +3,13 @@
     0.5,
     99.5
   ],
-  "source": "ROI dataset Mendeley (seluruh gambar)",
+  "source": "ROI dataset Mendeley (seluruh gambar); sharpness_min konjungtiva dikalibrasi ulang (persentil 5% foto bersih data pengembangan, v5)",
   "konjungtiva": {
     "brightness_min": 54.14172277951933,
     "brightness_max": 215.30269688117534,
     "saturation_min": 0.10518781611262296,
     "overexposed_max": 0.5967648757943386,
-    "sharpness_min": 0.7257223426443574
+    "sharpness_min": 1.582
   },
   "palm": {
     "brightness_min": 69.27415196508292,
