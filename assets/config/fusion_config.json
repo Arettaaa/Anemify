@@ -1,12 +1,14 @@
 {
-  "version": "fusion_v1",
+  "version": "fusion_v5",
   "method": "product_decision_rule",
   "formula": "logit(p) = ln(p/(1-p)) dengan p di-clip ke [clip, 1-clip]; p_gabungan = sigmoid(logit(p_palm) + logit(p_konj) - logit(prior))",
-  "prior": 0.6046287695584631,
+  "prior": 0.6064494380212062,
   "clip": 1e-06,
   "models": {
     "palm": {
-      "file": "palm_v3_fp32.tflite",
+      "file": "palm_v5_fp16.tflite",
+      "version": "palm_v5",
+      "chosen_model": "emb_reg",
       "input": {
         "shape": [
           1,
@@ -16,12 +18,13 @@
         ],
         "dtype": "float32",
         "channel_order": "RGBA",
-        "range": "RGB 0..255, alpha 0 atau 255 (255 = ROI). TANPA normalisasi tambahan.",
-        "how_to_make": "crop ROI telapak tangan (bagian tengah telapak, mengisi frame, seperti dataset), resize bilinear ke 224x224 tanpa mempertahankan rasio; alpha = 255 di seluruh gambar. Jika ada mask ROI: piksel di luar ROI diisi warna rata-rata ROI sebelum resize, alpha = mask (>127 -> 255, selain itu 0)"
+        "range": "RGB 0..255, alpha 0 atau 255 (255 = ROI). TANPA normalisasi tambahan. Sama dengan v3."
       }
     },
     "konjungtiva": {
-      "file": "konjungtiva_v3_fp32.tflite",
+      "file": "konjungtiva_v5_fp16.tflite",
+      "version": "konjungtiva_v5",
+      "chosen_model": "emb_reg",
       "input": {
         "shape": [
           1,
@@ -31,28 +34,27 @@
         ],
         "dtype": "float32",
         "channel_order": "RGBA",
-        "range": "RGB 0..255, alpha 0 atau 255 (255 = ROI). TANPA normalisasi tambahan.",
-        "how_to_make": "potong ke kotak pembatas ROI konjungtiva, isi piksel di luar ROI dengan warna rata-rata ROI (sebelum resize), resize bilinear ke 224x224 tanpa mempertahankan rasio; alpha = mask ROI di-resize lalu >127 -> 255, selain itu 0"
+        "range": "RGB 0..255, alpha 0 atau 255 (255 = ROI). TANPA normalisasi tambahan. Sama dengan v3."
       }
     }
   },
   "categories": {
-    "gabungan": {
-      "method": "pdr",
-      "low_max": 0.446,
-      "high_min": 0.649,
+    "konjungtiva_saja": {
+      "method": "konjungtiva",
+      "low_max": 0.437,
+      "high_min": 0.815,
       "high_rule": "presisi >= 0.85"
     },
     "palm_saja": {
       "method": "palm",
-      "low_max": 0.474,
-      "high_min": 0.702,
+      "low_max": 0.45,
+      "high_min": 0.722,
       "high_rule": "presisi >= 0.85"
     },
-    "konjungtiva_saja": {
-      "method": "konjungtiva",
-      "low_max": 0.46,
-      "high_min": 0.81,
+    "gabungan": {
+      "method": "pdr",
+      "low_max": 0.446,
+      "high_min": 0.628,
       "high_rule": "presisi >= 0.85"
     }
   },
@@ -84,207 +86,481 @@
     "ppv_high_min": 0.85,
     "fallback_spec": 0.9
   },
-  "metrics_cv_simulated": [
-    {
-      "metode": "palm",
-      "kondisi": "bersih",
-      "auc": 0.8428,
-      "threshold": 0.474,
-      "sens": 0.9033,
-      "spec": 0.6132,
-      "ppv": 0.7812,
-      "npv": 0.8058
+  "evaluation_per_child_pseudo_pairs": {
+    "uji_clean": {
+      "n_anak_palm": 101,
+      "n_anak_konj": 102,
+      "pasangan": 101,
+      "hasil": {
+        "Konjungtiva saja": {
+          "AUC": {
+            "mean": 0.7332,
+            "ci95": [
+              0.6259,
+              0.8348
+            ]
+          },
+          "Sensitivitas": {
+            "mean": 0.8638,
+            "ci95": [
+              0.7759,
+              0.9483
+            ]
+          },
+          "Spesifisitas": {
+            "mean": 0.4898,
+            "ci95": [
+              0.3488,
+              0.6512
+            ]
+          }
+        },
+        "Palm saja": {
+          "AUC": {
+            "mean": 0.8556,
+            "ci95": [
+              0.7712,
+              0.9261
+            ]
+          },
+          "Sensitivitas": {
+            "mean": 0.9135,
+            "ci95": [
+              0.8276,
+              0.9655
+            ]
+          },
+          "Spesifisitas": {
+            "mean": 0.6746,
+            "ci95": [
+              0.5349,
+              0.814
+            ]
+          }
+        },
+        "PDR": {
+          "AUC": {
+            "mean": 0.8865,
+            "ci95": [
+              0.8159,
+              0.9503
+            ]
+          },
+          "Sensitivitas": {
+            "mean": 0.8931,
+            "ci95": [
+              0.8103,
+              0.9655
+            ]
+          },
+          "Spesifisitas": {
+            "mean": 0.7378,
+            "ci95": [
+              0.6047,
+              0.8605
+            ]
+          }
+        },
+        "Rata-rata skor (pembanding)": {
+          "AUC": {
+            "mean": 0.8937,
+            "ci95": [
+              0.8212,
+              0.9531
+            ]
+          }
+        },
+        "PDR - model tunggal terbaik (AUC)": {
+          "mean": 0.0302,
+          "ci95": [
+            -0.0064,
+            0.0694
+          ],
+          "persen_pdr_lebih_tinggi": 0.943
+        },
+        "PDR - palm (AUC)": {
+          "mean": 0.0309,
+          "ci95": [
+            -0.0064,
+            0.0746
+          ],
+          "persen_pdr_lebih_tinggi": 0.943
+        },
+        "PDR - rata-rata skor (AUC)": {
+          "mean": -0.0073,
+          "ci95": [
+            -0.0277,
+            0.0064
+          ]
+        }
+      }
     },
-    {
-      "metode": "palm",
-      "kondisi": "terganggu",
-      "auc": 0.7875,
-      "threshold": 0.474,
-      "sens": 0.897,
-      "spec": 0.4966,
-      "ppv": 0.7315,
-      "npv": 0.7592
+    "uji_pert": {
+      "n_anak_palm": 101,
+      "n_anak_konj": 102,
+      "pasangan": 101,
+      "hasil": {
+        "Konjungtiva saja": {
+          "AUC": {
+            "mean": 0.6837,
+            "ci95": [
+              0.5726,
+              0.7887
+            ]
+          },
+          "Sensitivitas": {
+            "mean": 0.9315,
+            "ci95": [
+              0.8448,
+              0.9828
+            ]
+          },
+          "Spesifisitas": {
+            "mean": 0.2987,
+            "ci95": [
+              0.1628,
+              0.4419
+            ]
+          }
+        },
+        "Palm saja": {
+          "AUC": {
+            "mean": 0.832,
+            "ci95": [
+              0.7418,
+              0.9138
+            ]
+          },
+          "Sensitivitas": {
+            "mean": 0.9314,
+            "ci95": [
+              0.8621,
+              0.9828
+            ]
+          },
+          "Spesifisitas": {
+            "mean": 0.6727,
+            "ci95": [
+              0.5349,
+              0.814
+            ]
+          }
+        },
+        "PDR": {
+          "AUC": {
+            "mean": 0.8599,
+            "ci95": [
+              0.7755,
+              0.9335
+            ]
+          },
+          "Sensitivitas": {
+            "mean": 0.9061,
+            "ci95": [
+              0.8276,
+              0.9655
+            ]
+          },
+          "Spesifisitas": {
+            "mean": 0.6568,
+            "ci95": [
+              0.511,
+              0.7907
+            ]
+          }
+        },
+        "Rata-rata skor (pembanding)": {
+          "AUC": {
+            "mean": 0.8627,
+            "ci95": [
+              0.7786,
+              0.9347
+            ]
+          }
+        },
+        "PDR - model tunggal terbaik (AUC)": {
+          "mean": 0.0275,
+          "ci95": [
+            -0.0189,
+            0.0766
+          ],
+          "persen_pdr_lebih_tinggi": 0.858
+        },
+        "PDR - palm (AUC)": {
+          "mean": 0.0279,
+          "ci95": [
+            -0.0189,
+            0.0794
+          ],
+          "persen_pdr_lebih_tinggi": 0.859
+        },
+        "PDR - rata-rata skor (AUC)": {
+          "mean": -0.0027,
+          "ci95": [
+            -0.0156,
+            0.0072
+          ]
+        }
+      }
     },
-    {
-      "metode": "konjungtiva",
-      "kondisi": "bersih",
-      "auc": 0.7222,
-      "threshold": 0.46,
-      "sens": 0.8936,
-      "spec": 0.3658,
-      "ppv": 0.683,
-      "npv": 0.6921
+    "oof_clean": {
+      "n_anak_palm": 401,
+      "n_anak_konj": 407,
+      "pasangan": 401,
+      "hasil": {
+        "Konjungtiva saja": {
+          "AUC": {
+            "mean": 0.7616,
+            "ci95": [
+              0.7573,
+              0.7675
+            ]
+          },
+          "Sensitivitas": {
+            "mean": 0.9191,
+            "ci95": [
+              0.9174,
+              0.9261
+            ]
+          },
+          "Spesifisitas": {
+            "mean": 0.3081,
+            "ci95": [
+              0.3041,
+              0.3099
+            ]
+          }
+        },
+        "Palm saja": {
+          "AUC": {
+            "mean": 0.8656,
+            "ci95": [
+              0.8656,
+              0.8656
+            ]
+          },
+          "Sensitivitas": {
+            "mean": 0.9435,
+            "ci95": [
+              0.9435,
+              0.9435
+            ]
+          },
+          "Spesifisitas": {
+            "mean": 0.6023,
+            "ci95": [
+              0.6023,
+              0.6023
+            ]
+          }
+        },
+        "PDR": {
+          "AUC": {
+            "mean": 0.9075,
+            "ci95": [
+              0.8971,
+              0.9188
+            ]
+          },
+          "Sensitivitas": {
+            "mean": 0.9336,
+            "ci95": [
+              0.9087,
+              0.9565
+            ]
+          },
+          "Spesifisitas": {
+            "mean": 0.6819,
+            "ci95": [
+              0.6433,
+              0.7193
+            ]
+          }
+        },
+        "Rata-rata skor (pembanding)": {
+          "AUC": {
+            "mean": 0.9066,
+            "ci95": [
+              0.8949,
+              0.9188
+            ]
+          }
+        },
+        "PDR - model tunggal terbaik (AUC)": {
+          "mean": 0.0419,
+          "ci95": [
+            0.0315,
+            0.0532
+          ],
+          "persen_pdr_lebih_tinggi": 1.0
+        },
+        "PDR - palm (AUC)": {
+          "mean": 0.0419,
+          "ci95": [
+            0.0315,
+            0.0532
+          ],
+          "persen_pdr_lebih_tinggi": 1.0
+        },
+        "PDR - rata-rata skor (AUC)": {
+          "mean": 0.0009,
+          "ci95": [
+            -0.0018,
+            0.004
+          ]
+        }
+      }
     },
-    {
-      "metode": "konjungtiva",
-      "kondisi": "terganggu",
-      "auc": 0.6665,
-      "threshold": 0.46,
-      "sens": 0.9066,
-      "spec": 0.258,
-      "ppv": 0.6514,
-      "npv": 0.6436
-    },
-    {
-      "metode": "pdr",
-      "kondisi": "bersih",
-      "auc": 0.8775,
-      "threshold": 0.446,
-      "sens": 0.9082,
-      "spec": 0.6642,
-      "ppv": 0.8053,
-      "npv": 0.8255
-    },
-    {
-      "metode": "pdr",
-      "kondisi": "terganggu",
-      "auc": 0.8111,
-      "threshold": 0.446,
-      "sens": 0.8972,
-      "spec": 0.5349,
-      "ppv": 0.7468,
-      "npv": 0.7729
-    },
-    {
-      "metode": "sum",
-      "kondisi": "bersih",
-      "auc": 0.8813,
-      "threshold": 0.524,
-      "sens": 0.9086,
-      "spec": 0.6651,
-      "ppv": 0.8058,
-      "npv": 0.8263
-    },
-    {
-      "metode": "sum",
-      "kondisi": "terganggu",
-      "auc": 0.8149,
-      "threshold": 0.524,
-      "sens": 0.8976,
-      "spec": 0.5346,
-      "ppv": 0.7468,
-      "npv": 0.7734
+    "oof_pert": {
+      "n_anak_palm": 401,
+      "n_anak_konj": 407,
+      "pasangan": 401,
+      "hasil": {
+        "Konjungtiva saja": {
+          "AUC": {
+            "mean": 0.7215,
+            "ci95": [
+              0.7167,
+              0.7276
+            ]
+          },
+          "Sensitivitas": {
+            "mean": 0.9702,
+            "ci95": [
+              0.9696,
+              0.9739
+            ]
+          },
+          "Spesifisitas": {
+            "mean": 0.2034,
+            "ci95": [
+              0.1988,
+              0.2047
+            ]
+          }
+        },
+        "Palm saja": {
+          "AUC": {
+            "mean": 0.8309,
+            "ci95": [
+              0.8309,
+              0.8309
+            ]
+          },
+          "Sensitivitas": {
+            "mean": 0.9348,
+            "ci95": [
+              0.9348,
+              0.9348
+            ]
+          },
+          "Spesifisitas": {
+            "mean": 0.5673,
+            "ci95": [
+              0.5673,
+              0.5673
+            ]
+          }
+        },
+        "PDR": {
+          "AUC": {
+            "mean": 0.8686,
+            "ci95": [
+              0.8564,
+              0.8801
+            ]
+          },
+          "Sensitivitas": {
+            "mean": 0.9229,
+            "ci95": [
+              0.9,
+              0.9478
+            ]
+          },
+          "Spesifisitas": {
+            "mean": 0.6332,
+            "ci95": [
+              0.5965,
+              0.6725
+            ]
+          }
+        },
+        "Rata-rata skor (pembanding)": {
+          "AUC": {
+            "mean": 0.8719,
+            "ci95": [
+              0.8593,
+              0.8845
+            ]
+          }
+        },
+        "PDR - model tunggal terbaik (AUC)": {
+          "mean": 0.0377,
+          "ci95": [
+            0.0255,
+            0.0492
+          ],
+          "persen_pdr_lebih_tinggi": 1.0
+        },
+        "PDR - palm (AUC)": {
+          "mean": 0.0377,
+          "ci95": [
+            0.0255,
+            0.0492
+          ],
+          "persen_pdr_lebih_tinggi": 1.0
+        },
+        "PDR - rata-rata skor (AUC)": {
+          "mean": -0.0033,
+          "ci95": [
+            -0.0063,
+            -0.0004
+          ]
+        }
+      }
     }
-  ],
-  "metrics_test_simulated": {
-    "bersih": [
-      {
-        "metode": "palm",
-        "auc": 0.8484,
-        "threshold": 0.474,
-        "sens": 0.8851,
-        "spec": 0.6208,
-        "ppv": 0.7812,
-        "npv": 0.7793
-      },
-      {
-        "metode": "konjungtiva",
-        "auc": 0.7457,
-        "threshold": 0.46,
-        "sens": 0.864,
-        "spec": 0.4729,
-        "ppv": 0.7148,
-        "npv": 0.6946
-      },
-      {
-        "metode": "pdr",
-        "auc": 0.8824,
-        "threshold": 0.446,
-        "sens": 0.8904,
-        "spec": 0.7059,
-        "ppv": 0.8224,
-        "npv": 0.8081
-      },
-      {
-        "metode": "sum",
-        "auc": 0.8895,
-        "threshold": 0.524,
-        "sens": 0.8896,
-        "spec": 0.708,
-        "ppv": 0.8233,
-        "npv": 0.8075
-      }
-    ],
-    "terganggu": [
-      {
-        "metode": "palm",
-        "auc": 0.7805,
-        "threshold": 0.474,
-        "sens": 0.7443,
-        "spec": 0.7,
-        "ppv": 0.7914,
-        "npv": 0.6416
-      },
-      {
-        "metode": "konjungtiva",
-        "auc": 0.704,
-        "threshold": 0.46,
-        "sens": 0.8912,
-        "spec": 0.2907,
-        "ppv": 0.6577,
-        "npv": 0.6361
-      },
-      {
-        "metode": "pdr",
-        "auc": 0.8254,
-        "threshold": 0.446,
-        "sens": 0.8088,
-        "spec": 0.6816,
-        "ppv": 0.7952,
-        "npv": 0.6997
-      },
-      {
-        "metode": "sum",
-        "auc": 0.826,
-        "threshold": 0.524,
-        "sens": 0.8074,
-        "spec": 0.6831,
-        "ppv": 0.7958,
-        "npv": 0.6988
-      }
-    ]
   },
   "test_vectors": [
     {
       "p_palm": 0.8,
       "p_konj": 0.7,
-      "p_gabungan": 0.859217,
+      "p_gabungan": 0.858293,
       "kategori": "tinggi"
     },
     {
       "p_palm": 0.8,
       "p_konj": 0.3,
-      "p_gabungan": 0.528521,
+      "p_gabungan": 0.526621,
       "kategori": "perlu_perhatian"
     },
     {
       "p_palm": 0.3,
       "p_konj": 0.3,
-      "p_gabungan": 0.107227,
+      "p_gabungan": 0.106499,
       "kategori": "rendah"
     },
     {
       "p_palm": 0.95,
       "p_konj": 0.5,
-      "p_gabungan": 0.925508,
+      "p_gabungan": 0.924981,
       "kategori": "tinggi"
     },
     {
       "p_palm": 0.5,
       "p_konj": 0.5,
-      "p_gabungan": 0.395371,
+      "p_gabungan": 0.393551,
       "kategori": "rendah"
     },
     {
       "p_palm": 0.1,
       "p_konj": 0.9,
-      "p_gabungan": 0.395371,
+      "p_gabungan": 0.393551,
       "kategori": "rendah"
     },
     {
       "p_palm": 0.999999,
       "p_konj": 1e-06,
-      "p_gabungan": 0.395371,
+      "p_gabungan": 0.393551,
       "kategori": "rendah"
     }
   ],
@@ -293,7 +569,7 @@
     "Kittler, J., Hatef, M., Duin, R. P. W., & Matas, J. (1998). On combining classifiers. IEEE TPAMI 20(3), 226-239."
   ],
   "caveats": [
-    "Data palm dan konjungtiva tidak berpasangan per anak; metrik gabungan berasal dari pasangan simulasi (asumsi independensi bersyarat) sehingga cenderung optimistis.",
+    "Data palm dan konjungtiva tidak berpasangan per anak; metrik gabungan berasal dari pasangan semu (asumsi independensi bersyarat) sehingga cenderung optimistis.",
     "Skor terkalibrasi terhadap prevalensi dataset (anak <=5 th, Ghana); presisi di populasi nyata bisa lebih rendah.",
     "Hasil adalah skor risiko skrining, bukan diagnosis. Konfirmasi dengan pemeriksaan Hb."
   ]
