@@ -30,6 +30,7 @@ class ScanCapturePage extends StatefulWidget {
 
 class _ScanCapturePageState extends State<ScanCapturePage> {
   Uint8List? _photo;
+  Uint8List? _shown; // foto terakhir yang dijepret (lolos atau ditolak), untuk pratinjau
   bool _checking = false;
   ({String judul, String alasan, List<String> tips})? _reject;
   List<String> _warnings = const [];
@@ -45,6 +46,7 @@ class _ScanCapturePageState extends State<ScanCapturePage> {
     setState(() {
       _checking = true;
       _reject = null;
+      _shown = bytes;
     });
     bloc.add(EyePhotoCaptured(bytes));
     final s = await bloc.stream.firstWhere(
@@ -153,7 +155,7 @@ class _ScanCapturePageState extends State<ScanCapturePage> {
         const ScanStepBars(step: 1),
         const SizedBox(height: 16),
         ScanFrameBox(
-          photo: _photo,
+          photo: _shown ?? _photo,
           painter: const CrescentPainter(),
           caption: 'Posisikan konjungtiva pada frame bulan sabit',
         ),

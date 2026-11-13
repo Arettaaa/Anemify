@@ -30,6 +30,7 @@ class ScanPalmPage extends StatefulWidget {
 
 class _ScanPalmPageState extends State<ScanPalmPage> {
   Uint8List? _photo;
+  Uint8List? _shown; // foto terakhir yang dijepret (lolos atau ditolak), untuk pratinjau
   bool _checking = false;
   ({String judul, String alasan, List<String> tips})? _reject;
   List<String> _warnings = const [];
@@ -67,6 +68,7 @@ class _ScanPalmPageState extends State<ScanPalmPage> {
       _checking = true;
       _reject = null;
       _canRetry = false;
+      _shown = bytes;
     });
     bloc.add(PalmPhotoCaptured(bytes));
     final s = await bloc.stream.firstWhere(
@@ -212,7 +214,7 @@ class _ScanPalmPageState extends State<ScanPalmPage> {
         const ScanStepBars(step: 2),
         const SizedBox(height: 16),
         ScanFrameBox(
-          photo: _photo,
+          photo: _shown ?? _photo,
           painter: const HandPainter(),
           caption: 'Posisikan bagian tengah telapak di dalam kotak',
         ),
