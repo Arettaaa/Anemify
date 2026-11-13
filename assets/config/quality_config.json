@@ -14,7 +14,7 @@
   "palm": {
     "brightness_min": 69.27415196508292,
     "brightness_max": 219.35094274154977,
-    "saturation_min": 0.04285652592673366,
+    "saturation_min": 0,
     "overexposed_max": 0.5706114477040817,
     "sharpness_min": 1.01426178808547
   }
