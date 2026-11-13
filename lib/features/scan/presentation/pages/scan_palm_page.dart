@@ -215,6 +215,7 @@ class _ScanPalmPageState extends State<ScanPalmPage> {
         const SizedBox(height: 16),
         ScanFrameBox(
           photo: _shown ?? _photo,
+          rejected: _reject != null,
           painter: const HandPainter(),
           caption: 'Posisikan bagian tengah telapak di dalam kotak',
         ),

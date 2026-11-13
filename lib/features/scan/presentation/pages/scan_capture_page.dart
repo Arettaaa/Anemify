@@ -156,6 +156,7 @@ class _ScanCapturePageState extends State<ScanCapturePage> {
         const SizedBox(height: 16),
         ScanFrameBox(
           photo: _shown ?? _photo,
+          rejected: _reject != null,
           painter: const CrescentPainter(),
           caption: 'Posisikan konjungtiva pada frame bulan sabit',
         ),
