@@ -165,6 +165,11 @@ class _GuidedCameraPageState extends State<GuidedCameraPage>
     if (c == null || !c.value.isInitialized || _busy) return;
     setState(() => _busy = true);
     try {
+      // Fokus ulang ke tengah panduan tepat sebelum jepret, lalu beri waktu
+      // autofocus mengunci. Blur konjungtiva paling sering karena jepret
+      // sebelum fokus selesai.
+      await _focusCenter(c);
+      await Future.delayed(const Duration(milliseconds: 600));
       final f = await c.takePicture();
       final bytes = await f.readAsBytes();
       if (mounted) Navigator.of(context).pop<Uint8List>(bytes);
