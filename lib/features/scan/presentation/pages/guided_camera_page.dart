@@ -110,8 +110,11 @@ class _GuidedCameraPageState extends State<GuidedCameraPage>
     final old = _controller;
     if (mounted) setState(() => _controller = null);
     await old?.dispose();
-    final c = CameraController(cam, ResolutionPreset.high, enableAudio: false);
-    try {
+    final c = CameraController(
+      cam,
+      widget.isEye ? ResolutionPreset.veryHigh : ResolutionPreset.high,
+      enableAudio: false,
+    );
       await c.initialize();
       try {
         await c.setFlashMode(FlashMode.off);
