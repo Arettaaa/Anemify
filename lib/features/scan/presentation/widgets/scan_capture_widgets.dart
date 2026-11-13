@@ -38,11 +38,13 @@ class ScanFrameBox extends StatelessWidget {
   final Uint8List? photo;
   final CustomPainter painter;
   final String caption;
+  final bool rejected;
   const ScanFrameBox({
     super.key,
     required this.photo,
     required this.painter,
     required this.caption,
+    this.rejected = false,
   });
 
   @override
@@ -70,10 +72,16 @@ class ScanFrameBox extends StatelessWidget {
                 top: 16,
                 left: 4,
                 child: _Pill(
-                  icon: photo != null
-                      ? Icons.check_circle_outline
-                      : Icons.verified_user_outlined,
-                  text: photo != null ? 'Foto sudah diambil' : 'Panduan posisi foto',
+                  icon: photo == null
+                      ? Icons.verified_user_outlined
+                      : rejected
+                          ? Icons.error_outline
+                          : Icons.check_circle_outline,
+                  text: photo == null
+                      ? 'Panduan posisi foto'
+                      : rejected
+                          ? 'Foto ditolak, ambil ulang'
+                          : 'Foto sudah diambil',
                 ),
               ),
               Positioned(
