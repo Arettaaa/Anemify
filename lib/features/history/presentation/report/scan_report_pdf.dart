@@ -421,17 +421,6 @@ Future<Uint8List> buildScanReport(HistoryEntry e, Profile? p) async {
                   border: pw.Border.all(color: _line),
                   borderRadius: pw.BorderRadius.circular(6),
                 ),
-                child: pw.Column(
-                  crossAxisAlignment: pw.CrossAxisAlignment.start,
-                  children: [
-                    pw.Text('Verifikasi tenaga kesehatan (opsional)',
-                        style: st(7.5, bold: true, color: _grey)),
-                    pw.SizedBox(height: 26),
-                    pw.Container(height: 0.8, color: _line),
-                    pw.SizedBox(height: 3),
-                    pw.Text('Nama dan paraf', style: st(7, color: _grey)),
-                  ],
-                ),
               ),
             ],
           ),
