@@ -115,6 +115,7 @@ class _GuidedCameraPageState extends State<GuidedCameraPage>
       widget.isEye ? ResolutionPreset.veryHigh : ResolutionPreset.high,
       enableAudio: false,
     );
+    try {
       await c.initialize();
       try {
         await c.setFlashMode(FlashMode.off);
