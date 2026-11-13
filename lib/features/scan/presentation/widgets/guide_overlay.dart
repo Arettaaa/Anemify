@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 
 import '../../domain/entities/guide_geometry.dart';
-import 'scan_guide_painters.dart';
 
 /// Overlay panduan kamera, digambar LANGSUNG dari GuideGeometry
 /// (bentuk yang sama persis dengan area yang dipotong).
@@ -119,42 +118,6 @@ class _GuidePainter extends CustomPainter {
     final dim = Path.combine(
         PathOperation.difference, Path()..addRect(Offset.zero & size), guide);
     canvas.drawPath(dim, Paint()..color = Colors.black54);
-
-    // Siluet tangan samar, LEBIH BESAR dari kotak (jari di atas kotak, pergelangan
-    // di bawah) dengan tengah telapak tepat di tengah kotak: menunjukkan bahwa
-    // kotak hanya diisi bagian tengah telapak, bukan seluruh tangan.
-    if (!isEye) {
-      final r = GuideGeometry.palmRect(size.width.round(), size.height.round());
-      final boxCenter = Offset(r.left + r.width / 2, r.top + r.height / 2);
-      // Tinggi tangan ~1.9x sisi kotak; pusat telapak pada koordinat tangan
-      // ternormalisasi ≈ (0.45, 0.72).
-      final handH = r.height * 1.9;
-      final handW = handH * 0.85;
-      final handSize = Size(handW, handH);
-      canvas.save();
-      canvas.translate(
-        boxCenter.dx - 0.45 * handW,
-        boxCenter.dy - 0.72 * handH,
-      );
-      canvas.drawPath(
-        handSilhouettePath(handSize, widthFactor: 1, heightFactor: 1),
-        Paint()
-          ..style = PaintingStyle.stroke
-          ..strokeWidth = 1.6
-          ..strokeJoin = StrokeJoin.round
-          ..strokeCap = StrokeCap.round
-          ..color = Colors.white.withValues(alpha: 0.35),
-      );
-      canvas.drawPath(
-        handPalmLinesPath(handSize, widthFactor: 1, heightFactor: 1),
-        Paint()
-          ..style = PaintingStyle.stroke
-          ..strokeWidth = 1.2
-          ..strokeCap = StrokeCap.round
-          ..color = Colors.white.withValues(alpha: 0.25),
-      );
-      canvas.restore();
-    }
 
     canvas.drawPath(
       guide,

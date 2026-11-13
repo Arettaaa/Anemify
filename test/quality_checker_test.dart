@@ -64,12 +64,11 @@ void main() {
     expect(v(_img224((x, y, c) => [150, 90, 100][c])).failure, ScanFailureType.blurry); // polos = tanpa tekstur
   });
 
-  test('warna kusam -> peringatan saja, bukan penolakan', () {
+  test('warna kusam (abu-abu) -> ditolak sebagai bukan jaringan', () {
     final v = checker.check(
         QualityChecker.measure(_img224((x, y, c) => (x + y).isEven ? 100 : 140)),
         isEye: true);
-    expect(v.failure, isNull);
-    expect(v.warnings, [ScanWarning.dullColor]);
+    expect(v.failure, ScanFailureType.notTarget);
   });
 
   test('foto wajar -> lolos tanpa peringatan', () {

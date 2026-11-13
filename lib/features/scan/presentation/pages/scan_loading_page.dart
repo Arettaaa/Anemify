@@ -45,6 +45,8 @@ class _ScanLoadingPageState extends State<ScanLoadingPage>
 
   int _step = 0;
   Timer? _timer;
+  final _shownAt = DateTime.now();
+  static const _minShow = Duration(milliseconds: 1800);
 
   @override
   void initState() {
@@ -102,8 +104,12 @@ class _ScanLoadingPageState extends State<ScanLoadingPage>
         if (s.status == ScanStatus.success && s.result != null) {
           sl<SaveScanToHistory>()(s.result!)
               .then((_) => notifyHistoryChanged()); // kontrak bagian 10
-          pushScanPage(context, ScanResultPage(result: s.result!),
-              replace: true);
+          final sisa = _minShow - DateTime.now().difference(_shownAt);
+          Future.delayed(sisa.isNegative ? Duration.zero : sisa, () {
+            if (!mounted) return;
+            pushScanPage(context, ScanResultPage(result: s.result!),
+                replace: true);
+          });
         } else if (s.status == ScanStatus.failure) {
           Navigator.of(context).pop(s);
         }

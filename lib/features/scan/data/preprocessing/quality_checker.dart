@@ -104,11 +104,13 @@ class QualityChecker {
     const none = <ScanWarning>[];
     if (q.brightness < th.brightnessMin) return (failure: ScanFailureType.tooDark, warnings: none);
     if (q.brightness > th.brightnessMax) return (failure: ScanFailureType.tooBright, warnings: none);
-    final sh = q.sharpness;
+        final sh = q.sharpness;
     if (sh != null && sh < th.sharpnessMin) return (failure: ScanFailureType.blurry, warnings: none);
-    return (
-      failure: null,
-      warnings: q.saturation < th.saturationMin ? const [ScanWarning.dullColor] : none,
-    );
+    // Lebih kusam dari 99,5% foto dataset -> bukan jaringan (layar, kertas,
+    // dinding). Konjungtiva pucat tetap lolos karena ambangnya persentil 0,5%.
+    if (q.saturation < th.saturationMin) {
+      return (failure: ScanFailureType.notTarget, warnings: none);
+    }
+    return (failure: null, warnings: none);
   }
 }

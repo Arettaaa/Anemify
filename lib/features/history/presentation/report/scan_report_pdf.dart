@@ -76,7 +76,6 @@ Future<Uint8List> buildScanReport(HistoryEntry e, Profile? p) async {
   final c = e.category;
 
   CategoryThresholds? thr;
-  String versiModel = '-';
   try {
     final cfg = FusionConfig.fromJsonString(
         await rootBundle.loadString('assets/config/fusion_config.json'));
@@ -85,9 +84,6 @@ Future<Uint8List> buildScanReport(HistoryEntry e, Profile? p) async {
         : e.eyeScore != null
             ? cfg.konjOnly
             : cfg.palmOnly;
-    versiModel = cfg.palmModelFile
-        .replaceAll(RegExp(r'^palm_'), '')
-        .replaceAll(RegExp(r'_fp\d+\.tflite$'), '');
   } catch (_) {
     // Tanpa config, tabel rentang kategori dilewati.
   }
@@ -179,17 +175,6 @@ Future<Uint8List> buildScanReport(HistoryEntry e, Profile? p) async {
           pw.Row(
             crossAxisAlignment: pw.CrossAxisAlignment.center,
             children: [
-              pw.Container(
-                width: 40,
-                height: 40,
-                decoration: pw.BoxDecoration(
-                  color: _primary,
-                  borderRadius: pw.BorderRadius.circular(10),
-                ),
-                alignment: pw.Alignment.center,
-                child: pw.Text('A', style: st(22, bold: true, color: _white)),
-              ),
-              pw.SizedBox(width: 12),
               pw.Column(
                 crossAxisAlignment: pw.CrossAxisAlignment.start,
                 children: [
@@ -214,8 +199,6 @@ Future<Uint8List> buildScanReport(HistoryEntry e, Profile? p) async {
                       style: st(11, bold: true, color: _primaryDark)),
                   pw.SizedBox(height: 2),
                   pw.Text('No. ${nomorLaporan(e)}', style: st(8.5, color: _grey)),
-                  pw.Text('Model: $versiModel - diproses di perangkat',
-                      style: st(8, color: _grey)),
                 ],
               ),
             ],
@@ -261,7 +244,6 @@ Future<Uint8List> buildScanReport(HistoryEntry e, Profile? p) async {
                       identitas('Tanggal skrining', formatTglPanjang(e.createdAt)),
                       identitas('Waktu', '${formatJam(e.createdAt)} WIB'),
                       identitas('Foto dianalisis', sumber),
-                      identitas('Metode', 'Model klasifikasi citra di perangkat'),
                     ],
                   ),
                 ),

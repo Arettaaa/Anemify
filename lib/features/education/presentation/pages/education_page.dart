@@ -114,7 +114,7 @@ class _EducationPageState extends State<EducationPage> {
     return Scaffold(
       backgroundColor: Colors.white,
       body: SafeArea(
-        bottom: false,
+        bottom: true,
                child: CustomScrollView(
           slivers: [
             // Header (ikut scroll)
@@ -495,7 +495,7 @@ class _EducationPageState extends State<EducationPage> {
                         ),
                       ),
                     ),
-                    const SizedBox(height: 130),
+                    const SizedBox(height: 24),
                   ],
                 ),
               ),

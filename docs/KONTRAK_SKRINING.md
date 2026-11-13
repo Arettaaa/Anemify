@@ -13,15 +13,23 @@ UI **tidak perlu** (dan tidak boleh) menyentuh TFLite, preprocessing, cek kualit
 
 ```
 Halaman kamera ──(foto utuh)──► ScanBloc ──► potong sesuai panduan ► preprocessing
-                                                 ► cek kualitas (gelap/terang/blur)
-                                                 ► cek objek (telapak/konjungtiva dikenali?)
-                                                 ► 2 model TFLite ► PDR ► ScanResult
+                                   │             ► cek kualitas (gelap/terang/blur/kusam)
+                                   │             ► cek objek (telapak/konjungtiva dikenali?)
+                                   │                 └─ gagal → status failure (foto TIDAK disimpan)
+                                   │                 └─ lolos → status ready, foto disimpan + photoWarnings
+                                   │
+                            ScanSubmitted ──► 2 model TFLite ► PDR ► ScanResult
                                     ▲                                          │
 Halaman hasil ◄──── ScanState (status, result, failure, failedPhoto) ◄─────────┘
 ```
 
-Setiap foto dicek **sebelum** dianalisis. Kalau satu foto gagal cek, skrining berhenti dengan `status == failure`,
-dan `failedPhoto` memberi tahu foto mana yang harus diulang.
+Setiap foto dicek **segera setelah diambil** (status `checkingPhoto`), bukan saat tombol Analisis ditekan.
+Foto yang gagal cek **tidak pernah masuk state**: `status == failure`, `failedPhoto` menunjuk foto itu, dan foto
+lain yang sudah lolos tetap tersimpan. Saat `ScanSubmitted`, foto yang sudah lolos tidak dicek ulang (hasil
+potongan + tensornya di-cache), jadi analisis berlangsung cepat.
+
+Urutan alur UI: **foto mata dulu, harus lolos**, baru foto telapak. Setelah tiap foto lolos, UI menampilkan
+pratinjau + kartu hijau dan pengguna menekan sendiri "Lanjut"/"Analisis sekarang" (tidak otomatis pindah).
 
 ## 2. Menyiapkan BLoC
 
@@ -51,12 +59,22 @@ Satu `ScanBloc` dipakai untuk satu sesi skrining (foto telapak + foto mata + has
 | Event | Kapan dikirim | Catatan |
 |---|---|---|
 | `ScanStarted()` | Saat alur skrining dibuka | Memuat model. Aman dikirim berulang. |
-| `PalmPhotoCaptured(bytes)` | Setelah foto telapak diambil | **Foto utuh** dari kamera (`Uint8List`). Jangan dipotong/di-resize. Mengirim ulang = mengganti foto lama. |
-| `EyePhotoCaptured(bytes)` | Setelah foto mata diambil | **Foto utuh** dari kamera. Mengirim ulang = mengganti foto lama. |
-| `ScanSubmitted()` | Tombol "Analisis" ditekan | Boleh dengan satu foto atau dua foto. |
+| `PalmPhotoCaptured(bytes)` | Setelah foto telapak diambil | **Foto utuh** dari kamera (`Uint8List`). Jangan dipotong/di-resize. Foto **langsung dicek**; lolos → mengganti foto lama, gagal → foto lama (kalau ada) tetap dipakai. |
+| `EyePhotoCaptured(bytes)` | Setelah foto mata diambil | **Foto utuh** dari kamera. Perilaku sama seperti di atas. |
+| `ScanSubmitted()` | Tombol "Analisis" ditekan | Boleh dengan satu foto atau dua foto. Foto sudah lolos cek, jadi kegagalan di tahap ini hampir selalu `modelNotReady`/`unknown`. |
 | `ScanReset()` | Mulai skrining baru | Menghapus foto & hasil; model tetap termuat. |
 
-Contoh: `context.read<ScanBloc>().add(PalmPhotoCaptured(bytes));`
+Pola yang dipakai halaman kamera (lihat `scan_capture_page.dart` / `scan_palm_page.dart`):
+
+```dart
+final bloc = context.read<ScanBloc>();
+bloc.add(EyePhotoCaptured(bytes));
+final s = await bloc.stream.firstWhere((s) =>
+    (s.status == ScanStatus.ready && identical(s.eyePhoto, bytes)) ||
+    s.status == ScanStatus.failure);
+if (s.status == ScanStatus.failure) { /* tampilkan ScanRejectCard */ }
+else { /* tampilkan ScanAcceptedCard + s.photoWarnings[ScanPhotoKind.eye] */ }
+```
 
 ## 4. State (yang dibaca UI)
 
@@ -64,23 +82,27 @@ Contoh: `context.read<ScanBloc>().add(PalmPhotoCaptured(bytes));`
 |---|---|---|
 | `status` | `ScanStatus` | Lihat tabel di bawah |
 | `modelReady` | `bool` | Model sudah termuat |
-| `palmPhoto`, `eyePhoto` | `Uint8List?` | Foto yang sudah diambil (untuk pratinjau) |
+| `palmPhoto`, `eyePhoto` | `Uint8List?` | Foto yang **sudah lolos cek** (untuk pratinjau). Foto yang ditolak tidak pernah ada di sini. |
+| `photoWarnings` | `Map<ScanPhotoKind, List<ScanWarning>>` | Peringatan ringan per foto yang lolos (mis. `atypicalPhoto`). Tampilkan di kartu "foto diterima". |
 | `result` | `ScanResult?` | Terisi saat `status == success` |
 | `failure` | `ScanFailureType?` | Terisi saat `status == failure` |
 | `failedPhoto` | `ScanPhotoKind?` | `palm` / `eye` = foto yang harus diulang; `null` = tidak spesifik |
 | `failedMetrics` | `QualityMetrics?` | **Khusus debug.** UI biasa abaikan. |
-| `canSubmit` | `bool` (getter) | `true` kalau tombol "Analisis" boleh aktif |
+| `isBusy` | `bool` (getter) | `checkingPhoto` atau `processing` → tombol dinonaktifkan |
+| `canSubmit` | `bool` (getter) | `true` kalau tombol "Analisis" boleh aktif (`modelReady && hasPhoto && !isBusy`) |
 
 | `ScanStatus` | Tampilkan |
 |---|---|
 | `initial`, `loadingModel` | Indikator "Menyiapkan model..." |
-| `ready` | Halaman normal (ambil foto / tombol Analisis) |
-| `processing` | Indikator "Menganalisis..." (±2–3 detik), tombol dinonaktifkan |
+| `ready` | Halaman normal (ambil foto / tombol Lanjut / Analisis) |
+| `checkingPhoto` | Label tombol "Memeriksa foto…", tombol dinonaktifkan (biasanya < 1 detik) |
+| `processing` | Halaman `ScanLoadingPage` "Menganalisis…". Analisis sendiri sangat cepat (foto sudah di-cache), jadi halaman ini **ditahan minimal 1,8 detik** supaya pengguna sempat melihatnya. |
 | `success` | Halaman hasil dari `state.result` |
-| `failure` | Pesan dari `state.failure` (lihat bagian 6) + tombol **ulangi foto yang gagal** |
+| `failure` | `ScanRejectCard` dari `alasanTolak(failure, failedPhoto)` (bagian 6) + tombol **ulangi foto yang gagal** |
 
-Saat `failure` dengan `failedPhoto != null`: arahkan pengguna memotret ulang **foto itu saja** (kirim `PalmPhotoCaptured`/`EyePhotoCaptured` baru),
-foto lain tidak perlu diulang. Lalu kirim `ScanSubmitted()` lagi.
+Saat `failure` dengan `failedPhoto != null`: pengguna memotret ulang **foto itu saja** di halaman yang sama.
+Foto lain yang sudah lolos tetap ada di state. Kalau foto mata diulang padahal telapak sudah ada, halaman telapak
+dibuka dengan `autoAnalyze: true` sehingga analisis langsung jalan tanpa memotret ulang telapak.
 
 ## 5. Hasil: `ScanResult`
 
@@ -112,9 +134,19 @@ foto lain tidak perlu diulang. Lalu kirim `ScanSubmitted()` lagi.
 
 > `atypicalPhoto` saat ini **tidak muncul** (cek objek memakai mode ketat: foto yang kurang dikenali langsung ditolak dengan `notTarget`).
 > Tetap siapkan teksnya; mode bisa diubah lewat `assets/config/ood_config.json` tanpa mengubah kode.
+>
+> `dullColor` juga **tidak muncul lagi**: saturasi di bawah `saturation_min` (persentil 0,5% dataset) sekarang
+> **ditolak** sebagai `notTarget`, bukan diperingatkan. Alasannya: detektor OOD lemah untuk permukaan polos tanpa
+> tekstur (laporan `ood_config.json`: "kulit polos" 0% ditolak, "warna polos" 42%), sehingga layar/kertas/dinding
+> abu-abu bisa lolos sebagai konjungtiva. Konjungtiva pucat tetap lolos karena 99,5% foto dataset berada di atas ambang.
+> Teks `dullColor` tetap disimpan untuk riwayat lama.
 
 **Aturan tampilan hasil:**
-- Kategori adalah informasi utama. Skor boleh ditampilkan sebagai informasi tambahan dengan label **"skor risiko skrining"** (bukan "probabilitas anemia").
+- Kategori adalah informasi utama. Skor ditampilkan sebagai **persen** (`persen(score)` → "74%", widget `ScoreBreakdown`)
+  dengan label **"skor risiko skrining"** (bukan "probabilitas anemia"). `ScoreBreakdown` juga menampilkan skor
+  per foto (Konjungtiva mata / Telapak tangan) di bawah skor akhir, di halaman hasil, detail riwayat, dan PDF.
+- Setelah kategori, tampilkan kartu **"Apa yang harus saya lakukan?"** berisi 3 langkah bernomor per kategori
+  (`scan_result_page.dart`, `_nextSteps`). Langkah untuk `tinggi`/`perluPerhatian` menyebut pemeriksaan Hb dan membawa laporan PDF.
 - **Selalu** tampilkan disclaimer: *"Anemify adalah alat skrining awal, bukan diagnosis. Hasil tidak menggantikan pemeriksaan hemoglobin oleh tenaga kesehatan."*
 - Semua peringatan di `warnings` ditampilkan (tidak hanya yang pertama).
 - Jangan menghitung ulang atau mengubah kategori di UI.
@@ -136,7 +168,16 @@ foto lain tidak perlu diulang. Lalu kirim `ScanSubmitted()` lagi.
 | `modelNotReady` | "Model belum siap. Tunggu sebentar lalu coba lagi." |
 | `unknown` | "Terjadi kesalahan. Silakan coba lagi." |
 
-Fungsi bantu yang disarankan (taruh di widget UI):
+`notTarget` dipicu oleh **dua** hal: jarak OOD di atas ambang (`ood_config.json`) **atau** saturasi di bawah
+`saturation_min` (`quality_config.json`). Keduanya ditampilkan dengan pesan yang sama; pengguna tidak perlu tahu bedanya.
+
+Dua fungsi bantu sudah ada di `presentation/widgets/scan_messages.dart`:
+
+- `pesanGagal(t, p)` → satu kalimat (untuk toast / riwayat), isinya tabel di atas.
+- `alasanTolak(t, p)` → `({judul, alasan, tips})` untuk `ScanRejectCard` di halaman foto: judul singkat,
+  apa yang terdeteksi, dan 2–3 cara memperbaiki. **Ini yang dipakai halaman kamera**, bukan toast.
+
+Isi `pesanGagal`:
 
 ```dart
 String pesanGagal(ScanFailureType t, ScanPhotoKind? p) {
@@ -185,6 +226,10 @@ Tampilannya boleh diberi gaya (warna, tombol, teks petunjuk lewat parameter `ins
 
 1. **Overlay:** pakai `GuideOverlay(isEye: true/false)` dari `presentation/widgets/guide_overlay.dart`.
    Warna/ketebalan garis boleh diubah; **geometri tidak boleh** (geometri ada di `GuideGeometry`).
+   Overlay sekarang menambahkan chip petunjuk di bawah frame ("Bagian merah muda kelopak bawah mengisi sabit" /
+   "Tengah telapak memenuhi kotak"); chip itu hiasan di luar area potong, tidak mengubah geometri.
+   **Jangan** menggambar siluet tangan di dalam kotak telapak: kotak hanya diisi bagian tengah telapak (seperti foto dataset),
+   siluet tangan utuh membuat pengguna menjauhkan tangan sehingga telapak kekecilan.
 2. **Preview utuh:** bungkus preview dengan `AspectRatio(aspectRatio: 1 / controller.value.aspectRatio)`, lalu `Stack` berisi `CameraPreview` + `GuideOverlay`.
    **Jangan** memakai `BoxFit.cover`, crop, atau zoom pada preview.
 3. **Resolusi:** `ResolutionPreset.high` (atau `veryHigh`), bukan `max`.
@@ -194,8 +239,12 @@ Tampilannya boleh diberi gaya (warna, tombol, teks petunjuk lewat parameter `ins
 7. **Petunjuk di layar:**
    - Telapak: "Buka telapak tangan dan posisikan bagian tengahnya di dalam kotak."
    - Mata: "Pegang HP ±15–20 cm. Tarik kelopak mata bawah sampai bagian dalam yang kemerahan terlihat. Isi sabit dengan bagian kemerahan itu saja; bulu mata dan kulit kelopak di luar sabit. Gunakan cahaya terang, tanpa flash."
-8. **Disarankan:** tampilkan contoh gambar foto mata yang benar vs salah (kelopak tidak ditarik / bulu mata masuk sabit).
+8. **Contoh foto benar vs salah** sudah ada: `ContohFotoCard(isEye: ...)` di `presentation/widgets/scan_example_photos.dart`,
+   dipasang di kedua halaman foto. Saat ini berupa ilustrasi (digambar kode, berlabel "Ilustrasi"); kalau nanti ada
+   foto contoh asli yang layak, ganti painter-nya dengan `Image.asset`.
    Dari uji coba, kesalahan paling sering adalah tepi kelopak dan bulu mata ikut masuk sabit → foto ditolak `notTarget`.
+9. **Umpan balik haptic:** `HapticFeedback.mediumImpact()` saat foto diterima, `HapticFeedback.vibrate()` saat ditolak.
+   Tanpa suara.
 
 Contoh lengkap yang sudah teruji: `presentation/pages/debug_camera_page.dart`.
 
@@ -249,8 +298,27 @@ Semua lewat `sl` (`core/di/injection.dart`):
 | Hapus satu | `await sl<DeleteHistoryEntry>()(id);` |
 | Hapus semua | `await sl<ClearHistory>()();` |
 
-`HistoryEntry`: `id`, `createdAt`, `category`, `score`, `palmScore`, `eyeScore`, `usesFusion`, `warnings`.
+`HistoryEntry`: `id`, `profileId`, `createdAt`, `category`, `score`, `palmScore`, `eyeScore`, `usesFusion`, `warnings`.
 `warnings` ikut menyimpan peringatan baru (`dullColor`, `atypicalPhoto`); tampilkan di detail riwayat dengan teks yang sama seperti bagian 5.
+`GetScanHistory` hanya mengembalikan riwayat **profil aktif**; untuk semua profil pakai `HistoryLocalDataSource.getAll(profileId)` per profil.
+
+**Laporan PDF per hasil** (`history/presentation/report/scan_report_pdf.dart`, `ReportPdfButton`): laporan formal
+A4 — kop "anemify.", nomor laporan `ANM-YYYYMMDD-HHMM-ID`, identitas, tabel hasil per foto (persen), tabel
+interpretasi dengan rentang ambang dari `fusion_config.json`, keterangan, kotak verifikasi tenaga kesehatan.
+**Tidak boleh** memuat nilai Hb, nama/versi model, atau logo huruf. Dibagikan lewat `Printing.sharePdf`.
+
+## 10b. Ekspor & impor data
+
+Lokasi: `lib/features/settings/data/data_transfer_service.dart` (`sl<DataTransferService>()`), menu di Pengaturan.
+
+| Aksi | Hasil |
+|---|---|
+| Ekspor JSON | `writeJsonFile(nama)` → berkas di temp dir → share sheet (`share_plus`). Isi: **semua profil**, riwayat lengkap, log TTD per profil. Format `{"app":"anemify","version":1,...}`. |
+| Ekspor PDF | `buildSummaryPdf()` → ringkasan semua profil (tabel riwayat + jumlah hari TTD) → `Printing.sharePdf`. |
+| Impor | pilih `.json` (`file_selector`) → `importFromJson(raw)` → `ImportSummary`. Validasi `app`/`version`; profil baru ditambah (cocok lewat `id`); riwayat **dedup** per (profil, waktu, skor) sehingga impor ulang tidak menggandakan; log TTD digabung lewat `TtdRepository.restoreLogs` (catatan di perangkat menang). |
+
+Pengaturan pengingat TTD **tidak** ikut dicadangkan (preferensi perangkat). Tidak ada klaim "tersimpan" sebelum
+share sheet dibuka — berkas memang baru benar-benar disimpan saat pengguna memilih tujuan.
 
 **Menyimpan otomatis** (taruh di halaman hasil/kamera, jangan ubah `ScanBloc`):
 
@@ -279,4 +347,19 @@ BlocListener<ScanBloc, ScanState>(
   git branch -d feature/nama-fitur
   ```
 - `git pull` di `main` sebelum membuat branch baru.
-- `lib/main.dart` rawan konflik: sepakati satu orang yang mengubahnya. Saat ini `home` masih halaman debug (`DebugParityPage`); ganti ke beranda saat sudah siap, lalu aktifkan lagi test di `test/widget_test.dart` (hapus `skip: true`).
+- `lib/main.dart` rawan konflik: sepakati satu orang yang mengubahnya. `home` sekarang sudah `SplashScreen`;
+  `test/widget_test.dart` masih `skip: true` dengan catatan lama — aktifkan lagi (hapus `skip: true`) dan sesuaikan isinya.
+
+## 12. Riwayat perubahan kontrak
+
+**2026-11-13 (Aretta) — menyentuh area logika, Yumna mohon dicek:**
+
+| File | Perubahan |
+|---|---|
+| `domain/repositories/scan_repository.dart` | Tambah `PhotoCheck` dan `checkPhoto({photo, isEye})`. |
+| `data/repositories/scan_repository_impl.dart` | `_prepare()` + cache per jenis foto; `checkPhoto` memakai `_verify` yang sama dengan `classify`; `classify` memakai cache lalu membersihkannya. Logika gerbang & model **tidak** diubah. |
+| `data/preprocessing/quality_checker.dart` | Saturasi `< saturation_min` → `notTarget` (dulu hanya peringatan `dullColor`). Lihat catatan bagian 5. |
+| `presentation/bloc/scan_state.dart`, `scan_bloc.dart` | Status `checkingPhoto`, `photoWarnings`, `isBusy`; foto ditolak tidak masuk state. |
+| `presentation/widgets/guide_overlay.dart` | Chip petunjuk di bawah frame; geometri tetap. |
+| `test/scan_bloc_test.dart`, `test/quality_checker_test.dart` | Disesuaikan. |
+| `assets/config/*.json` | **Tidak diubah.** |

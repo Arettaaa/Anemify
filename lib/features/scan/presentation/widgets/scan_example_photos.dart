@@ -3,7 +3,7 @@ import 'dart:ui';
 import 'package:flutter/material.dart';
 
 import '../../../../core/theme/app_colors.dart';
-import 'scan_guide_painters.dart';
+import 'dart:math' as math;
 import 'scan_widgets.dart';
 
 /// Kartu contoh foto benar vs salah, ditampilkan sebelum pengguna memotret.
@@ -201,43 +201,35 @@ class _EyeExamplePainter extends CustomPainter {
   bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
 }
 
-/// Telapak tangan terbuka memenuhi frame.
+/// Close-up tengah telapak (tanpa jari), seperti foto dataset.
 class _PalmExamplePainter extends CustomPainter {
   const _PalmExamplePainter();
 
   @override
   void paint(Canvas canvas, Size size) {
     final w = size.width, h = size.height;
-    // latar
-    canvas.drawRect(Offset.zero & size, Paint()..color = const Color(0xFFF6E7DA));
-
-    final hand = handSilhouettePath(size, widthFactor: 0.62, heightFactor: 0.94);
-    canvas.drawPath(hand, Paint()..color = const Color(0xFFEFC5A6));
-    canvas.drawPath(
-      hand,
-      Paint()
-        ..style = PaintingStyle.stroke
-        ..strokeWidth = 2
-        ..strokeJoin = StrokeJoin.round
-        ..strokeCap = StrokeCap.round
-        ..color = const Color(0xFFB5876B),
-    );
-
-    canvas.drawPath(
-      handPalmLinesPath(size, widthFactor: 0.62, heightFactor: 0.94),
-      Paint()
-        ..style = PaintingStyle.stroke
-        ..strokeWidth = 1.6
-        ..strokeCap = StrokeCap.round
-        ..color = const Color(0xFFC08A66),
-    );
-
-    // kotak panduan di tengah telapak
-    final side = w * 0.34;
-    final box = Rect.fromCenter(
-        center: Offset(w * 0.5, h * 0.58), width: side, height: side);
     canvas.drawRect(
-      box,
+      Offset.zero & size,
+      Paint()
+        ..shader = const LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [Color(0xFFF3CDB0), Color(0xFFE9B995)],
+        ).createShader(Offset.zero & size),
+    );
+    // sedikit variasi kulit supaya tidak terlihat polos
+    canvas.drawOval(
+      Rect.fromCenter(center: Offset(w * 0.35, h * 0.4), width: w * 0.5, height: h * 0.45),
+      Paint()..color = const Color(0xFFF7D8BE).withValues(alpha: 0.6),
+    );
+    canvas.drawOval(
+      Rect.fromCenter(center: Offset(w * 0.7, h * 0.7), width: w * 0.45, height: h * 0.4),
+      Paint()..color = const Color(0xFFE2AD88).withValues(alpha: 0.45),
+    );
+    // kotak panduan memenuhi frame
+    final side = math.min(w, h) * 0.78;
+    canvas.drawRect(
+      Rect.fromCenter(center: Offset(w / 2, h / 2), width: side, height: side),
       Paint()
         ..style = PaintingStyle.stroke
         ..strokeWidth = 1.8
